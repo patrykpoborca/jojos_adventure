@@ -51,25 +51,45 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   late final MemoryLaneGame _game;
   final FocusNode _focusNode = FocusNode();
+  bool _showDebugPanel = MemoryLaneGame.showDebugPanel;
 
   @override
   void initState() {
     super.initState();
     _game = MemoryLaneGame();
+
+    // Listen for debug panel toggle
+    _game.onDebugPanelToggled = (visible) {
+      debugPrint('Callback received: visible=$visible, mounted=$mounted');
+      if (mounted) {
+        setState(() {
+          _showDebugPanel = visible;
+          debugPrint('setState called, _showDebugPanel=$_showDebugPanel');
+        });
+      }
+    };
   }
 
   @override
   void dispose() {
+    _game.onDebugPanelToggled = null;
     _focusNode.dispose();
     super.dispose();
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (!MemoryLaneGame.debugObstaclePlacement) {
-      return KeyEventResult.ignored;
-    }
-
     if (event is KeyDownEvent) {
+      // D key always works to toggle debug panel
+      if (event.logicalKey == LogicalKeyboardKey.keyD) {
+        _game.toggleDebugPanel();
+        return KeyEventResult.handled;
+      }
+
+      // Other keys only work when debug panel is visible
+      if (!_showDebugPanel) {
+        return KeyEventResult.ignored;
+      }
+
       if (event.logicalKey == LogicalKeyboardKey.space) {
         _game.handleObstaclePlacement();
         return KeyEventResult.handled;
@@ -81,6 +101,9 @@ class _GameScreenState extends State<GameScreen> {
         return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.keyM) {
         _game.togglePlacementMode();
+        return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyL) {
+        _game.toggleLevel();
         return KeyEventResult.handled;
       }
     }
@@ -135,8 +158,8 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
 
-              // Debug overlay (only shown when debug mode is enabled)
-              if (MemoryLaneGame.debugObstaclePlacement)
+              // Debug overlay (toggle with D key)
+              if (_showDebugPanel)
                 DebugObstacleOverlay(game: _game),
             ],
           ),

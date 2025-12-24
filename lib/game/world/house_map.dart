@@ -55,56 +55,171 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
   /// Format: stylizedPhotoPath = cover, photos = slideshow images, levelTrigger = optional level
   List<MemoryItemData> getMemoryData() {
     return const [
-      // Phase 1 memories (crawling)
-      MemoryItemData.simple(x: 188, y: 243, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Going to sunday brunch! 1'),
-      MemoryItemData.simple(x: 406, y: 594, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Halina-core-automon'),
-      MemoryItemData.simple(x: 260, y: 517, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Jack time'),
-      MemoryItemData.simple(x: 256, y: 822, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Watching out the window'),
-      MemoryItemData.simple(x: 1418, y: 355, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Year 0 christmas'),
-      MemoryItemData.simple(x: 1428, y: 617, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Prison cell'),
-      MemoryItemData.simple(x: 1198, y: 424, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Board game time 1'),
-      MemoryItemData.simple(x: 874, y: 400, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Bundle of joy (week 2)'),
-      MemoryItemData.simple(x: 495, y: 937, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Christmas lights'),
-      MemoryItemData.simple(x: 744, y: 581, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Going to bed 1'),
-      MemoryItemData.simple(x: 2021, y: 868, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Smelly poop'),
-      MemoryItemData.simple(x: 3178, y: 993, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Hanging with kevork?'),
-      MemoryItemData.simple(x: 1298, y: 665, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Helmet boy'),
+      // ========================================
+      // Phase 1 memories (crawling) - young_ photos
+      // ========================================
+      MemoryItemData.simple(
+        x: 188, y: 243,
+        photoPath: 'assets/photos/young_recliner.jpg',
+        date: 'Date', caption: 'Going to sunday brunch! 1',
+      ),
+      MemoryItemData.simple(
+        x: 406, y: 594,
+        photoPath: 'assets/photos/young_halena_couch.jpg',
+        date: 'Date', caption: 'Halina-core-automon',
+      ),
+      // Jack time - slideshow with 2 photos!
+      MemoryItemData(
+        x: 260, y: 517,
+        stylizedPhotoPath: 'assets/photos/young_jack_couch.jpg',
+        photos: ['assets/photos/young_jack_couch.jpg', 'assets/photos/young_jack_couch_2.jpg'],
+        date: 'Date', caption: 'Jack time',
+      ),
+      MemoryItemData.simple(
+        x: 256, y: 822,
+        photoPath: 'assets/photos/young_middle_nursery.jpg',
+        date: 'Date', caption: 'Watching out the window',
+      ),
+      MemoryItemData.simple(
+        x: 1418, y: 355,
+        photoPath: 'assets/photos/young_christmas.jpg',
+        date: 'Date', caption: 'Year 0 christmas',
+      ),
+      MemoryItemData.simple(
+        x: 1428, y: 617,
+        photoPath: 'assets/photos/young_baby_jail.jpg',
+        date: 'Date', caption: 'Prison cell',
+      ),
+      MemoryItemData.simple(
+        x: 1198, y: 424,
+        photoPath: 'assets/photos/young_office_table.jpg',
+        date: 'Date', caption: 'Board game time 1',
+      ),
+      MemoryItemData(
+        x: 874, y: 400,
+        stylizedPhotoPath: 'assets/photos/young_bundle_ofjoy.jpg',
+        photos: [
+          'young_bundle_ofjoy_1.jpg',
+          'young_bundle_ofjoy_2.jpg'
+        ],
+        date: 'Date', caption: 'Bundle of joy (week 2)',
+      ),
+      MemoryItemData.simple(
+        x: 495, y: 937,
+        photoPath: 'assets/photos/young_couch_sleep.jpg',
+        date: 'Date', caption: 'Christmas lights',
+      ),
+      MemoryItemData.simple(
+        x: 744, y: 581,
+        photoPath: 'assets/photos/young_in_crib.jpg',
+        date: 'Date', caption: 'Going to bed 1',
+      ),
+      MemoryItemData.simple(
+        x: 2021, y: 868,
+        photoPath: 'assets/photos/young_changing_station.jpg',
+        date: 'Date', caption: 'Smelly poop',
+      ),
+      MemoryItemData.simple(
+        x: 3178, y: 993,
+        photoPath: 'assets/photos/young_bath_time.jpg',
+        date: 'Date', caption: 'Hanging with kevork?',
+      ),
+      MemoryItemData.simple(
+        x: 1298, y: 665,
+        photoPath: 'assets/photos/young_helmet_counter.jpg',
+        date: 'Date', caption: 'Helmet boy',
+      ),
 
-      // Phase 2 memories (walking)
-      MemoryItemData.simple(x: 188, y: 243, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Going to sunday brunch! 2'),
-      MemoryItemData.simple(x: 868, y: 259, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Pumpkin horror story'),
-      MemoryItemData.simple(x: 835, y: 1105, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Bottle assembly factory'),
-      MemoryItemData.simple(x: 1007, y: 992, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Hmm fuzzy memory'),
-      MemoryItemData.simple(x: 1319, y: 800, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Grand parents memory'),
-      MemoryItemData.simple(x: 1418, y: 355, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Year one christmas tree'),
-      MemoryItemData.simple(x: 1506, y: 867, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Force feeding station'),
-      MemoryItemData.simple(x: 1054, y: 305, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Board game 2'),
-      MemoryItemData.simple(x: 744, y: 581, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Going to bed 2'),
-      MemoryItemData.simple(x: 1963, y: 1096, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Stair climbing'),
-      MemoryItemData.simple(x: 2079, y: 1026, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Dog cuddles'),
-      MemoryItemData.simple(x: 2302, y: 562, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Working with dad'),
-      MemoryItemData.simple(x: 1647, y: 624, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Chilling with grandma'),
-      MemoryItemData.simple(x: 2143, y: 643, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Random office hang'),
-      MemoryItemData.simple(x: 3174, y: 299, photoPath: 'memories/Memory.jpg', date: 'Date', caption: 'Hanging in the snow'),
-
-      // Example with slideshow:
-      // MemoryItemData(
-      //   x: 500, y: 500,
-      //   stylizedPhotoPath: 'memories/birthday_stylized.jpg',
-      //   photos: ['memories/birthday_1.jpg', 'memories/birthday_2.jpg', 'memories/birthday_3.jpg'],
-      //   date: 'Jan 2024',
-      //   caption: 'First Birthday!',
-      // ),
-      //
-      // Example with level trigger:
-      // MemoryItemData(
-      //   x: 1000, y: 800,
-      //   stylizedPhotoPath: 'memories/adventure_cover.jpg',
-      //   photos: ['memories/adventure_1.jpg'],
-      //   date: 'Summer 2024',
-      //   caption: 'A Special Adventure',
-      //   levelTrigger: 'beach_level',
-      // ),
+      // ========================================
+      // Phase 2 memories (walking) - old_ photos
+      // ========================================
+      MemoryItemData.simple(
+        x: 188, y: 243,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Going to sunday brunch! 2',
+      ),
+      MemoryItemData(
+        x: 868, y: 259,
+        stylizedPhotoPath: 'assets/photos/old_pumpkin_boy.jpg',
+        photos: [
+          'assets/photos/old_thanksgiving_1.jpg',
+          'assets/photos/old_thanksgiving_2.jpg',
+          'assets/photos/old_thanksgiving_3.jpg',
+          'assets/photos/old_thanksgiving_4.jpg',
+          'assets/photos/old_thanksgiving_5.jpg',
+        ],
+        date: 'Date', caption: 'Pumpkin horror story',
+      ),
+      MemoryItemData.simple(
+        x: 835, y: 1105,
+        photoPath: 'assets/photos/old_eating_countertop.jpg',
+        date: 'Date', caption: 'Bottle assembly factory',
+      ),
+      MemoryItemData.simple(
+        x: 1007, y: 992,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Hmm fuzzy memory',
+      ),
+      // Grand parents memory - Thanksgiving slideshow with 5 photos!
+      MemoryItemData(
+        x: 1319, y: 800,
+        stylizedPhotoPath: 'assets/photos/young_countertop_sleep.jpg',
+        date: 'Date', caption: 'Helmet boy',
+      ),
+      MemoryItemData.simple(
+        x: 1418, y: 355,
+        photoPath: 'assets/photos/old_window.jpg',
+        date: 'Date', caption: 'Year one christmas tree',
+      ),
+      MemoryItemData.simple(
+        x: 1506, y: 867,
+        photoPath: 'assets/photos/old_eating_countertop.jpg',
+        date: 'Date', caption: 'Force feeding station',
+      ),
+      MemoryItemData.simple(
+        x: 1054, y: 305,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Board game 2',
+      ),
+      MemoryItemData.simple(
+        x: 744, y: 581,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Going to bed 2',
+      ),
+      // Stairs memory - triggers upstairs level!
+      MemoryItemData(
+        x: 1850, y: 950,
+        stylizedPhotoPath: 'assets/photos/old_bathtime.jpg',
+        photos: ['assets/photos/old_bathtime.jpg'],
+        date: 'Date',
+        caption: 'Climbing the stairs...',
+        levelTrigger: 'upstairsNursery',
+      ),
+      MemoryItemData.simple(
+        x: 2079, y: 1026,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Dog cuddles',
+      ),
+      MemoryItemData.simple(
+        x: 2302, y: 562,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Working with dad',
+      ),
+      MemoryItemData.simple(
+        x: 1647, y: 624,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Chilling with grandma',
+      ),
+      MemoryItemData.simple(
+        x: 2143, y: 643,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date', caption: 'Random office hang',
+      ),
+      MemoryItemData.simple(
+        x: 3174, y: 299,
+        photoPath: 'assets/photos/old_window.jpg',
+        date: 'Date', caption: 'Hanging in the snow',
+      ),
     ];
   }
 
@@ -133,14 +248,14 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     _addMemories();
 
     // Debug: Add a visual indicator for playable bounds
-    if (MemoryLaneGame.debugObstaclePlacement) {
+    if (MemoryLaneGame.debugObstaclePlacementEnabled) {
       _addDebugBounds();
     }
   }
 
   /// Adds all collision obstacles to the map
   void _addObstacles() {
-    final showDebug = MemoryLaneGame.debugObstaclePlacement;
+    final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
 
     for (final data in getObstacleData()) {
       add(data.toObstacle(showDebug: showDebug));
@@ -149,7 +264,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
   /// Adds all memory items to the map
   void _addMemories() {
-    final showDebug = MemoryLaneGame.debugObstaclePlacement;
+    final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
 
     for (final data in getMemoryData()) {
       add(data.toMemoryItem(showDebug: showDebug));

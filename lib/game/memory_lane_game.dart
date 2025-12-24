@@ -4,6 +4,16 @@ import 'package:flutter/material.dart';
 
 import 'actors/baby_player.dart';
 import 'world/house_map.dart';
+import 'world/upstairs_map.dart';
+
+/// Available levels in the game
+enum LevelId {
+  /// Main floor of the house
+  mainFloor,
+
+  /// Upstairs nursery
+  upstairsNursery,
+}
 
 /// Game state enumeration
 enum GameState {
@@ -68,13 +78,21 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   late final BabyPlayer player;
   late final JoystickComponent joystick;
-  late final HouseMap houseMap;
+
+  /// Current level being played
+  LevelId currentLevel = LevelId.mainFloor;
+
+  /// Reference to the current map component
+  PositionComponent? currentMap;
 
   // ==========================================
   // DEBUG MODE FOR PLACEMENT
   // ==========================================
-  /// Set to true to enable debug placement mode
-  static const bool debugObstaclePlacement = true;
+  /// Set to true to enable debug placement mode at startup
+  static const bool debugObstaclePlacementEnabled = true;
+
+  /// Runtime toggle for debug panel visibility
+  static bool showDebugPanel = debugObstaclePlacementEnabled;
 
   /// Current placement mode (obstacle or memory)
   DebugPlacementMode _placementMode = DebugPlacementMode.obstacle;
@@ -94,6 +112,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Callback to notify UI of mode changes
   void Function(DebugPlacementMode mode)? onModeChanged;
 
+  /// Callback to notify UI when debug panel is toggled
+  void Function(bool visible)? onDebugPanelToggled;
+
   /// List of placed obstacles (for output)
   final List<String> _placedObstacles = [];
 
@@ -104,15 +125,14 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   DebugPlacementMode get placementMode => _placementMode;
 
   @override
-  Color backgroundColor() => const Color(0xFFF5EBE0); // Warm cream
+  Color backgroundColor() => const Color(0xFFE8F4F8); // Light icy blue to match snowy background
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Load the house map (background)
-    houseMap = HouseMap();
-    await world.add(houseMap);
+    // Load and add the tiled background (behind everything)
+    await _loadBackground();
 
     // Create joystick for movement control
     joystick = JoystickComponent(
@@ -131,9 +151,11 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     player = BabyPlayer(joystick: joystick);
     await world.add(player);
 
+    // Load the initial level
+    await _loadLevel(currentLevel);
+
     // Set up camera to follow player
     camera.follow(player, maxSpeed: 300, snap: true);
-    camera.viewfinder.zoom = 0.5; // Adjust to see more of the house
 
     // Add joystick to camera viewport (HUD)
     camera.viewport.add(joystick);
@@ -141,15 +163,100 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Game is ready
     state = GameState.exploring;
 
-    if (debugObstaclePlacement) {
+    if (debugObstaclePlacementEnabled) {
       debugPrint('=== DEBUG PLACEMENT MODE ===');
       debugPrint('Press M to toggle between OBSTACLE and MEMORY mode');
       debugPrint('OBSTACLE: SPACE to mark corners, creates rectangle');
       debugPrint('MEMORY: SPACE to place memory point');
       debugPrint('Press C to cancel current placement');
       debugPrint('Press P to print all placed items');
+      debugPrint('Press L to switch levels (debug)');
       debugPrint('============================');
     }
+  }
+
+  /// Load a specific level
+  Future<void> _loadLevel(LevelId levelId) async {
+    // Remove current map if exists
+    if (currentMap != null) {
+      currentMap!.removeFromParent();
+      currentMap = null;
+    }
+
+    // Create and add the new map
+    switch (levelId) {
+      case LevelId.mainFloor:
+        currentMap = HouseMap();
+        camera.viewfinder.zoom = 0.5; // Zoomed out for large house
+        player.position = Vector2(500, 500); // Starting position
+        break;
+      case LevelId.upstairsNursery:
+        currentMap = UpstairsMap();
+        camera.viewfinder.zoom = 1.0; // Closer zoom for small room
+        player.position = Vector2(300, 400); // Near the door
+        break;
+    }
+
+    await world.add(currentMap!);
+    currentLevel = levelId;
+    debugPrint('Loaded level: $levelId');
+  }
+
+  /// Switch to a different level
+  Future<void> switchToLevel(LevelId levelId) async {
+    if (levelId == currentLevel) return;
+
+    state = GameState.loading;
+    await _loadLevel(levelId);
+    state = GameState.exploring;
+  }
+
+  /// Switch to level by string ID (used by memory triggers)
+  Future<void> switchToLevelByName(String levelName) async {
+    final levelId = LevelId.values.firstWhere(
+      (l) => l.name == levelName,
+      orElse: () => currentLevel,
+    );
+    await switchToLevel(levelId);
+  }
+
+  /// Toggle between levels (for debug)
+  Future<void> toggleLevel() async {
+    final nextLevel = currentLevel == LevelId.mainFloor
+        ? LevelId.upstairsNursery
+        : LevelId.mainFloor;
+    await switchToLevel(nextLevel);
+  }
+
+  /// Get the playable bounds for the current level
+  Rect get currentPlayableBounds {
+    if (currentMap is HouseMap) {
+      return (currentMap as HouseMap).playableBounds;
+    } else if (currentMap is UpstairsMap) {
+      return (currentMap as UpstairsMap).playableBounds;
+    }
+    // Default fallback
+    return const Rect.fromLTWH(0, 0, 1000, 1000);
+  }
+
+  /// Load the background that shows behind the map
+  Future<void> _loadBackground() async {
+    final bgSprite = await loadSprite('house/backgrounds_for_maps.jpeg');
+
+    // Scale the background to cover a large area (bigger than any level)
+    // Main floor is ~3100x1200, so we need something larger
+    const targetWidth = 5000.0;
+    const targetHeight = 3000.0;
+
+    // Single large background, centered with negative offset
+    final bgComponent = SpriteComponent(
+      sprite: bgSprite,
+      position: Vector2(-500, -500),
+      size: Vector2(targetWidth, targetHeight),
+      priority: -100, // Render behind everything
+    );
+
+    await world.add(bgComponent);
   }
 
   @override
@@ -159,15 +266,22 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       super.update(dt);
 
       // Update obstacle preview if placing
-      if (debugObstaclePlacement) {
+      if (showDebugPanel) {
         updatePreview();
       }
     }
   }
 
+  /// Toggles the debug panel visibility
+  void toggleDebugPanel() {
+    showDebugPanel = !showDebugPanel;
+    debugPrint('Debug panel: ${showDebugPanel ? "ON" : "OFF"}, callback: ${onDebugPanelToggled != null}');
+    onDebugPanelToggled?.call(showDebugPanel);
+  }
+
   /// Toggles between obstacle and memory placement modes
   void togglePlacementMode() {
-    if (!debugObstaclePlacement) return;
+    if (!showDebugPanel) return;
 
     // Cancel any in-progress placement
     cancelObstaclePlacement();
@@ -186,7 +300,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   /// Handles spacebar press for placement (obstacle or memory)
   void handleObstaclePlacement() {
-    if (!debugObstaclePlacement) return;
+    if (!showDebugPanel) return;
 
     if (_placementMode == DebugPlacementMode.memory) {
       _handleMemoryPlacement();

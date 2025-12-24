@@ -1,7 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import '../game/memory_lane_game.dart' show DebugPlacementMode, MemoryLaneGame;
+import '../game/memory_lane_game.dart' show DebugPlacementMode, GameState, MemoryLaneGame;
 
 /// Debug overlay for obstacle placement mode
 class DebugObstacleOverlay extends StatefulWidget {
@@ -54,9 +54,12 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
   void _updatePosition() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
-        setState(() {
-          _currentPosition = widget.game.player.position;
-        });
+        // Only update if game is loaded and player exists
+        if (widget.game.state != GameState.loading) {
+          setState(() {
+            _currentPosition = widget.game.player.position;
+          });
+        }
         _updatePosition();
       }
     });
@@ -221,6 +224,7 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
             ),
             const _ControlRow(key_: 'C', action: 'Cancel placement'),
             const _ControlRow(key_: 'P', action: 'Print all to console'),
+            const _ControlRow(key_: 'L', action: 'Switch level'),
           ],
         ),
       ),

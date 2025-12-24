@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -5,11 +7,8 @@ import '../game/memory_lane_game.dart';
 
 /// View state for the memory overlay
 enum MemoryViewState {
-  /// Showing the stylized polaroid cover
-  polaroid,
-
-  /// Showing the photo slideshow
-  slideshow,
+  /// Showing polaroid stack
+  polaroidStack,
 
   /// Showing the level trigger dialog
   levelDialog,
@@ -27,7 +26,7 @@ class PolaroidOverlay extends StatefulWidget {
 
 class _PolaroidOverlayState extends State<PolaroidOverlay>
     with SingleTickerProviderStateMixin {
-  MemoryViewState _viewState = MemoryViewState.polaroid;
+  MemoryViewState _viewState = MemoryViewState.polaroidStack;
   int _currentPhotoIndex = 0;
 
   late final AnimationController _animController;
@@ -54,32 +53,24 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   Memory? get memory => widget.game.currentMemory;
 
+  /// Get all photos including the stylized cover
+  List<String> get allPhotos {
+    if (memory == null) return [];
+    return [memory!.stylizedPhotoPath, ...memory!.photos];
+  }
+
+  bool get isLastPhoto => _currentPhotoIndex >= allPhotos.length - 1;
+
   void _onPolaroidTap() {
     if (memory == null) return;
 
-    if (memory!.hasSlideshow) {
-      setState(() {
-        _viewState = MemoryViewState.slideshow;
-        _currentPhotoIndex = 0;
-      });
-    } else if (memory!.triggersLevel) {
-      setState(() {
-        _viewState = MemoryViewState.levelDialog;
-      });
-    } else {
-      _closeOverlay();
-    }
-  }
-
-  void _nextPhoto() {
-    if (memory == null) return;
-
-    if (_currentPhotoIndex < memory!.photos.length - 1) {
+    if (!isLastPhoto) {
+      // Show next photo
       setState(() {
         _currentPhotoIndex++;
       });
     } else {
-      // End of slideshow
+      // End of photos
       if (memory!.triggersLevel) {
         setState(() {
           _viewState = MemoryViewState.levelDialog;
@@ -90,19 +81,6 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     }
   }
 
-  void _previousPhoto() {
-    if (_currentPhotoIndex > 0) {
-      setState(() {
-        _currentPhotoIndex--;
-      });
-    } else {
-      // Go back to polaroid view
-      setState(() {
-        _viewState = MemoryViewState.polaroid;
-      });
-    }
-  }
-
   void _closeOverlay() {
     _animController.reverse().then((_) {
       widget.game.resumeGame();
@@ -110,10 +88,17 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   }
 
   void _onLevelAccept() {
-    // TODO: Implement level transition
     final levelId = memory?.levelTrigger;
-    debugPrint('Level trigger accepted: $levelId');
-    _closeOverlay();
+    if (levelId != null) {
+      debugPrint('Level trigger accepted: $levelId');
+      // Close overlay first, then switch level
+      _animController.reverse().then((_) {
+        widget.game.resumeGame();
+        widget.game.switchToLevelByName(levelId);
+      });
+    } else {
+      _closeOverlay();
+    }
   }
 
   void _onLevelDecline() {
@@ -127,12 +112,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       child: Material(
         color: Colors.black54,
         child: GestureDetector(
-          onTap: () {
-            // Tap outside to close (only in polaroid mode)
-            if (_viewState == MemoryViewState.polaroid) {
-              _onPolaroidTap();
-            }
-          },
+          onTap: _onPolaroidTap,
           behavior: HitTestBehavior.opaque,
           child: Center(
             child: _buildContent(),
@@ -144,243 +124,166 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   Widget _buildContent() {
     switch (_viewState) {
-      case MemoryViewState.polaroid:
-        return _buildPolaroidView();
-      case MemoryViewState.slideshow:
-        return _buildSlideshowView();
+      case MemoryViewState.polaroidStack:
+        return _buildPolaroidStack();
       case MemoryViewState.levelDialog:
         return _buildLevelDialog();
     }
   }
 
-  Widget _buildPolaroidView() {
-    return GestureDetector(
-      onTap: _onPolaroidTap,
-      child: Transform.rotate(
-        angle: 0.05,
-        child: Container(
-          width: 320,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFFBF7),
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+  Widget _buildPolaroidStack() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final photoSize = (screenHeight * 0.35).clamp(180.0, 280.0);
+    final photos = allPhotos;
+    final totalPhotos = photos.length;
+
+    return SizedBox(
+      width: photoSize + 80,
+      height: photoSize + 140,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Background polaroids (upcoming ones)
+          for (int i = totalPhotos - 1; i > _currentPhotoIndex; i--)
+            _buildStackedPolaroid(
+              photoPath: photos[i],
+              photoSize: photoSize,
+              stackIndex: i - _currentPhotoIndex,
+              isBackground: true,
+            ),
+
+          // Current polaroid on top
+          _buildStackedPolaroid(
+            photoPath: photos[_currentPhotoIndex],
+            photoSize: photoSize,
+            stackIndex: 0,
+            isBackground: false,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Stylized photo area
-              Container(
-                width: 280,
-                height: 280,
+
+          // Photo counter
+          if (totalPhotos > 1)
+            Positioned(
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  border: Border.all(
-                    color: const Color(0xFFD0D0D0),
-                    width: 1,
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentPhotoIndex + 1} / $totalPhotos',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                child: memory != null
-                    ? Image.asset(
-                        memory!.stylizedPhotoPath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(
-                              Icons.photo,
-                              size: 64,
-                              color: Color(0xFF9E9E9E),
-                            ),
-                          );
-                        },
-                      )
-                    : const Center(
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStackedPolaroid({
+    required String photoPath,
+    required double photoSize,
+    required int stackIndex,
+    required bool isBackground,
+  }) {
+    // Random but consistent rotation for each stack position
+    final random = math.Random(stackIndex * 42);
+    final rotation = isBackground
+        ? (random.nextDouble() - 0.5) * 0.15
+        : 0.03;
+    final offsetX = isBackground ? (random.nextDouble() - 0.5) * 20 : 0.0;
+    final offsetY = isBackground ? -stackIndex * 4.0 : 0.0;
+    final scale = isBackground ? 1.0 - (stackIndex * 0.02) : 1.0;
+
+    return Transform.translate(
+      offset: Offset(offsetX, offsetY),
+      child: Transform.rotate(
+        angle: rotation,
+        child: Transform.scale(
+          scale: scale,
+          child: Container(
+            width: photoSize + 40,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBF7),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isBackground ? 0.15 : 0.3),
+                  blurRadius: isBackground ? 10 : 20,
+                  offset: Offset(0, isBackground ? 5 : 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Photo area
+                Container(
+                  width: photoSize,
+                  height: photoSize,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E0E0),
+                    border: Border.all(
+                      color: const Color(0xFFD0D0D0),
+                      width: 1,
+                    ),
+                  ),
+                  child: Image.asset(
+                    photoPath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
                         child: Icon(
                           Icons.photo,
                           size: 64,
                           color: Color(0xFF9E9E9E),
                         ),
-                      ),
-              ),
-              const SizedBox(height: 16),
-
-              // Date
-              if (memory != null)
-                Text(
-                  memory!.date,
-                  style: GoogleFonts.caveat(
-                    fontSize: 16,
-                    color: const Color(0xFF6B5B4F),
+                      );
+                    },
                   ),
                 ),
-              const SizedBox(height: 4),
+                const SizedBox(height: 12),
 
-              // Caption
-              if (memory != null)
-                Text(
-                  memory!.caption,
-                  style: GoogleFonts.caveat(
-                    fontSize: 22,
-                    color: const Color(0xFF3C3C3C),
-                    fontWeight: FontWeight.w500,
+                // Only show text on current polaroid
+                if (!isBackground && memory != null) ...[
+                  Text(
+                    memory!.date,
+                    style: GoogleFonts.caveat(
+                      fontSize: 14,
+                      color: const Color(0xFF6B5B4F),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              const SizedBox(height: 16),
-
-              // Hint text
-              Text(
-                memory?.hasSlideshow == true
-                    ? 'Tap to see more photos'
-                    : 'Tap to continue',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                ),
-              ),
-            ],
+                  const SizedBox(height: 2),
+                  Text(
+                    memory!.caption,
+                    style: GoogleFonts.caveat(
+                      fontSize: 18,
+                      color: const Color(0xFF3C3C3C),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isLastPhoto ? 'Tap to continue' : 'Tap for next photo',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+                if (isBackground)
+                  SizedBox(height: photoSize * 0.15),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSlideshowView() {
-    if (memory == null || memory!.photos.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final currentPhoto = memory!.photos[_currentPhotoIndex];
-    final isLastPhoto = _currentPhotoIndex == memory!.photos.length - 1;
-
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.85,
-      height: MediaQuery.of(context).size.height * 0.8,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header with close button and counter
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Back button
-                IconButton(
-                  onPressed: _previousPhoto,
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                ),
-                // Photo counter
-                Text(
-                  '${_currentPhotoIndex + 1} / ${memory!.photos.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                // Close button
-                IconButton(
-                  onPressed: _closeOverlay,
-                  icon: const Icon(Icons.close, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-
-          // Photo area
-          Expanded(
-            child: GestureDetector(
-              onTap: _nextPhoto,
-              onHorizontalDragEnd: (details) {
-                if (details.primaryVelocity! < 0) {
-                  _nextPhoto();
-                } else if (details.primaryVelocity! > 0) {
-                  _previousPhoto();
-                }
-              },
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                child: Image.asset(
-                  currentPhoto,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.broken_image,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-
-          // Caption and navigation
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  memory!.caption,
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                // Navigation buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_currentPhotoIndex > 0)
-                      TextButton.icon(
-                        onPressed: _previousPhoto,
-                        icon: const Icon(Icons.chevron_left),
-                        label: const Text('Previous'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                        ),
-                      ),
-                    const SizedBox(width: 24),
-                    ElevatedButton(
-                      onPressed: _nextPhoto,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD4A574),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: Text(isLastPhoto ? 'Done' : 'Next'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

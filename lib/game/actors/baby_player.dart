@@ -44,6 +44,7 @@ class BabyPlayer extends SpriteAnimationComponent
       : super(
           size: Vector2.all(displaySize),
           anchor: Anchor.center,
+          priority: 100, // Render on top of map elements
         );
 
   /// Current movement speed based on mode
@@ -236,10 +237,9 @@ class BabyPlayer extends SpriteAnimationComponent
     _updateAnimation();
   }
 
-  /// Keeps the player within the house boundaries
+  /// Keeps the player within the current map boundaries
   void _clampToHouseBounds() {
-    final houseMap = game.houseMap;
-    final bounds = houseMap.playableBounds;
+    final bounds = game.currentPlayableBounds;
     final halfSize = displaySize / 2;
 
     position.x = position.x.clamp(
