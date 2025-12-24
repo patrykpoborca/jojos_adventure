@@ -24,6 +24,15 @@ enum GameState {
   complete,
 }
 
+/// Game phase - progression through the story
+enum GamePhase {
+  /// Phase 1: Baby is crawling, collecting early memories
+  crawling,
+
+  /// Phase 2: Toddler is walking, collecting later memories
+  walking,
+}
+
 /// Debug placement mode
 enum DebugPlacementMode {
   obstacle,
@@ -47,12 +56,16 @@ class Memory {
   /// Optional level ID to trigger after viewing (shows yes/no dialog)
   final String? levelTrigger;
 
+  /// Which phase this memory belongs to
+  final GamePhase phase;
+
   const Memory({
     required this.stylizedPhotoPath,
     required this.photos,
     required this.date,
     required this.caption,
     this.levelTrigger,
+    this.phase = GamePhase.crawling,
   });
 
   /// Convenience constructor for single photo memories
@@ -61,6 +74,7 @@ class Memory {
     required this.date,
     required this.caption,
     this.levelTrigger,
+    this.phase = GamePhase.crawling,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
@@ -84,6 +98,18 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   /// Reference to the current map component
   PositionComponent? currentMap;
+
+  /// Current game phase
+  GamePhase currentPhase = GamePhase.crawling;
+
+  /// Number of memories collected in current phase
+  int _memoriesCollectedInPhase = 0;
+
+  /// Total memories available in current phase (set when level loads)
+  int _totalMemoriesInPhase = 0;
+
+  /// Callback when phase changes
+  void Function(GamePhase newPhase)? onPhaseChanged;
 
   // ==========================================
   // DEBUG MODE FOR PLACEMENT
@@ -474,12 +500,70 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     overlays.add('polaroid');
   }
 
-  /// Resumes the game after viewing a memory
+  /// Resumes the game after viewing a memory (and track collection)
   void resumeGame() {
+    // Track the collected memory
+    if (currentMemory != null) {
+      _onMemoryCollected(currentMemory!);
+    }
+
     overlays.remove('polaroid');
     currentMemory = null;
     state = GameState.exploring;
   }
+
+  /// Called when a memory is collected
+  void _onMemoryCollected(Memory memory) {
+    if (memory.phase == currentPhase) {
+      _memoriesCollectedInPhase++;
+      debugPrint('Memory collected: $_memoriesCollectedInPhase/$_totalMemoriesInPhase in ${currentPhase.name} phase');
+
+      // Check if all memories in this phase are collected
+      if (_memoriesCollectedInPhase >= _totalMemoriesInPhase && !memory.triggersLevel) {
+        _onPhaseComplete();
+      }
+    }
+  }
+
+  /// Called when all memories in a phase are collected
+  void _onPhaseComplete() {
+    if (currentPhase == GamePhase.crawling) {
+      debugPrint('Phase 1 complete! Transitioning to walking phase...');
+      transitionToPhase(GamePhase.walking);
+    } else {
+      debugPrint('All phases complete! Starting montage...');
+      startMontage();
+    }
+  }
+
+  /// Transition to a new game phase
+  Future<void> transitionToPhase(GamePhase newPhase) async {
+    if (newPhase == currentPhase) return;
+
+    currentPhase = newPhase;
+    _memoriesCollectedInPhase = 0;
+
+    // Update player sprite for walking phase
+    if (newPhase == GamePhase.walking) {
+      await player.switchToWalking();
+    }
+
+    // Reload current level to show new phase memories
+    await _loadLevel(currentLevel);
+
+    onPhaseChanged?.call(newPhase);
+    debugPrint('Transitioned to ${newPhase.name} phase');
+  }
+
+  /// Set the total memory count for the current phase (called by maps)
+  void setPhaseMemoryCount(int count) {
+    _totalMemoriesInPhase = count;
+    debugPrint('Phase ${currentPhase.name} has $count memories');
+  }
+
+  /// Get memories collected progress
+  int get memoriesCollected => _memoriesCollectedInPhase;
+  int get totalMemories => _totalMemoriesInPhase;
 
   /// Starts the end montage sequence
   void startMontage() {

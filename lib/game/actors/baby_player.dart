@@ -231,6 +231,11 @@ class BabyPlayer extends SpriteAnimationComponent
     _updateAnimation();
   }
 
+  /// Switch to walking mode (async version for game phase transition)
+  Future<void> switchToWalking() async {
+    upgradeToWalking();
+  }
+
   /// Resets to crawling mode (if needed)
   void resetToCrawling() {
     _movementMode = MovementMode.crawling;

@@ -1,12 +1,15 @@
+import 'dart:math';
+
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
 import '../memory_lane_game.dart';
 
 /// A collectible memory item that triggers a photo overlay when touched
-class MemoryItem extends PositionComponent
+class MemoryItem extends SpriteAnimationComponent
     with CollisionCallbacks, TapCallbacks, HasGameReference<MemoryLaneGame> {
   /// The memory data associated with this item
   final Memory memory;
@@ -20,13 +23,26 @@ class MemoryItem extends PositionComponent
   /// Distance threshold for collecting (in pixels)
   static const double collectDistance = 150.0;
 
+  /// Sprite sheet configuration
+  static const int sheetColumns = 3;
+  static const int sheetRows = 2;
+  static const double animationSpeed = 0.15;
+  static const double spriteSize = 80.0;
+
+  /// Scale effect when player is nearby
+  static const double normalScale = 1.0;
+  static const double activeScale = 1.2; // 20% larger when in range
+  static const double scaleSpeed = 3.0; // How fast to scale up/down
+
+  double _currentScale = normalScale;
+
   MemoryItem({
     required Vector2 position,
     required this.memory,
     this.showDebug = false,
   }) : super(
           position: position,
-          size: Vector2.all(100), // Tap area size (larger for easier tapping)
+          size: Vector2.all(spriteSize),
           anchor: Anchor.center,
         );
 
@@ -39,53 +55,45 @@ class MemoryItem extends PositionComponent
     return distance <= collectDistance;
   }
 
-  // Visual components for glow effect
-  CircleComponent? _glowCircle;
-  CircleComponent? _innerCircle;
-  bool _wasInRange = false;
-
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Add circular hitbox for collision detection
+    // Load the sprite sheet (3 columns x 2 rows)
+    final image = await game.images.load('sprites/memories.png');
+    final frameWidth = image.width / sheetColumns;
+    final frameHeight = image.height / sheetRows;
+
+    final spriteSheet = SpriteSheet(
+      image: image,
+      srcSize: Vector2(frameWidth, frameHeight),
+    );
+
+    // Create looping animation from all 6 frames (3 columns x 2 rows)
+    final frames = <Sprite>[];
+    for (var row = 0; row < sheetRows; row++) {
+      for (var col = 0; col < sheetColumns; col++) {
+        frames.add(spriteSheet.getSprite(row, col));
+      }
+    }
+
+    animation = SpriteAnimation.spriteList(
+      frames,
+      stepTime: animationSpeed,
+      loop: true,
+    );
+
+    // Start at a random frame so memories don't synchronize
+    final random = Random();
+    final randomStartFrame = random.nextInt(frames.length);
+    animationTicker?.currentIndex = randomStartFrame;
+
+    // Add circular hitbox for tap detection (larger than sprite for easier tapping)
     add(CircleHitbox(
-      radius: 50,
+      radius: spriteSize / 2 + 20,
       position: size / 2,
       anchor: Anchor.center,
       collisionType: CollisionType.passive,
-    ));
-
-    // Always add visual indicator (glow when in range)
-    _glowCircle = CircleComponent(
-      radius: 40,
-      position: size / 2,
-      anchor: Anchor.center,
-      paint: Paint()
-        ..color = Colors.amber.withValues(alpha: 0.2)
-        ..style = PaintingStyle.fill,
-    );
-    add(_glowCircle!);
-
-    _innerCircle = CircleComponent(
-      radius: 20,
-      position: size / 2,
-      anchor: Anchor.center,
-      paint: Paint()
-        ..color = Colors.amber.withValues(alpha: 0.6)
-        ..style = PaintingStyle.fill,
-    );
-    add(_innerCircle!);
-
-    // Border
-    add(CircleComponent(
-      radius: 40,
-      position: size / 2,
-      anchor: Anchor.center,
-      paint: Paint()
-        ..color = Colors.amber.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
     ));
 
     // Debug: show collect radius
@@ -106,31 +114,17 @@ class MemoryItem extends PositionComponent
   void update(double dt) {
     super.update(dt);
 
-    // Update glow effect based on player proximity
-    final inRange = isPlayerInRange;
-    if (inRange != _wasInRange) {
-      _wasInRange = inRange;
-      _updateGlowEffect(inRange);
-    }
-  }
+    if (_collected) return;
 
-  void _updateGlowEffect(bool inRange) {
-    if (inRange) {
-      // Bright glow when in range
-      _glowCircle?.paint = Paint()
-        ..color = Colors.amber.withValues(alpha: 0.5)
-        ..style = PaintingStyle.fill;
-      _innerCircle?.paint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.9)
-        ..style = PaintingStyle.fill;
-    } else {
-      // Dim when out of range
-      _glowCircle?.paint = Paint()
-        ..color = Colors.amber.withValues(alpha: 0.2)
-        ..style = PaintingStyle.fill;
-      _innerCircle?.paint = Paint()
-        ..color = Colors.amber.withValues(alpha: 0.6)
-        ..style = PaintingStyle.fill;
+    // Smoothly scale up/down based on player proximity
+    final targetScale = isPlayerInRange ? activeScale : normalScale;
+    if (_currentScale != targetScale) {
+      if (_currentScale < targetScale) {
+        _currentScale = (_currentScale + scaleSpeed * dt).clamp(normalScale, activeScale);
+      } else {
+        _currentScale = (_currentScale - scaleSpeed * dt).clamp(normalScale, activeScale);
+      }
+      scale = Vector2.all(_currentScale);
     }
   }
 
@@ -153,8 +147,7 @@ class MemoryItem extends PositionComponent
     _collected = true;
     game.triggerMemory(memory);
 
-    // TODO: Add collection animation
-    // For now, just hide the item
+    // Hide the item after collection
     removeFromParent();
   }
 }
@@ -176,6 +169,9 @@ class MemoryItemData {
   /// Optional level ID to trigger after viewing
   final String? levelTrigger;
 
+  /// Which phase this memory belongs to
+  final GamePhase phase;
+
   const MemoryItemData({
     required this.x,
     required this.y,
@@ -184,6 +180,7 @@ class MemoryItemData {
     required this.date,
     required this.caption,
     this.levelTrigger,
+    this.phase = GamePhase.crawling,
   });
 
   /// Convenience constructor for simple single-photo memories
@@ -194,6 +191,7 @@ class MemoryItemData {
     required this.date,
     required this.caption,
     this.levelTrigger,
+    this.phase = GamePhase.crawling,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
@@ -206,6 +204,7 @@ class MemoryItemData {
         date: date,
         caption: caption,
         levelTrigger: levelTrigger,
+        phase: phase,
       ),
       showDebug: showDebug,
     );

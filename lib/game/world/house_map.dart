@@ -137,6 +137,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         x: 188, y: 243,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Going to sunday brunch! 2',
+        phase: GamePhase.walking,
       ),
       MemoryItemData(
         x: 868, y: 259,
@@ -149,42 +150,50 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
           'assets/photos/old_thanksgiving_5.jpg',
         ],
         date: 'Date', caption: 'Pumpkin horror story',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 835, y: 1105,
         photoPath: 'assets/photos/old_eating_countertop.jpg',
         date: 'Date', caption: 'Bottle assembly factory',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 1007, y: 992,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Hmm fuzzy memory',
+        phase: GamePhase.walking,
       ),
       // Grand parents memory - Thanksgiving slideshow with 5 photos!
       MemoryItemData(
         x: 1319, y: 800,
         stylizedPhotoPath: 'assets/photos/young_countertop_sleep.jpg',
         date: 'Date', caption: 'Helmet boy',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 1418, y: 355,
         photoPath: 'assets/photos/old_window.jpg',
         date: 'Date', caption: 'Year one christmas tree',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 1506, y: 867,
         photoPath: 'assets/photos/old_eating_countertop.jpg',
         date: 'Date', caption: 'Force feeding station',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 1054, y: 305,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Board game 2',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 744, y: 581,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Going to bed 2',
+        phase: GamePhase.walking,
       ),
       // Stairs memory - triggers upstairs level!
       MemoryItemData(
@@ -194,31 +203,37 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         date: 'Date',
         caption: 'Climbing the stairs...',
         levelTrigger: 'upstairsNursery',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 2079, y: 1026,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Dog cuddles',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 2302, y: 562,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Working with dad',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 1647, y: 624,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Chilling with grandma',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 2143, y: 643,
         photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date', caption: 'Random office hang',
+        phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
         x: 3174, y: 299,
         photoPath: 'assets/photos/old_window.jpg',
         date: 'Date', caption: 'Hanging in the snow',
+        phase: GamePhase.walking,
       ),
     ];
   }
@@ -262,13 +277,20 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     }
   }
 
-  /// Adds all memory items to the map
+  /// Adds memory items for the current game phase
   void _addMemories() {
     final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
+    final currentPhase = game.currentPhase;
 
-    for (final data in getMemoryData()) {
+    // Filter memories by current phase
+    final phaseMemories = getMemoryData().where((m) => m.phase == currentPhase);
+
+    for (final data in phaseMemories) {
       add(data.toMemoryItem(showDebug: showDebug));
     }
+
+    // Update game's memory count for this phase
+    game.setPhaseMemoryCount(phaseMemories.length);
   }
 
   void _addDebugBounds() {

@@ -151,13 +151,20 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     }
   }
 
-  /// Adds all memory items to the map
+  /// Adds memory items for the current game phase
   void _addMemories() {
     final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
+    final currentPhase = game.currentPhase;
 
-    for (final data in getMemoryData()) {
+    // Filter memories by current phase
+    final phaseMemories = getMemoryData().where((m) => m.phase == currentPhase);
+
+    for (final data in phaseMemories) {
       add(data.toMemoryItem(showDebug: showDebug));
     }
+
+    // Update game's memory count for this phase
+    game.setPhaseMemoryCount(phaseMemories.length);
   }
 
   void _addDebugBounds() {
