@@ -44,6 +44,9 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         x: 1136,
         y: 1297,
         stylizedPhotoPath: 'assets/photos/young_middle_nursery.jpg',
+        photos: [
+          'assets/photos/young_middle_nursery.jpg'
+        ],
         date: 'Date',
         caption: 'Back downstairs...',
         phase: GamePhase.crawling,
@@ -75,6 +78,15 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         caption: 'Diaper duty',
         phase: GamePhase.crawling,
       ),
+
+      MemoryItemData.simple(
+        x: 868,
+        y: 842,
+        photoPath: 'assets/photos/young_changing_station.jpg',
+        date: 'Date',
+        caption: 'I like to chill while we change',
+        phase: GamePhase.crawling,
+      ),
       MemoryItemData(
         x: 1353,
         y: 786,
@@ -100,56 +112,32 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       // ========================================
 
       // Door memory - returns to main floor (phase 2)
-      MemoryItemData(
-        x: 310,
-        y: 100,
-        stylizedPhotoPath: 'assets/photos/old_window.jpg',
-        photos: ['assets/photos/old_window.jpg'],
-        date: 'Date',
-        caption: 'Back downstairs...',
-        levelTrigger: 'mainFloor',
-        phase: GamePhase.walking,
-      ),
 
       // Armchair memory (phase 2)
-      MemoryItemData.simple(
-        x: 420,
-        y: 360,
-        photoPath: 'assets/photos/old_bathtime.jpg',
+      MemoryItemData(
+        x: 210, y: 1449,
+        stylizedPhotoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date',
-        caption: 'Story time with dad',
+        caption: 'Bathtime, look I can wash my butt',
+        photos: [
+          'assets/photos/old_bath_time_2.jpg',
+        ],
         phase: GamePhase.walking,
       ),
-
-      // Window/forest view memory (phase 2)
-      MemoryItemData.simple(
-        x: 250,
-        y: 180,
-        photoPath: 'assets/photos/old_window.jpg',
+      MemoryItemData(
+        x: 541, y: 1087,
+        stylizedPhotoPath: 'assets/photos/old_crib_drunk.png',
         date: 'Date',
-        caption: 'Watching the snow',
+        caption: 'Older cribs!',
         phase: GamePhase.walking,
       ),
-
-      // Closet area memory (phase 2)
-      MemoryItemData.simple(
-        x: 450,
-        y: 220,
-        photoPath: 'assets/photos/old_eating_countertop.jpg',
+      MemoryItemData(
+        x: 929, y: 886,
+        stylizedPhotoPath: 'assets/photos/old_changing_pad.jpg',
         date: 'Date',
-        caption: 'Picking out clothes',
+        caption: 'Older changing table!',
         phase: GamePhase.walking,
-      ),
-
-      // Crib memory (phase 2 - older now)
-      MemoryItemData.simple(
-        x: 60,
-        y: 350,
-        photoPath: 'assets/photos/old_bathtime.jpg',
-        date: 'Date',
-        caption: 'Too big for the crib',
-        phase: GamePhase.walking,
-      ),
+      )
     ];
   }
 

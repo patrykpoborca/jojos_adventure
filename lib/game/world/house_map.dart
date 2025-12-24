@@ -60,8 +60,8 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       // ========================================
       MemoryItemData.simple(
         x: 188, y: 243,
-        photoPath: 'assets/photos/young_recliner.jpg',
-        date: 'Date', caption: 'Going to sunday brunch! 1',
+        photoPath: 'assets/photos/young_some_times_parents_travel.jpg',
+        date: 'Date', caption: 'Parents travel sometimes too!',
       ),
       MemoryItemData.simple(
         x: 406, y: 594,
@@ -72,17 +72,22 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       MemoryItemData(
         x: 260, y: 517,
         stylizedPhotoPath: 'assets/photos/young_jack_couch.jpg',
-        photos: ['assets/photos/young_jack_couch.jpg', 'assets/photos/young_jack_couch_2.jpg'],
+        photos: ['assets/photos/young_jack_couch_2.jpg'],
         date: 'Date', caption: 'Jack time',
       ),
       MemoryItemData.simple(
         x: 256, y: 822,
-        photoPath: 'assets/photos/young_middle_nursery.jpg',
+        photoPath: 'assets/photos/old_window.jpg',
         date: 'Date', caption: 'Watching out the window',
+        phase: GamePhase.walking
       ),
-      MemoryItemData.simple(
+      MemoryItemData(
         x: 1418, y: 355,
-        photoPath: 'assets/photos/young_christmas.jpg',
+        stylizedPhotoPath: 'assets/photos/young_christmas.jpg',
+        photos: [
+          'assets/photos/young_christmas_one.jpg',
+          'assets/photos/young_christmas_two.jpg',
+        ],
         date: 'Date', caption: 'Year 0 christmas',
       ),
       MemoryItemData.simple(
@@ -92,15 +97,15 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 1198, y: 424,
-        photoPath: 'assets/photos/young_office_table.jpg',
-        date: 'Date', caption: 'Board game time 1',
+        photoPath: 'assets/photos/young_board_games.jpg',
+        date: 'Date', caption: 'Board game times!',
       ),
       MemoryItemData(
         x: 874, y: 400,
         stylizedPhotoPath: 'assets/photos/young_bundle_ofjoy.jpg',
         photos: [
-          'young_bundle_ofjoy_1.jpg',
-          'young_bundle_ofjoy_2.jpg'
+          'assets/photos/young_bundle_ofjoy_1.jpg',
+          'assets/photos/young_bundle_ofjoy_2.jpg'
         ],
         date: 'Date', caption: 'Bundle of joy (week 2)',
       ),
@@ -109,19 +114,34 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         photoPath: 'assets/photos/young_couch_sleep.jpg',
         date: 'Date', caption: 'Christmas lights',
       ),
+      MemoryItemData.simple(
+          x: 379, y: 491,
+        photoPath: 'assets/photos/young_couch_sleep.jpg',
+        date: 'Date', caption: 'Nap times',
+        phase: GamePhase.crawling
+      ),
+
+      MemoryItemData(
+          x: 271, y: 645,
+          stylizedPhotoPath: 'assets/photos/young_grandpa_couch.jpg',
+          photos: [
+            'assets/photos/young_ottoman.jpg',
+          ],
+          date: 'Date', caption: 'Nap times',
+          phase: GamePhase.crawling
+      ),
       // Triggers upstairs nursery level (stays in crawling phase)
       MemoryItemData(
         x: 744, y: 581,
         stylizedPhotoPath: 'assets/photos/young_in_crib.jpg',
-        photos: ['assets/photos/young_in_crib.jpg'],
         date: 'Date',
         caption: 'Going to bed 1',
         levelTrigger: 'upstairsNursery',
       ),
       MemoryItemData.simple(
         x: 2021, y: 868,
-        photoPath: 'assets/photos/young_changing_station.jpg',
-        date: 'Date', caption: 'Smelly poop',
+        photoPath: 'assets/photos/young_stinky_bathroom.jpg',
+        date: 'Date', caption: 'Smelly poop with mum',
       ),
       MemoryItemData.simple(
         x: 3178, y: 993,
@@ -130,8 +150,8 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 1298, y: 665,
-        photoPath: 'assets/photos/young_helmet_counter.jpg',
-        date: 'Date', caption: 'Helmet boy',
+        photoPath: 'assets/photos/young_countertop_sleep.jpg',
+        date: 'Date', caption: 'Nap time on the the countertop',
       ),
 
       // ========================================
@@ -139,8 +159,8 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       // ========================================
       MemoryItemData.simple(
         x: 188, y: 243,
-        photoPath: 'assets/photos/old_bathtime.jpg',
-        date: 'Date', caption: 'Going to sunday brunch! 2',
+        photoPath: 'assets/photos/old_jojo_travels_too.jpg',
+        date: 'Date', caption: 'JoJo likes to come too sometimes!',
         phase: GamePhase.walking,
       ),
       MemoryItemData(
@@ -158,26 +178,52 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 835, y: 1105,
-        photoPath: 'assets/photos/old_eating_countertop.jpg',
+        photoPath: 'assets/photos/old_bottle_factory.png',
         date: 'Date', caption: 'Bottle assembly factory',
         phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
+        x: 367, y: 466,
+        photoPath: 'assets/photos/old_couch_chill.jpg',
+        date: 'Date', caption: 'Dad works too much',
+        phase: GamePhase.walking,
+      ),
+
+      MemoryItemData.simple(
+        x: 255, y: 642,
+        photoPath: 'assets/photos/old_couch_fun.jpg',
+        date: 'Date', caption: 'Meeting Bennet!',
+        phase: GamePhase.walking,
+      ),
+      MemoryItemData.simple(
+        x: 1391, y: 1019,
+        photoPath: 'assets/photos/old_heights.jpg',
+        date: 'Date', caption: 'Look how tall I am!',
+        phase: GamePhase.walking,
+      ),
+      MemoryItemData(
         x: 1007, y: 992,
-        photoPath: 'assets/photos/old_bathtime.jpg',
+        stylizedPhotoPath: 'assets/photos/old_fall_1.png',
+        photos: [
+          'assets/photos/old_fall_2.png',
+        ],
         date: 'Date', caption: 'Hmm fuzzy memory',
         phase: GamePhase.walking,
       ),
       // Grand parents memory - Thanksgiving slideshow with 5 photos!
       MemoryItemData(
         x: 1319, y: 800,
-        stylizedPhotoPath: 'assets/photos/young_countertop_sleep.jpg',
+        stylizedPhotoPath: 'assets/photos/young_helmet_counter.jpg',
         date: 'Date', caption: 'Helmet boy',
         phase: GamePhase.walking,
       ),
-      MemoryItemData.simple(
+      MemoryItemData(
         x: 1418, y: 355,
-        photoPath: 'assets/photos/old_window.jpg',
+        stylizedPhotoPath: 'assets/photos/old_parents_tree.jpg',
+        photos: [
+          'assets/photos/old_grandparents_tree.jpg',
+          'assets/photos/old_inlaws_tree.jpg'
+        ],
         date: 'Date', caption: 'Year one christmas tree',
         phase: GamePhase.walking,
       ),
@@ -189,21 +235,28 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 1054, y: 305,
-        photoPath: 'assets/photos/old_bathtime.jpg',
-        date: 'Date', caption: 'Board game 2',
+        photoPath: 'assets/photos/old_board_game.png',
+        date: 'Date', caption: 'I like crisps',
         phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
-        x: 744, y: 581,
-        photoPath: 'assets/photos/old_bathtime.jpg',
-        date: 'Date', caption: 'Going to bed 2',
+        x: 1251, y: 650,
+        photoPath: 'assets/photos/old_cookies.jpg',
+        date: 'Date', caption: 'Hey, this is recent!',
         phase: GamePhase.walking,
+      ),
+      MemoryItemData(
+        x: 744, y: 581,
+        stylizedPhotoPath: 'assets/photos/old_going_to_bed.jpg',
+        date: 'Date',
+        caption: 'Jojo can walk up the stairs!',
+        levelTrigger: 'upstairsNursery',
+        phase: GamePhase.walking
       ),
       // Stairs memory - triggers upstairs level!
       MemoryItemData(
         x: 1850, y: 950,
         stylizedPhotoPath: 'assets/photos/old_bathtime.jpg',
-        photos: ['assets/photos/old_bathtime.jpg'],
         date: 'Date',
         caption: 'Climbing the stairs...',
         levelTrigger: 'upstairsNursery',
@@ -211,28 +264,83 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 2079, y: 1026,
-        photoPath: 'assets/photos/old_bathtime.jpg',
+        photoPath: 'assets/photos/young_dog_hang.jpg',
+        date: 'Date', caption: 'Dog cuddles',
+        phase: GamePhase.crawling,
+      ),
+      MemoryItemData.simple(
+        x: 2079, y: 1026,
+        photoPath: 'assets/photos/old_dog_hang.jpg',
         date: 'Date', caption: 'Dog cuddles',
         phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
-        x: 2302, y: 562,
-        photoPath: 'assets/photos/old_bathtime.jpg',
+        x: 2329, y: 544,
+        photoPath: 'assets/photos/old_working.jpg',
         date: 'Date', caption: 'Working with dad',
         phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
-        x: 1647, y: 624,
-        photoPath: 'assets/photos/old_bathtime.jpg',
-        date: 'Date', caption: 'Chilling with grandma',
+        x: 2329, y: 544,
+        photoPath: 'assets/photos/young_office_table.jpg',
+        date: 'Date', caption: 'Working with dad',
+        phase: GamePhase.crawling,
+      ),
+      MemoryItemData.simple(
+        x: 2965, y: 265,
+        photoPath: 'assets/photos/old_outdoor.jpg',
+        date: 'Date', caption: 'Snowday!',
         phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
+        x: 2965, y: 265,
+        photoPath: 'assets/photos/young_outdoors.jpg',
+        date: 'Date', caption: 'Outdoor vibes in the yard!',
+        phase: GamePhase.crawling,
+      ),
+      MemoryItemData.simple(
         x: 2143, y: 643,
-        photoPath: 'assets/photos/old_bathtime.jpg',
-        date: 'Date', caption: 'Random office hang',
+        photoPath: 'assets/photos/old_baby_office_hang.jpg',
+        date: 'Date', caption: 'OGs know this aint here but it was cute',
         phase: GamePhase.walking,
       ),
+      MemoryItemData.simple(
+        x: 1744, y: 522,
+        photoPath: 'assets/photos/old_grandma_cuddles.jpg',
+        date: 'Date', caption: 'Hanging out with grandma!',
+        phase: GamePhase.walking,
+      ),
+      MemoryItemData.simple(
+        x: 1739, y: 528,
+        photoPath: 'assets/photos/old_grandma_cuddles.jpg',
+        date: 'Date', caption: 'Shakes with grandma!',
+        phase: GamePhase.crawling,
+      ),
+
+      MemoryItemData.simple(
+        x: 1739, y: 528,
+        photoPath: 'assets/photos/young_not_quite_here.jpg',
+        date: 'Date', caption: 'This is from grandmas!',
+        phase: GamePhase.crawling,
+      ),
+
+      MemoryItemData(
+        x: 2563, y: 414,
+        stylizedPhotoPath: 'assets/photos/old_travel_1.jpg',
+        photos: [
+          'assets/photos/old_travel_2.jpg',
+          'assets/photos/old_travel_3.jpg',
+          'assets/photos/old_travel_4.jpg',
+          'assets/photos/old_travel_5.jpg',
+          'assets/photos/old_travel_6.jpg',
+          'assets/photos/old_travel_7.jpg',
+          'assets/photos/old_travel_8.jpg'
+        ],
+        date: 'Date', caption: 'Secret outside adventure, it was in the yard right?!',
+        phase: GamePhase.walking,
+      ),
+
+
       MemoryItemData.simple(
         x: 3174, y: 299,
         photoPath: 'assets/photos/old_window.jpg',

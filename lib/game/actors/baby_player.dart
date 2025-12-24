@@ -18,8 +18,8 @@ class BabyPlayer extends SpriteAnimationComponent
   final JoystickComponent joystick;
 
   /// Movement speed in pixels per second
-  static const double crawlSpeed = 100;
-  static const double walkSpeed = 150;
+  static const double crawlSpeed = 60;
+  static const double walkSpeed = 180;
 
   /// Sprite frame configuration
   static const int frameColumns = 4;

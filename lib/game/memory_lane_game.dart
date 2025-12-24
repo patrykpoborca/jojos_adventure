@@ -24,6 +24,13 @@ enum GameState {
   complete,
 }
 
+/// Overlay type for the polaroid overlay
+enum OverlayType {
+  memory,
+  phaseComplete,
+  gameComplete,
+}
+
 /// Game phase - progression through the story
 enum GamePhase {
   /// Phase 1: Baby is crawling, collecting early memories
@@ -90,6 +97,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   GameState state = GameState.loading;
   Memory? currentMemory;
 
+  /// Type of overlay to show (memory, phase complete, or game complete)
+  OverlayType overlayType = OverlayType.memory;
+
   late final BabyPlayer player;
   late final JoystickComponent joystick;
 
@@ -107,6 +117,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   /// Total memories available in current phase (set when level loads)
   int _totalMemoriesInPhase = 0;
+
+  /// Set of collected memory keys (to avoid double-counting)
+  final Set<String> _collectedMemoryKeys = {};
 
   /// Callback when phase changes
   void Function(GamePhase newPhase)? onPhaseChanged;
@@ -197,6 +210,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       debugPrint('Press C to cancel current placement');
       debugPrint('Press P to print all placed items');
       debugPrint('Press L to switch levels (debug)');
+      debugPrint('Press G to toggle phase (crawling/walking)');
       debugPrint('============================');
     }
   }
@@ -220,7 +234,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       case LevelId.upstairsNursery:
         currentMap = UpstairsMap();
         camera.viewfinder.zoom = 0.25; // Closer zoom for small room
-        player.position = Vector2(300, 400); // Near the door
+        player.position = Vector2(1358, 647); // Near the exit door
         player.scale = Vector2.all(2.0); // Larger baby for small room
         break;
     }
@@ -254,6 +268,30 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
         ? LevelId.upstairsNursery
         : LevelId.mainFloor;
     await switchToLevel(nextLevel);
+  }
+
+  /// Toggle between phases (for debug)
+  Future<void> togglePhase() async {
+    final nextPhase = currentPhase == GamePhase.crawling
+        ? GamePhase.walking
+        : GamePhase.crawling;
+
+    currentPhase = nextPhase;
+    _memoriesCollectedInPhase = 0;
+    _collectedMemoryKeys.clear();
+
+    // Update player sprite based on phase
+    if (nextPhase == GamePhase.walking) {
+      await player.switchToWalking();
+    } else {
+      player.resetToCrawling();
+    }
+
+    // Reload current level to show new phase memories
+    await _loadLevel(currentLevel);
+
+    onPhaseChanged?.call(nextPhase);
+    debugPrint('Toggled to ${nextPhase.name} phase');
   }
 
   /// Get the playable bounds for the current level
@@ -498,6 +536,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     if (state != GameState.exploring) return;
 
     currentMemory = memory;
+    overlayType = OverlayType.memory;
     state = GameState.viewingMemory;
     overlays.add('polaroid');
   }
@@ -517,12 +556,19 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Called when a memory is collected
   void _onMemoryCollected(Memory memory) {
     if (memory.phase == currentPhase) {
-      _memoriesCollectedInPhase++;
-      debugPrint('Memory collected: $_memoriesCollectedInPhase/$_totalMemoriesInPhase in ${currentPhase.name} phase');
+      // Create a unique key for this memory
+      final memoryKey = '${memory.stylizedPhotoPath}_${memory.phase.name}';
 
-      // Check if all memories in this phase are collected
-      if (_memoriesCollectedInPhase >= _totalMemoriesInPhase && !memory.triggersLevel) {
-        _onPhaseComplete();
+      // Only count if not already collected
+      if (!_collectedMemoryKeys.contains(memoryKey)) {
+        _collectedMemoryKeys.add(memoryKey);
+        _memoriesCollectedInPhase++;
+        debugPrint('Memory collected: $_memoriesCollectedInPhase/$_totalMemoriesInPhase in ${currentPhase.name} phase');
+
+        // Check if all memories in this phase are collected
+        if (_memoriesCollectedInPhase >= _totalMemoriesInPhase && !memory.triggersLevel) {
+          _onPhaseComplete();
+        }
       }
     }
   }
@@ -530,12 +576,26 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Called when all memories in a phase are collected
   void _onPhaseComplete() {
     if (currentPhase == GamePhase.crawling) {
-      debugPrint('Phase 1 complete! Transitioning to walking phase...');
-      transitionToPhase(GamePhase.walking);
+      debugPrint('Phase 1 complete! Showing phase transition dialog...');
+      showPhaseCompleteOverlay();
     } else {
-      debugPrint('All phases complete! Starting montage...');
-      startMontage();
+      debugPrint('All phases complete! Showing game complete dialog...');
+      showGameCompleteOverlay();
     }
+  }
+
+  /// Shows the phase complete overlay
+  void showPhaseCompleteOverlay() {
+    overlayType = OverlayType.phaseComplete;
+    state = GameState.viewingMemory;
+    overlays.add('polaroid');
+  }
+
+  /// Shows the game complete overlay
+  void showGameCompleteOverlay() {
+    overlayType = OverlayType.gameComplete;
+    state = GameState.viewingMemory;
+    overlays.add('polaroid');
   }
 
   /// Transition to a new game phase
@@ -544,6 +604,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
     currentPhase = newPhase;
     _memoriesCollectedInPhase = 0;
+    _collectedMemoryKeys.clear();
 
     // Update player sprite for walking phase
     if (newPhase == GamePhase.walking) {

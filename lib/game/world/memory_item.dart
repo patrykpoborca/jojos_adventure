@@ -130,7 +130,9 @@ class MemoryItem extends SpriteAnimationComponent
 
   @override
   void onTapUp(TapUpEvent event) {
-    if (_collected) return;
+    // Level-triggering memories can always be tapped (even after collection)
+    // Regular memories can only be tapped once
+    if (_collected && !memory.triggersLevel) return;
 
     if (isPlayerInRange) {
       collect();
@@ -142,13 +144,22 @@ class MemoryItem extends SpriteAnimationComponent
 
   /// Called when the player collects this memory
   void collect() {
-    if (_collected) return;
+    // Level-triggering memories can be triggered multiple times
+    // Regular memories can only be collected once
+    if (_collected && !memory.triggersLevel) return;
 
-    _collected = true;
+    // Only mark as collected on first collection (for counting purposes)
+    if (!_collected) {
+      _collected = true;
+    }
+
     game.triggerMemory(memory);
 
-    // Hide the item after collection
-    removeFromParent();
+    // Level-triggering memories stay visible and interactive
+    // Regular memories are removed after collection
+    if (!memory.triggersLevel) {
+      removeFromParent();
+    }
   }
 }
 

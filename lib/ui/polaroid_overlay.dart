@@ -12,6 +12,12 @@ enum MemoryViewState {
 
   /// Showing the level trigger dialog
   levelDialog,
+
+  /// Showing phase complete dialog (crawling -> walking)
+  phaseComplete,
+
+  /// Showing game complete dialog
+  gameComplete,
 }
 
 /// Polaroid-style overlay for displaying photo memories
@@ -26,7 +32,7 @@ class PolaroidOverlay extends StatefulWidget {
 
 class _PolaroidOverlayState extends State<PolaroidOverlay>
     with SingleTickerProviderStateMixin {
-  MemoryViewState _viewState = MemoryViewState.polaroidStack;
+  late MemoryViewState _viewState;
   int _currentPhotoIndex = 0;
 
   late final AnimationController _animController;
@@ -35,6 +41,20 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   @override
   void initState() {
     super.initState();
+
+    // Set initial view state based on game's overlay type
+    switch (widget.game.overlayType) {
+      case OverlayType.memory:
+        _viewState = MemoryViewState.polaroidStack;
+        break;
+      case OverlayType.phaseComplete:
+        _viewState = MemoryViewState.phaseComplete;
+        break;
+      case OverlayType.gameComplete:
+        _viewState = MemoryViewState.gameComplete;
+        break;
+    }
+
     _animController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -128,6 +148,10 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         return _buildPolaroidStack();
       case MemoryViewState.levelDialog:
         return _buildLevelDialog();
+      case MemoryViewState.phaseComplete:
+        return _buildPhaseCompleteDialog();
+      case MemoryViewState.gameComplete:
+        return _buildGameCompleteDialog();
     }
   }
 
@@ -139,7 +163,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
     return SizedBox(
       width: photoSize + 80,
-      height: photoSize + 140,
+      height: photoSize + 180,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -268,6 +292,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -381,5 +407,195 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         ],
       ),
     );
+  }
+
+  Widget _buildPhaseCompleteDialog() {
+    return Container(
+      width: 380,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF7),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icon
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: const Color(0xFF8BC34A).withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.child_care,
+              size: 50,
+              color: Color(0xFF8BC34A),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Title
+          Text(
+            'Growing Up!',
+            style: GoogleFonts.caveat(
+              fontSize: 32,
+              color: const Color(0xFF3C3C3C),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Description
+          Text(
+            'You\'ve collected all the crawling memories!\nTime to take your first steps...',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 28),
+
+          // Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _onPhaseTransition,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8BC34A),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Start Walking!',
+                style: GoogleFonts.caveat(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onPhaseTransition() {
+    _animController.reverse().then((_) {
+      widget.game.resumeGame();
+      widget.game.transitionToPhase(GamePhase.walking);
+    });
+  }
+
+  Widget _buildGameCompleteDialog() {
+    return Container(
+      width: 400,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF7),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icon
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4A574).withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.favorite,
+              size: 60,
+              color: Color(0xFFD4A574),
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Title
+          Text(
+            'Memory Lane Complete!',
+            style: GoogleFonts.caveat(
+              fontSize: 34,
+              color: const Color(0xFF3C3C3C),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Description
+          Text(
+            'You\'ve collected all the precious memories.\nWhat a beautiful journey it has been!',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '🎄 Merry Christmas! 🎄',
+            style: GoogleFonts.caveat(
+              fontSize: 24,
+              color: const Color(0xFFD4A574),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _onGameComplete,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD4A574),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'The End',
+                style: GoogleFonts.caveat(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onGameComplete() {
+    _animController.reverse().then((_) {
+      widget.game.resumeGame();
+    });
   }
 }

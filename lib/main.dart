@@ -105,6 +105,9 @@ class _GameScreenState extends State<GameScreen> {
       } else if (event.logicalKey == LogicalKeyboardKey.keyL) {
         _game.toggleLevel();
         return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyG) {
+        _game.togglePhase();
+        return KeyEventResult.handled;
       }
     }
     return KeyEventResult.ignored;
