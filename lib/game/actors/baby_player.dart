@@ -210,8 +210,21 @@ class BabyPlayer extends SpriteAnimationComponent
     }
   }
 
+  /// Offset to apply when facing south (down) to fix sprite alignment
+  static const double _southFacingOffset = 50.0;
+  double _currentYOffset = 0.0;
+
   /// Updates the current animation based on state
   void _updateAnimation() {
+    // Apply Y offset when facing down to fix floating appearance
+    final targetOffset = (_currentDirection == BabyDirection.down && _isMoving)
+        ? _southFacingOffset
+        : 0.0;
+    if (_currentYOffset != targetOffset) {
+      position.y += (targetOffset - _currentYOffset);
+      _currentYOffset = targetOffset;
+    }
+
     if (_movementMode == MovementMode.crawling) {
       animation = _isMoving
           ? _crawlAnimations[_currentDirection]!

@@ -20,94 +20,135 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
   List<ObstacleData> getObstacleData() {
     return const [
       // Room boundaries
-      ObstacleData(x: 0, y: 0, width: 576, height: 20, label: 'northWall'),
-      ObstacleData(x: 0, y: 460, width: 576, height: 20, label: 'southWall'),
-      ObstacleData(x: 0, y: 0, width: 20, height: 480, label: 'westWall'),
-      ObstacleData(x: 556, y: 0, width: 20, height: 480, label: 'eastWall'),
-
-      // Crib (left side)
-      ObstacleData(x: 20, y: 280, width: 80, height: 140, label: 'crib'),
-
-      // Changing table/dresser area (upper middle)
-      ObstacleData(x: 130, y: 60, width: 150, height: 80, label: 'changingTable'),
-
-      // Door area (center top) - smaller collision so player can approach
-      ObstacleData(x: 280, y: 20, width: 60, height: 40, label: 'door'),
-
-      // Closet (right side)
-      ObstacleData(x: 400, y: 20, width: 156, height: 180, label: 'closet'),
-
-      // Armchair (bottom right)
-      ObstacleData(x: 380, y: 320, width: 100, height: 100, label: 'armchair'),
-
-      // Nightstand with lamp (bottom right corner)
-      ObstacleData(x: 490, y: 380, width: 60, height: 60, label: 'nightstand'),
-
-      // Ottoman/pouf (near armchair)
-      ObstacleData(x: 340, y: 400, width: 40, height: 40, label: 'ottoman'),
-
-      // Toy basket (left of changing table)
-      ObstacleData(x: 80, y: 140, width: 50, height: 50, label: 'toyBasket'),
+      ObstacleData(x: 84, y: 84, width: 1088, height: 714, label: 'northLeftWall'),
+      ObstacleData(x: 85, y: 828, width: 349, height: 511, label: 'crib'),
+      ObstacleData(x: 84, y: 1261, width: 43, height: 542, label: 'westWall'),
+      ObstacleData(x: 84, y: 1780, width: 2072, height: 23, label: 'southWall'),
+      ObstacleData(x: 2126, y: 84, width: 29, height: 1720, label: 'westWall'),
+      ObstacleData(x: 1034, y: 84, width: 1113, height: 45, label: 'northWall'),
+      ObstacleData(x: 1623, y: 84, width: 532, height: 815, label: 'wardrobe'),
+      ObstacleData(x: 1104, y: 84, width: 525, height: 656, label: 'exitDoor'),
+      ObstacleData(x: 1707, y: 1144, width: 334, height: 418, label: 'rockingChair'),
     ];
   }
 
   /// Returns the list of memory item data for the nursery
   List<MemoryItemData> getMemoryData() {
     return const [
-      // Door memory - returns to main floor
+      // ========================================
+      // Phase 1 memories (crawling) - young_ photos
+      // ========================================
+
+      // Door memory - returns to main floor (phase 1)
       MemoryItemData(
-        x: 310,
-        y: 100,
+        x: 1136,
+        y: 1297,
         stylizedPhotoPath: 'assets/photos/young_middle_nursery.jpg',
-        photos: ['assets/photos/young_middle_nursery.jpg'],
         date: 'Date',
         caption: 'Back downstairs...',
-        levelTrigger: 'mainFloor',
+        phase: GamePhase.crawling,
       ),
-
-      // Crib memory
+      MemoryItemData(
+        x: 1564,
+        y: 1327,
+        stylizedPhotoPath: 'assets/photos/young_recliner.jpg',
+        date: 'Date',
+        caption: 'Boobie milkies!',
+        phase: GamePhase.crawling,
+      ),
+      // Crib memory (phase 1)
       MemoryItemData.simple(
-        x: 60,
-        y: 350,
+        x: 470,
+        y: 1106,
         photoPath: 'assets/photos/young_in_crib.jpg',
         date: 'Date',
         caption: 'Sweet dreams',
+        phase: GamePhase.crawling,
       ),
 
-      // Changing table memory
+      // Changing table memory (phase 1)
       MemoryItemData.simple(
-        x: 200,
-        y: 100,
+        x: 868,
+        y: 842,
         photoPath: 'assets/photos/young_changing_station.jpg',
         date: 'Date',
         caption: 'Diaper duty',
+        phase: GamePhase.crawling,
+      ),
+      MemoryItemData(
+        x: 1353,
+        y: 786,
+        stylizedPhotoPath: 'assets/photos/young_downstairs.jpg',
+        date: 'Date',
+        caption: 'Back downstairs...',
+        levelTrigger: 'mainFloor',
+        phase: GamePhase.crawling,
       ),
 
-      // Armchair memory
+      MemoryItemData(
+        x: 192,
+        y: 1444,
+        stylizedPhotoPath: 'assets/photos/young_bath_time.jpg',
+        date: 'Date',
+        caption: 'Back downstairs...',
+        phase: GamePhase.crawling,
+      ),
+
+
+      // ========================================
+      // Phase 2 memories (walking) - old_ photos
+      // ========================================
+
+      // Door memory - returns to main floor (phase 2)
+      MemoryItemData(
+        x: 310,
+        y: 100,
+        stylizedPhotoPath: 'assets/photos/old_window.jpg',
+        photos: ['assets/photos/old_window.jpg'],
+        date: 'Date',
+        caption: 'Back downstairs...',
+        levelTrigger: 'mainFloor',
+        phase: GamePhase.walking,
+      ),
+
+      // Armchair memory (phase 2)
       MemoryItemData.simple(
         x: 420,
         y: 360,
-        photoPath: 'assets/photos/young_recliner.jpg',
+        photoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Date',
-        caption: 'Story time',
+        caption: 'Story time with dad',
+        phase: GamePhase.walking,
       ),
 
-      // Window/forest view memory
+      // Window/forest view memory (phase 2)
       MemoryItemData.simple(
         x: 250,
         y: 180,
-        photoPath: 'assets/photos/young_middle_nursery.jpg',
+        photoPath: 'assets/photos/old_window.jpg',
         date: 'Date',
-        caption: 'Watching the trees',
+        caption: 'Watching the snow',
+        phase: GamePhase.walking,
       ),
 
-      // Closet area memory
+      // Closet area memory (phase 2)
       MemoryItemData.simple(
         x: 450,
         y: 220,
-        photoPath: 'assets/photos/young_halena_couch.jpg',
+        photoPath: 'assets/photos/old_eating_countertop.jpg',
         date: 'Date',
-        caption: 'Getting dressed',
+        caption: 'Picking out clothes',
+        phase: GamePhase.walking,
+      ),
+
+      // Crib memory (phase 2 - older now)
+      MemoryItemData.simple(
+        x: 60,
+        y: 350,
+        photoPath: 'assets/photos/old_bathtime.jpg',
+        date: 'Date',
+        caption: 'Too big for the crib',
+        phase: GamePhase.walking,
       ),
     ];
   }

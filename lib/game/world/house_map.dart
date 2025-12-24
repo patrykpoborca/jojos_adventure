@@ -109,10 +109,14 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         photoPath: 'assets/photos/young_couch_sleep.jpg',
         date: 'Date', caption: 'Christmas lights',
       ),
-      MemoryItemData.simple(
+      // Triggers upstairs nursery level (stays in crawling phase)
+      MemoryItemData(
         x: 744, y: 581,
-        photoPath: 'assets/photos/young_in_crib.jpg',
-        date: 'Date', caption: 'Going to bed 1',
+        stylizedPhotoPath: 'assets/photos/young_in_crib.jpg',
+        photos: ['assets/photos/young_in_crib.jpg'],
+        date: 'Date',
+        caption: 'Going to bed 1',
+        levelTrigger: 'upstairsNursery',
       ),
       MemoryItemData.simple(
         x: 2021, y: 868,

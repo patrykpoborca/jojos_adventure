@@ -215,11 +215,13 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
         currentMap = HouseMap();
         camera.viewfinder.zoom = 0.5; // Zoomed out for large house
         player.position = Vector2(500, 500); // Starting position
+        player.scale = Vector2.all(1.0); // Normal size for large house
         break;
       case LevelId.upstairsNursery:
         currentMap = UpstairsMap();
-        camera.viewfinder.zoom = 1.0; // Closer zoom for small room
+        camera.viewfinder.zoom = 0.25; // Closer zoom for small room
         player.position = Vector2(300, 400); // Near the door
+        player.scale = Vector2.all(2.0); // Larger baby for small room
         break;
     }
 
