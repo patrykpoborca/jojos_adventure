@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'game/memory_lane_game.dart';
+import 'ui/debug_obstacle_overlay.dart';
 import 'ui/polaroid_overlay.dart';
 
 void main() {
@@ -49,6 +50,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late final MemoryLaneGame _game;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -57,38 +59,86 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (!MemoryLaneGame.debugObstaclePlacement) {
+      return KeyEventResult.ignored;
+    }
+
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.space) {
+        _game.handleObstaclePlacement();
+        return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
+        _game.cancelObstaclePlacement();
+        return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyP) {
+        _game.printAllObstacles();
+        return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyM) {
+        _game.togglePlacementMode();
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GameWidget(
-        game: _game,
-        overlayBuilderMap: {
-          'polaroid': (context, game) => PolaroidOverlay(
-                game: game as MemoryLaneGame,
-              ),
-        },
-        loadingBuilder: (context) => const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      body: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: _handleKeyEvent,
+        child: GestureDetector(
+          // Tap anywhere to regain focus (after text field interaction)
+          onTap: () => _focusNode.requestFocus(),
+          behavior: HitTestBehavior.translucent,
+          child: Stack(
             children: [
-              CircularProgressIndicator(
-                color: Color(0xFFD4A574),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Loading memories...',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF6B5B4F),
+              // Game widget
+              GameWidget(
+                game: _game,
+                overlayBuilderMap: {
+                  'polaroid': (context, game) => PolaroidOverlay(
+                        game: game as MemoryLaneGame,
+                      ),
+                },
+                loadingBuilder: (context) => const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Color(0xFFD4A574),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Loading memories...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF6B5B4F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                errorBuilder: (context, error) => Center(
+                  child: Text(
+                    'Error loading game:\n$error',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
                 ),
               ),
+
+              // Debug overlay (only shown when debug mode is enabled)
+              if (MemoryLaneGame.debugObstaclePlacement)
+                DebugObstacleOverlay(game: _game),
             ],
-          ),
-        ),
-        errorBuilder: (context, error) => Center(
-          child: Text(
-            'Error loading game:\n$error',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red),
           ),
         ),
       ),

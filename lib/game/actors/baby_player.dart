@@ -48,7 +48,7 @@ class BabyPlayer extends SpriteAnimationComponent
 
   /// Current movement speed based on mode
   double get speed =>
-      _movementMode == MovementMode.crawling ? crawlSpeed : walkSpeed;
+      (_movementMode == MovementMode.crawling ? crawlSpeed : walkSpeed) * 3;
 
   /// Current movement mode
   MovementMode get movementMode => _movementMode;
