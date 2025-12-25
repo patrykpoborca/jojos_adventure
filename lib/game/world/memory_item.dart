@@ -52,6 +52,13 @@ class MemorySpriteTypes {
       displaySize: 64.0,
       animationSpeed: 0.25,
     ),
+    MemorySpriteType(
+      assetPath: 'sprites/memories_4.png',
+      columns: 4,
+      rows: 4,
+      displaySize: 84.0,
+      animationSpeed: 0.25,
+    ),
   ];
 
   static final Random _random = Random();

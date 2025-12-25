@@ -21,10 +21,13 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
   static const double fogOpacity = 0.85;
 
   /// Number of rays to cast for organic edge
-  static const int rayCount = 48;
+  static const int rayCount = 64;
 
   /// How much the edge wobbles (0-1)
-  static const double edgeWobble = 0.15;
+  static const double edgeWobble = 0.12;
+
+  /// Number of smoothing passes for the edge
+  static const int smoothingPasses = 3;
 
   /// How much obstacles block light (0-1)
   static const double obstacleShadowStrength = 0.6;
@@ -88,11 +91,8 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
   ) {
     final obstacles = _getNearbyObstacles(center, innerRadius + outerFade + 100);
 
-    // Calculate the average/max radius for gradient sizing
-    double maxOuterRadius = 0;
-
-    // Build the outer boundary path with organic wobble and obstacle shadows
-    final outerPath = Path();
+    // First pass: calculate all ray radii
+    final rayRadii = List<double>.filled(rayCount, 0);
 
     for (var i = 0; i < rayCount; i++) {
       final angle = (i / rayCount) * 2 * math.pi;
@@ -111,8 +111,38 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
       final shadowFactor = _calculateShadowFactor(center, rayEnd, obstacles);
 
       // Calculate effective outer radius for this ray
-      final effectiveRadius = (innerRadius + outerFade) * totalWobble * shadowFactor;
-      maxOuterRadius = math.max(maxOuterRadius, effectiveRadius);
+      rayRadii[i] = (innerRadius + outerFade) * totalWobble * shadowFactor;
+    }
+
+    // Apply smoothing passes to reduce sharp peaks
+    for (var pass = 0; pass < smoothingPasses; pass++) {
+      final smoothed = List<double>.filled(rayCount, 0);
+      for (var i = 0; i < rayCount; i++) {
+        // Average with neighbors (wrapping around)
+        final prev = rayRadii[(i - 1 + rayCount) % rayCount];
+        final curr = rayRadii[i];
+        final next = rayRadii[(i + 1) % rayCount];
+        // Weighted average: 25% prev, 50% current, 25% next
+        smoothed[i] = prev * 0.25 + curr * 0.5 + next * 0.25;
+      }
+      // Copy smoothed values back
+      for (var i = 0; i < rayCount; i++) {
+        rayRadii[i] = smoothed[i];
+      }
+    }
+
+    // Find max radius for gradient sizing
+    double maxOuterRadius = 0;
+    for (final r in rayRadii) {
+      maxOuterRadius = math.max(maxOuterRadius, r);
+    }
+
+    // Build the outer boundary path using smoothed radii
+    final outerPath = Path();
+
+    for (var i = 0; i < rayCount; i++) {
+      final angle = (i / rayCount) * 2 * math.pi;
+      final effectiveRadius = rayRadii[i];
 
       final x = center.x + math.cos(angle) * effectiveRadius;
       final y = center.y + math.sin(angle) * effectiveRadius;
@@ -120,10 +150,10 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
       if (i == 0) {
         outerPath.moveTo(x, y);
       } else {
-        // Use curves for smoother edges
+        // Use curves for smoother edges - control point uses average of current and previous radius
         final prevAngle = ((i - 0.5) / rayCount) * 2 * math.pi;
-        final prevWobble = 1.0 + math.sin(prevAngle * 5 + _time) * edgeWobble * 0.3;
-        final ctrlRadius = effectiveRadius * prevWobble;
+        final prevRadius = rayRadii[(i - 1 + rayCount) % rayCount];
+        final ctrlRadius = (effectiveRadius + prevRadius) / 2;
 
         final ctrlX = center.x + math.cos(prevAngle) * ctrlRadius;
         final ctrlY = center.y + math.sin(prevAngle) * ctrlRadius;
