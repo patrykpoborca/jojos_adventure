@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../game/audio/audio_manager.dart';
 import '../game/memory_lane_game.dart';
+import 'responsive_sizing.dart';
 
 /// View state for the memory overlay
 enum MemoryViewState {
@@ -179,14 +180,15 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   }
 
   Widget _buildPolaroidStack() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final photoSize = (screenHeight * 0.35).clamp(180.0, 280.0);
+    final screenHeight = ResponsiveSizing.screenHeight(context);
+    final scale = ResponsiveSizing.scaleFactor(context);
+    final photoSize = (screenHeight * 0.35).clamp(180.0, 280.0) * scale;
     final photos = allPhotos;
     final totalPhotos = photos.length;
 
     return SizedBox(
-      width: photoSize + 80,
-      height: photoSize + 180,
+      width: photoSize + ResponsiveSizing.spacing(context, 80),
+      height: photoSize + ResponsiveSizing.spacing(context, 180),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -212,16 +214,20 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
             Positioned(
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: ResponsiveSizing.paddingSymmetric(
+                  context,
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: ResponsiveSizing.borderRadius(context, 12),
                 ),
                 child: Text(
                   '${_currentPhotoIndex + 1} / $totalPhotos',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: ResponsiveSizing.fontSize(context, 12),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -246,6 +252,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     final offsetX = isBackground ? (random.nextDouble() - 0.5) * 20 : 0.0;
     final offsetY = isBackground ? -stackIndex * 4.0 : 0.0;
     final scale = isBackground ? 1.0 - (stackIndex * 0.02) : 1.0;
+    final padding = ResponsiveSizing.spacing(context, 16);
+    final borderPadding = ResponsiveSizing.spacing(context, 40);
 
     return Transform.translate(
       offset: Offset(offsetX, offsetY),
@@ -254,16 +262,16 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         child: Transform.scale(
           scale: scale,
           child: Container(
-            width: photoSize + 40,
-            padding: const EdgeInsets.all(16),
+            width: photoSize + borderPadding,
+            padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFBF7),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: ResponsiveSizing.borderRadius(context, 4),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isBackground ? 0.15 : 0.3),
-                  blurRadius: isBackground ? 10 : 20,
-                  offset: Offset(0, isBackground ? 5 : 10),
+                  blurRadius: ResponsiveSizing.spacing(context, isBackground ? 10 : 20),
+                  offset: Offset(0, ResponsiveSizing.spacing(context, isBackground ? 5 : 10)),
                 ),
               ],
             ),
@@ -285,17 +293,17 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                     photoPath,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return const Center(
+                      return Center(
                         child: Icon(
                           Icons.photo,
-                          size: 64,
-                          color: Color(0xFF9E9E9E),
+                          size: ResponsiveSizing.iconSize(context, 64),
+                          color: const Color(0xFF9E9E9E),
                         ),
                       );
                     },
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: ResponsiveSizing.spacing(context, 12)),
 
                 // Only show text on current polaroid
                 if (!isBackground && memory != null) ...[
@@ -304,16 +312,16 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                     Text(
                       memory!.date,
                       style: GoogleFonts.caveat(
-                        fontSize: 14,
+                        fontSize: ResponsiveSizing.fontSize(context, 14),
                         color: const Color(0xFF6B5B4F),
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: ResponsiveSizing.spacing(context, 2)),
                   ],
                   Text(
                     memory!.caption,
                     style: GoogleFonts.caveat(
-                      fontSize: 18,
+                      fontSize: ResponsiveSizing.fontSize(context, 18),
                       color: const Color(0xFF3C3C3C),
                       fontWeight: FontWeight.w500,
                     ),
@@ -321,11 +329,11 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveSizing.spacing(context, 8)),
                   Text(
                     isLastPhoto ? 'Tap to continue' : 'Tap for next photo',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: ResponsiveSizing.fontSize(context, 11),
                       color: Colors.grey.shade500,
                     ),
                   ),
@@ -341,22 +349,23 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   }
 
   Widget _buildLevelDialog() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
-    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
+    final dialogHeight = ResponsiveSizing.dialogHeight(context);
+    final dialogWidth = ResponsiveSizing.dialogWidth(context);
+    final pos = ResponsiveSizing.positionOffset(context, 12);
+    final captionPadding = ResponsiveSizing.spacing(context, 16);
+    final captionBottom = ResponsiveSizing.spacing(context, 20);
 
     return Container(
       width: dialogWidth,
       height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: ResponsiveSizing.borderRadius(context, 20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            blurRadius: ResponsiveSizing.spacing(context, 24),
+            offset: Offset(0, ResponsiveSizing.spacing(context, 12)),
           ),
         ],
       ),
@@ -372,10 +381,10 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: const Color(0xFFD4A574),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.photo,
-                      size: 64,
+                      size: ResponsiveSizing.iconSize(context, 64),
                       color: Colors.white54,
                     ),
                   ),
@@ -405,22 +414,22 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Caption at bottom
           Positioned(
-            left: 16,
-            right: 16,
-            bottom: 20,
+            left: captionPadding,
+            right: captionPadding,
+            bottom: captionBottom,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   memory?.caption ?? 'A special memory awaits...',
                   style: GoogleFonts.caveat(
-                    fontSize: 28,
+                    fontSize: ResponsiveSizing.fontSize(context, 28),
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 8,
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
                       ),
                     ],
                   ),
@@ -432,8 +441,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Close button (X) - top left
           Positioned(
-            top: 12,
-            left: 12,
+            top: pos,
+            left: pos,
             child: _buildCornerButton(
               icon: Icons.close,
               onTap: _onLevelDecline,
@@ -443,8 +452,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Go forward button (arrow) - top right
           Positioned(
-            top: 12,
-            right: 12,
+            top: pos,
+            right: pos,
             child: _buildCornerButton(
               icon: Icons.arrow_forward,
               onTap: _onLevelAccept,
@@ -466,48 +475,52 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         ? (accentColor ?? const Color(0xFFD4A574))
         : Colors.black.withValues(alpha: 0.4);
 
+    final buttonSize = ResponsiveSizing.cornerButtonSize(context);
+    final iconSz = ResponsiveSizing.cornerButtonIconSize(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 44,
-        height: 44,
+        width: buttonSize,
+        height: buttonSize,
         decoration: BoxDecoration(
           color: buttonColor,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              blurRadius: ResponsiveSizing.spacing(context, 8),
+              offset: Offset(0, ResponsiveSizing.spacing(context, 2)),
             ),
           ],
         ),
         child: Icon(
           icon,
           color: Colors.white,
-          size: 22,
+          size: iconSz,
         ),
       ),
     );
   }
 
   Widget _buildPhaseCompleteDialog() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
-    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
+    final dialogHeight = ResponsiveSizing.dialogHeight(context);
+    final dialogWidth = ResponsiveSizing.dialogWidth(context);
+    final pos = ResponsiveSizing.positionOffset(context, 12);
+    final captionPadding = ResponsiveSizing.spacing(context, 16);
+    final captionBottom = ResponsiveSizing.spacing(context, 20);
 
     return Container(
       width: dialogWidth,
       height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: ResponsiveSizing.borderRadius(context, 20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            blurRadius: ResponsiveSizing.spacing(context, 24),
+            offset: Offset(0, ResponsiveSizing.spacing(context, 12)),
           ),
         ],
       ),
@@ -533,7 +546,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
           Center(
             child: Icon(
               Icons.child_care,
-              size: 160,
+              size: ResponsiveSizing.iconSize(context, 160),
               color: Colors.white.withValues(alpha: 0.2),
             ),
           ),
@@ -560,37 +573,37 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Caption at bottom
           Positioned(
-            left: 16,
-            right: 16,
-            bottom: 20,
+            left: captionPadding,
+            right: captionPadding,
+            bottom: captionBottom,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Growing Up!',
                   style: GoogleFonts.caveat(
-                    fontSize: 36,
+                    fontSize: ResponsiveSizing.fontSize(context, 36),
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
                       ),
                     ],
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: ResponsiveSizing.spacing(context, 4)),
                 Text(
                   'Time to take your first steps...',
                   style: GoogleFonts.caveat(
-                    fontSize: 22,
+                    fontSize: ResponsiveSizing.fontSize(context, 22),
                     color: Colors.white.withValues(alpha: 0.9),
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
                       ),
                     ],
                   ),
@@ -602,8 +615,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Go forward button (arrow) - top right (only action for this dialog)
           Positioned(
-            top: 12,
-            right: 12,
+            top: pos,
+            right: pos,
             child: _buildCornerButton(
               icon: Icons.arrow_forward,
               onTap: _onPhaseTransition,
@@ -624,22 +637,23 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   }
 
   Widget _buildGameCompleteDialog() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
-    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
+    final dialogHeight = ResponsiveSizing.dialogHeight(context);
+    final dialogWidth = ResponsiveSizing.dialogWidth(context);
+    final pos = ResponsiveSizing.positionOffset(context, 12);
+    final captionPadding = ResponsiveSizing.spacing(context, 16);
+    final captionBottom = ResponsiveSizing.spacing(context, 20);
 
     return Container(
       width: dialogWidth,
       height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: ResponsiveSizing.borderRadius(context, 20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            blurRadius: ResponsiveSizing.spacing(context, 24),
+            offset: Offset(0, ResponsiveSizing.spacing(context, 12)),
           ),
         ],
       ),
@@ -654,10 +668,10 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
             errorBuilder: (context, error, stackTrace) {
               return Container(
                 color: const Color(0xFF4CAF50),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.directions_car,
-                    size: 64,
+                    size: ResponsiveSizing.iconSize(context, 64),
                     color: Colors.white54,
                   ),
                 ),
@@ -687,38 +701,38 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Caption at bottom
           Positioned(
-            left: 16,
-            right: 16,
-            bottom: 20,
+            left: captionPadding,
+            right: captionPadding,
+            bottom: captionBottom,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Ready for Adventure!',
                   style: GoogleFonts.caveat(
-                    fontSize: 32,
+                    fontSize: ResponsiveSizing.fontSize(context, 32),
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 8,
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
                       ),
                     ],
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: ResponsiveSizing.spacing(context, 4)),
                 Text(
                   '🎄 Merry Christmas! 🎄',
                   style: GoogleFonts.caveat(
-                    fontSize: 22,
+                    fontSize: ResponsiveSizing.fontSize(context, 22),
                     color: const Color(0xFFFFD700),
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 8,
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
                       ),
                     ],
                   ),
@@ -729,8 +743,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Close button (X) - top left
           Positioned(
-            top: 12,
-            left: 12,
+            top: pos,
+            left: pos,
             child: _buildCornerButton(
               icon: Icons.close,
               onTap: _closeOverlay,
@@ -740,8 +754,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Go forward button (arrow) - top right
           Positioned(
-            top: 12,
-            right: 12,
+            top: pos,
+            right: pos,
             child: _buildCornerButton(
               icon: Icons.arrow_forward,
               onTap: _onStartRoadTrip,
@@ -755,10 +769,11 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   }
 
   Widget _buildEndgameNotReadyDialog() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
-    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
+    final dialogHeight = ResponsiveSizing.dialogHeight(context);
+    final dialogWidth = ResponsiveSizing.dialogWidth(context);
+    final pos = ResponsiveSizing.positionOffset(context, 12);
+    final captionPadding = ResponsiveSizing.spacing(context, 16);
+    final captionBottom = ResponsiveSizing.spacing(context, 20);
     final collected = widget.game.memoriesCollected;
     final total = widget.game.totalMemories;
 
@@ -767,12 +782,12 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: ResponsiveSizing.borderRadius(context, 20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            blurRadius: ResponsiveSizing.spacing(context, 24),
+            offset: Offset(0, ResponsiveSizing.spacing(context, 12)),
           ),
         ],
       ),
@@ -793,10 +808,10 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     color: Colors.grey.shade600,
-                    child: const Center(
+                    child: Center(
                       child: Icon(
                         Icons.directions_car,
-                        size: 64,
+                        size: ResponsiveSizing.iconSize(context, 64),
                         color: Colors.white30,
                       ),
                     ),
@@ -835,64 +850,68 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
           // Lock icon in center
           Center(
             child: Container(
-              width: 64,
-              height: 64,
+              width: ResponsiveSizing.dimension(context, 64),
+              height: ResponsiveSizing.dimension(context, 64),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.lock,
                 color: Colors.white70,
-                size: 32,
+                size: ResponsiveSizing.iconSize(context, 32),
               ),
             ),
           ),
 
           // Caption and progress at bottom
           Positioned(
-            left: 16,
-            right: 16,
-            bottom: 20,
+            left: captionPadding,
+            right: captionPadding,
+            bottom: captionBottom,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Not Quite Ready Yet...',
                   style: GoogleFonts.caveat(
-                    fontSize: 28,
+                    fontSize: ResponsiveSizing.fontSize(context, 28),
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 8,
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
                       ),
                     ],
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: ResponsiveSizing.spacing(context, 8)),
                 // Progress indicator
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: ResponsiveSizing.paddingSymmetric(
+                    context,
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: ResponsiveSizing.borderRadius(context, 20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.photo_library,
-                        color: Color(0xFFD4A574),
-                        size: 18,
+                        color: const Color(0xFFD4A574),
+                        size: ResponsiveSizing.iconSize(context, 18),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: ResponsiveSizing.spacing(context, 8)),
                       Text(
                         '$collected / $total memories',
                         style: GoogleFonts.caveat(
-                          fontSize: 18,
+                          fontSize: ResponsiveSizing.fontSize(context, 18),
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -906,8 +925,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
           // Close button (X) - top left (only button for this dialog)
           Positioned(
-            top: 12,
-            left: 12,
+            top: pos,
+            left: pos,
             child: _buildCornerButton(
               icon: Icons.close,
               onTap: _closeOverlay,

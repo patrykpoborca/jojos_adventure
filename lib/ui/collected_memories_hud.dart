@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../game/memory_lane_game.dart';
 import '../game/world/memory_item.dart';
+import 'responsive_sizing.dart';
 
 /// HUD overlay showing collected memories in the top left with animated sprites
 class CollectedMemoriesHud extends StatefulWidget {
@@ -62,13 +63,13 @@ class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
     }
 
     return Positioned(
-      top: 12,
-      left: 12,
+      top: ResponsiveSizing.spacing(context, 12),
+      left: ResponsiveSizing.spacing(context, 12),
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: ResponsiveSizing.paddingAll(context, 8),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: ResponsiveSizing.borderRadius(context, 8),
           border: Border.all(
             color: Colors.amber.withValues(alpha: 0.3),
             width: 1,
@@ -80,7 +81,7 @@ class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
             // Memory sprites grouped by type
             ...grouped.entries.map((entry) {
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: ResponsiveSizing.paddingOnly(context, right: 8),
                 child: _AnimatedMemorySprite(
                   spriteTypeIndex: entry.key,
                 ),
@@ -88,16 +89,20 @@ class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
             }),
             // Collected/Total counter
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: ResponsiveSizing.paddingSymmetric(
+                context,
+                horizontal: 8,
+                vertical: 4,
+              ),
               decoration: BoxDecoration(
                 color: Colors.amber.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: ResponsiveSizing.borderRadius(context, 6),
               ),
               child: Text(
                 '$collected/$total',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: ResponsiveSizing.fontSize(context, 14),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -147,25 +152,27 @@ class _AnimatedMemorySpriteState extends State<_AnimatedMemorySprite> {
 
   @override
   Widget build(BuildContext context) {
+    final spriteSize = ResponsiveSizing.dimension(context, 32);
+    final borderRad = ResponsiveSizing.spacing(context, 6);
     // Static first frame with glow
     return Container(
-      width: 32,
-      height: 32,
+      width: spriteSize,
+      height: spriteSize,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(borderRad),
         boxShadow: [
           BoxShadow(
             color: Colors.amber.withValues(alpha: 0.3),
-            blurRadius: 6,
+            blurRadius: ResponsiveSizing.spacing(context, 6),
             spreadRadius: 1,
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(borderRad),
         child: _spriteSheet != null
             ? CustomPaint(
-                size: const Size(32, 32),
+                size: Size(spriteSize, spriteSize),
                 painter: _SpriteFramePainter(
                   spriteSheet: _spriteSheet!,
                   frameIndex: 0, // Always first frame
@@ -175,10 +182,10 @@ class _AnimatedMemorySpriteState extends State<_AnimatedMemorySprite> {
               )
             : Container(
                 color: Colors.amber.withValues(alpha: 0.2),
-                child: const Icon(
+                child: Icon(
                   Icons.photo_album,
                   color: Colors.amber,
-                  size: 16,
+                  size: ResponsiveSizing.iconSize(context, 16),
                 ),
               ),
       ),

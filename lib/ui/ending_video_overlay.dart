@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 
 import '../game/memory_lane_game.dart';
+import 'responsive_sizing.dart';
 
 /// Full-screen video overlay for the ending scene
 class EndingVideoOverlay extends StatefulWidget {
@@ -122,14 +123,21 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
             // Skip button (only during video playback)
             if (_isInitialized && !_showEndCard && !_hasError)
               Positioned(
-                top: 40,
-                right: 20,
+                top: ResponsiveSizing.spacing(context, 40),
+                right: ResponsiveSizing.spacing(context, 20),
                 child: TextButton.icon(
                   onPressed: _onSkip,
-                  icon: const Icon(Icons.skip_next, color: Colors.white70),
-                  label: const Text(
+                  icon: Icon(
+                    Icons.skip_next,
+                    color: Colors.white70,
+                    size: ResponsiveSizing.iconSize(context, 24),
+                  ),
+                  label: Text(
                     'Skip',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: ResponsiveSizing.fontSize(context, 14),
+                    ),
                   ),
                 ),
               ),
@@ -140,19 +148,19 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
   }
 
   Widget _buildLoadingState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             color: Color(0xFFD4A574),
           ),
-          SizedBox(height: 16),
+          SizedBox(height: ResponsiveSizing.spacing(context, 16)),
           Text(
             'Loading...',
             style: TextStyle(
               color: Colors.white70,
-              fontSize: 16,
+              fontSize: ResponsiveSizing.fontSize(context, 16),
             ),
           ),
         ],
@@ -165,20 +173,20 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
             color: Colors.white54,
-            size: 64,
+            size: ResponsiveSizing.iconSize(context, 64),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: ResponsiveSizing.spacing(context, 16)),
+          Text(
             'Could not load video',
             style: TextStyle(
               color: Colors.white70,
-              fontSize: 18,
+              fontSize: ResponsiveSizing.fontSize(context, 18),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: ResponsiveSizing.spacing(context, 24)),
           ElevatedButton(
             onPressed: () {
               setState(() {
@@ -187,8 +195,18 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD4A574),
+              padding: ResponsiveSizing.paddingSymmetric(
+                context,
+                horizontal: 24,
+                vertical: 12,
+              ),
             ),
-            child: const Text('Continue'),
+            child: Text(
+              'Continue',
+              style: TextStyle(
+                fontSize: ResponsiveSizing.fontSize(context, 14),
+              ),
+            ),
           ),
         ],
       ),
@@ -238,7 +256,7 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
           left: 0,
           right: 0,
           bottom: 0,
-          height: 280,
+          height: ResponsiveSizing.dimension(context, 280),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -258,7 +276,7 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
           top: 0,
           right: 0,
           bottom: 0,
-          width: 280,
+          width: ResponsiveSizing.dimension(context, 280),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -276,21 +294,21 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
         // Message on right side
         Positioned(
           top: 0,
-          right: 24,
-          bottom: 100,
-          width: 220,
+          right: ResponsiveSizing.spacing(context, 24),
+          bottom: ResponsiveSizing.spacing(context, 100),
+          width: ResponsiveSizing.dimension(context, 220),
           child: Center(
             child: Text(
               'Thank you for exploring our memories.\n\nWith love,\nfrom the Poborca family!',
               style: GoogleFonts.caveat(
-                fontSize: 22,
+                fontSize: ResponsiveSizing.fontSize(context, 22),
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 height: 1.4,
                 shadows: [
                   Shadow(
                     color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 8,
+                    blurRadius: ResponsiveSizing.spacing(context, 8),
                   ),
                 ],
               ),
@@ -301,9 +319,9 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
 
         // Caption and close button at bottom
         Positioned(
-          left: 24,
-          right: 24,
-          bottom: 40,
+          left: ResponsiveSizing.spacing(context, 24),
+          right: ResponsiveSizing.spacing(context, 24),
+          bottom: ResponsiveSizing.spacing(context, 40),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -311,73 +329,74 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
               Text(
                 'The End',
                 style: GoogleFonts.caveat(
-                  fontSize: 52,
+                  fontSize: ResponsiveSizing.fontSize(context, 52),
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   shadows: [
                     Shadow(
                       color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 10,
+                      blurRadius: ResponsiveSizing.spacing(context, 10),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: ResponsiveSizing.spacing(context, 8)),
 
               // Christmas message
               Text(
                 '🎄 Merry Christmas! 🎄',
                 style: GoogleFonts.caveat(
-                  fontSize: 28,
+                  fontSize: ResponsiveSizing.fontSize(context, 28),
                   color: const Color(0xFFFFD700),
                   fontWeight: FontWeight.bold,
                   shadows: [
                     Shadow(
                       color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 8,
+                      blurRadius: ResponsiveSizing.spacing(context, 8),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: ResponsiveSizing.spacing(context, 4)),
               Text(
                 '2024 - 2025',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: ResponsiveSizing.fontSize(context, 16),
                   color: Colors.white.withValues(alpha: 0.7),
                   shadows: [
                     Shadow(
                       color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 4,
+                      blurRadius: ResponsiveSizing.spacing(context, 4),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: ResponsiveSizing.spacing(context, 24)),
 
               // Close button
               GestureDetector(
                 onTap: _onClose,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: ResponsiveSizing.paddingSymmetric(
+                    context,
                     horizontal: 40,
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFD4A574),
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: ResponsiveSizing.borderRadius(context, 30),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        blurRadius: ResponsiveSizing.spacing(context, 10),
+                        offset: Offset(0, ResponsiveSizing.spacing(context, 4)),
                       ),
                     ],
                   ),
                   child: Text(
                     'Close',
                     style: GoogleFonts.caveat(
-                      fontSize: 24,
+                      fontSize: ResponsiveSizing.fontSize(context, 24),
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),

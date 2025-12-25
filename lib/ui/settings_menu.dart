@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../game/audio/audio_manager.dart';
 import '../game/memory_lane_game.dart';
+import 'responsive_sizing.dart';
 
 /// Settings menu overlay
 class SettingsMenu extends StatefulWidget {
@@ -74,22 +75,22 @@ class _SettingsMenuState extends State<SettingsMenu>
                 child: GestureDetector(
                   onTap: () {}, // Prevent tap-through
                   child: Container(
-                    width: 340,
-                    margin: const EdgeInsets.all(24),
+                    width: ResponsiveSizing.dimension(context, 340),
+                    margin: ResponsiveSizing.paddingAll(context, 24),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFFBF7),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: ResponsiveSizing.borderRadius(context, 16),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          blurRadius: ResponsiveSizing.spacing(context, 20),
+                          offset: Offset(0, ResponsiveSizing.spacing(context, 10)),
                         ),
                       ],
                     ),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.8,
+                        maxHeight: ResponsiveSizing.screenHeight(context) * 0.8,
                       ),
                       child: SingleChildScrollView(
                         child: Column(
@@ -101,7 +102,7 @@ class _SettingsMenuState extends State<SettingsMenu>
                             _buildFloorSection(),
                             _buildDivider(),
                             _buildPhaseSection(),
-                            const SizedBox(height: 16),
+                            SizedBox(height: ResponsiveSizing.spacing(context, 16)),
                           ],
                         ),
                       ),
@@ -117,13 +118,18 @@ class _SettingsMenuState extends State<SettingsMenu>
   }
 
   Widget _buildHeader() {
+    final radius = ResponsiveSizing.spacing(context, 16);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFFD4A574),
+      padding: ResponsiveSizing.paddingSymmetric(
+        context,
+        horizontal: 20,
+        vertical: 16,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD4A574),
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+          topLeft: Radius.circular(radius),
+          topRight: Radius.circular(radius),
         ),
       ),
       child: Row(
@@ -131,7 +137,7 @@ class _SettingsMenuState extends State<SettingsMenu>
           Text(
             'Settings',
             style: GoogleFonts.caveat(
-              fontSize: 28,
+              fontSize: ResponsiveSizing.fontSize(context, 28),
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
@@ -139,7 +145,11 @@ class _SettingsMenuState extends State<SettingsMenu>
           const Spacer(),
           IconButton(
             onPressed: _closeSettings,
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: Icon(
+              Icons.close,
+              color: Colors.white,
+              size: ResponsiveSizing.iconSize(context, 24),
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -149,23 +159,24 @@ class _SettingsMenuState extends State<SettingsMenu>
   }
 
   Widget _buildDivider() {
+    final indent = ResponsiveSizing.spacing(context, 20);
     return Divider(
       height: 1,
       thickness: 1,
       color: Colors.grey.shade200,
-      indent: 20,
-      endIndent: 20,
+      indent: indent,
+      endIndent: indent,
     );
   }
 
   Widget _buildAudioSection() {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: ResponsiveSizing.paddingAll(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Audio'),
-          const SizedBox(height: 12),
+          SizedBox(height: ResponsiveSizing.spacing(context, 12)),
           _buildVolumeSlider(
             label: 'Master',
             value: _masterVolume,
@@ -174,7 +185,7 @@ class _SettingsMenuState extends State<SettingsMenu>
               AudioManager().masterVolume = value;
             },
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: ResponsiveSizing.spacing(context, 8)),
           _buildVolumeSlider(
             label: 'Music',
             value: _musicVolume,
@@ -183,7 +194,7 @@ class _SettingsMenuState extends State<SettingsMenu>
               AudioManager().musicVolume = value;
             },
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: ResponsiveSizing.spacing(context, 8)),
           _buildVolumeSlider(
             label: 'SFX',
             value: _sfxVolume,
@@ -201,7 +212,7 @@ class _SettingsMenuState extends State<SettingsMenu>
     return Text(
       title,
       style: TextStyle(
-        fontSize: 12,
+        fontSize: ResponsiveSizing.fontSize(context, 12),
         fontWeight: FontWeight.w600,
         color: Colors.grey.shade500,
         letterSpacing: 1.2,
@@ -217,11 +228,11 @@ class _SettingsMenuState extends State<SettingsMenu>
     return Row(
       children: [
         SizedBox(
-          width: 55,
+          width: ResponsiveSizing.dimension(context, 55),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: ResponsiveSizing.fontSize(context, 14),
               color: Colors.grey.shade700,
             ),
           ),
@@ -233,8 +244,10 @@ class _SettingsMenuState extends State<SettingsMenu>
               inactiveTrackColor: Colors.grey.shade300,
               thumbColor: const Color(0xFFD4A574),
               overlayColor: const Color(0xFFD4A574).withValues(alpha: 0.2),
-              trackHeight: 4,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+              trackHeight: ResponsiveSizing.spacing(context, 4),
+              thumbShape: RoundSliderThumbShape(
+                enabledThumbRadius: ResponsiveSizing.spacing(context, 8),
+              ),
             ),
             child: Slider(
               value: value,
@@ -243,11 +256,11 @@ class _SettingsMenuState extends State<SettingsMenu>
           ),
         ),
         SizedBox(
-          width: 36,
+          width: ResponsiveSizing.dimension(context, 36),
           child: Text(
             '${(value * 100).round()}',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: ResponsiveSizing.fontSize(context, 12),
               color: Colors.grey.shade600,
             ),
             textAlign: TextAlign.right,
@@ -261,12 +274,12 @@ class _SettingsMenuState extends State<SettingsMenu>
     final currentLevel = widget.game.currentLevel;
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: ResponsiveSizing.paddingAll(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Floor'),
-          const SizedBox(height: 12),
+          SizedBox(height: ResponsiveSizing.spacing(context, 12)),
           Row(
             children: [
               Expanded(
@@ -281,7 +294,7 @@ class _SettingsMenuState extends State<SettingsMenu>
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: ResponsiveSizing.spacing(context, 12)),
               Expanded(
                 child: _buildToggleButton(
                   label: 'Upstairs',
@@ -305,12 +318,12 @@ class _SettingsMenuState extends State<SettingsMenu>
     final currentPhase = widget.game.currentPhase;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: ResponsiveSizing.paddingSymmetric(context, horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Phase'),
-          const SizedBox(height: 12),
+          SizedBox(height: ResponsiveSizing.spacing(context, 12)),
           Row(
             children: [
               Expanded(
@@ -325,7 +338,7 @@ class _SettingsMenuState extends State<SettingsMenu>
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: ResponsiveSizing.spacing(context, 12)),
               Expanded(
                 child: _buildToggleButton(
                   label: 'Walking',
@@ -353,10 +366,10 @@ class _SettingsMenuState extends State<SettingsMenu>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: ResponsiveSizing.paddingSymmetric(context, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFD4A574) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: ResponsiveSizing.borderRadius(context, 10),
           border: Border.all(
             color: isSelected ? const Color(0xFFD4A574) : Colors.grey.shade300,
           ),
@@ -365,7 +378,7 @@ class _SettingsMenuState extends State<SettingsMenu>
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: ResponsiveSizing.fontSize(context, 14),
               fontWeight: FontWeight.w500,
               color: isSelected ? Colors.white : Colors.grey.shade700,
             ),

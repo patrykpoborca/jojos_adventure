@@ -7,6 +7,7 @@ import 'ui/collected_memories_hud.dart';
 import 'ui/debug_obstacle_overlay.dart';
 import 'ui/ending_video_overlay.dart';
 import 'ui/polaroid_overlay.dart';
+import 'ui/responsive_sizing.dart';
 import 'ui/settings_menu.dart';
 
 void main() {
@@ -160,19 +161,19 @@ class _GameScreenState extends State<GameScreen> {
                         game: game as MemoryLaneGame,
                       ),
                 },
-                loadingBuilder: (context) => const Center(
+                loadingBuilder: (context) => Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircularProgressIndicator(
+                      const CircularProgressIndicator(
                         color: Color(0xFFD4A574),
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: ResponsiveSizing.spacing(context, 16)),
                       Text(
                         'Loading memories...',
                         style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF6B5B4F),
+                          fontSize: ResponsiveSizing.fontSize(context, 18),
+                          color: const Color(0xFF6B5B4F),
                         ),
                       ),
                     ],
@@ -193,36 +194,41 @@ class _GameScreenState extends State<GameScreen> {
 
               // Settings button (top right) - hidden in cinematic mode
               if (!_isCinematicMode)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _game.showSettings(),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: const Color(0xAAD4A574),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                Builder(
+                  builder: (context) {
+                    final buttonSize = ResponsiveSizing.dimension(context, 48);
+                    return Positioned(
+                      top: ResponsiveSizing.spacing(context, 12),
+                      right: ResponsiveSizing.spacing(context, 12),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _game.showSettings(),
+                          borderRadius: BorderRadius.circular(buttonSize / 2),
+                          child: Container(
+                            width: buttonSize,
+                            height: buttonSize,
+                            decoration: BoxDecoration(
+                              color: const Color(0xAAD4A574),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: ResponsiveSizing.spacing(context, 8),
+                                  offset: Offset(0, ResponsiveSizing.spacing(context, 2)),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.settings,
-                          color: Colors.white,
-                          size: 24,
+                            child: Icon(
+                              Icons.settings,
+                              color: Colors.white,
+                              size: ResponsiveSizing.iconSize(context, 24),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
 
               // Debug overlay (toggle with D key) - hidden in cinematic mode
