@@ -102,6 +102,8 @@ class _SettingsMenuState extends State<SettingsMenu>
                             _buildFloorSection(),
                             _buildDivider(),
                             _buildPhaseSection(),
+                            _buildDivider(),
+                            _buildDebugSection(),
                             SizedBox(height: ResponsiveSizing.spacing(context, 16)),
                           ],
                         ),
@@ -346,6 +348,51 @@ class _SettingsMenuState extends State<SettingsMenu>
                   onTap: () async {
                     if (currentPhase != GamePhase.walking) {
                       await widget.game.togglePhase();
+                      setState(() {});
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebugSection() {
+    final isDebugEnabled = MemoryLaneGame.showDebugPanel;
+
+    return Padding(
+      padding: ResponsiveSizing.paddingSymmetric(context, horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: ResponsiveSizing.spacing(context, 12)),
+          _buildSectionTitle('Developer'),
+          SizedBox(height: ResponsiveSizing.spacing(context, 12)),
+          Row(
+            children: [
+              Expanded(
+                child: _buildToggleButton(
+                  label: 'Debug Off',
+                  isSelected: !isDebugEnabled,
+                  onTap: () {
+                    if (isDebugEnabled) {
+                      widget.game.toggleDebugPanel();
+                      setState(() {});
+                    }
+                  },
+                ),
+              ),
+              SizedBox(width: ResponsiveSizing.spacing(context, 12)),
+              Expanded(
+                child: _buildToggleButton(
+                  label: 'Debug On',
+                  isSelected: isDebugEnabled,
+                  onTap: () {
+                    if (!isDebugEnabled) {
+                      widget.game.toggleDebugPanel();
                       setState(() {});
                     }
                   },

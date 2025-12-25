@@ -205,9 +205,9 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
             ),
             const SizedBox(height: 12),
 
-            // Instructions
+            // Instructions (tappable for touch devices)
             const Text(
-              'Controls:',
+              'Controls (tap to activate):',
               style: TextStyle(
                 color: Colors.amber,
                 fontWeight: FontWeight.bold,
@@ -215,16 +215,43 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
               ),
             ),
             const SizedBox(height: 4),
-            const _ControlRow(key_: 'M', action: 'Toggle mode'),
+            _ControlRow(
+              key_: 'M',
+              action: 'Toggle mode',
+              onTap: () => widget.game.togglePlacementMode(),
+            ),
             _ControlRow(
               key_: 'SPACE',
               action: _currentMode == DebugPlacementMode.obstacle
                   ? 'Mark corner / Create'
                   : 'Place memory',
+              onTap: () => widget.game.handleObstaclePlacement(),
             ),
-            const _ControlRow(key_: 'C', action: 'Cancel placement'),
-            const _ControlRow(key_: 'P', action: 'Print all to console'),
-            const _ControlRow(key_: 'L', action: 'Switch level'),
+            _ControlRow(
+              key_: 'C',
+              action: 'Cancel placement',
+              onTap: () => widget.game.cancelObstaclePlacement(),
+            ),
+            _ControlRow(
+              key_: 'P',
+              action: 'Print all to console',
+              onTap: () => widget.game.printAllObstacles(),
+            ),
+            _ControlRow(
+              key_: 'L',
+              action: 'Switch level',
+              onTap: () => widget.game.toggleLevel(),
+            ),
+            _ControlRow(
+              key_: 'G',
+              action: 'Toggle phase',
+              onTap: () => widget.game.togglePhase(),
+            ),
+            _ControlRow(
+              key_: 'B',
+              action: 'Collect all memories',
+              onTap: () => widget.game.debugCollectAllMemories(),
+            ),
           ],
         ),
       ),
@@ -235,40 +262,65 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
 class _ControlRow extends StatelessWidget {
   final String key_;
   final String action;
+  final VoidCallback? onTap;
 
-  const _ControlRow({required this.key_, required this.action});
+  const _ControlRow({
+    required this.key_,
+    required this.action,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: Text(
-              key_,
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'monospace',
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: onTap != null
+                      ? Colors.amber.withValues(alpha: 0.3)
+                      : Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(3),
+                  border: onTap != null
+                      ? Border.all(color: Colors.amber.withValues(alpha: 0.5))
+                      : null,
+                ),
+                child: Text(
+                  key_,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  action,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              if (onTap != null)
+                Icon(
+                  Icons.touch_app,
+                  color: Colors.amber.withValues(alpha: 0.5),
+                  size: 14,
+                ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            action,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 11,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

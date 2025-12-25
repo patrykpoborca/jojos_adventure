@@ -225,7 +225,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   // DEBUG MODE FOR PLACEMENT
   // ==========================================
   /// Set to true to enable debug placement mode at startup
-  static const bool debugObstaclePlacementEnabled = true;
+  static const bool debugObstaclePlacementEnabled = false;
 
   /// Runtime toggle for debug panel visibility
   static bool showDebugPanel = debugObstaclePlacementEnabled;
