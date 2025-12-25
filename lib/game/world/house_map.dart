@@ -639,7 +639,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     final suvSprite = await game.loadSprite('sprites/suv.png');
     add(SpriteComponent(
       sprite: suvSprite,
-      position: Vector2(2800, 831),
+      position: Vector2(2685, 831),
       anchor: Anchor.center,
       scale: Vector2.all(0.25),
     ));
@@ -647,7 +647,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     // Collision box for the SUV
     add(const ObstacleData(
       x: 2758, y: 670,
-      width: 80, height: 318,
+      width: 100, height: 318,
       label: 'rivianr1s',
     ).toObstacle(showDebug: MemoryLaneGame.debugObstaclePlacementEnabled));
   }

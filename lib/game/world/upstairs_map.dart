@@ -131,7 +131,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         x: 541, y: 1087,
         stylizedPhotoPath: 'assets/photos/old_crib_drunk.png',
         date: 'Date',
-        caption: 'Older cribs!',
+        caption: 'Milkies are great!',
         phase: GamePhase.walking,
       ),
       MemoryItemData(
