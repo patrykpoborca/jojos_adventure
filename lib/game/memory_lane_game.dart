@@ -174,6 +174,40 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   void Function(GamePhase newPhase)? onPhaseChanged;
 
   // ==========================================
+  // RESPONSIVE CAMERA ZOOM
+  // ==========================================
+  /// Base zoom for main floor (phones see this)
+  static const double _mainFloorBaseZoom = 0.5;
+
+  /// Base zoom for upstairs nursery (phones see this)
+  static const double _upstairsBaseZoom = 0.25;
+
+  /// Base screen width (phone in landscape)
+  static const double _baseScreenWidth = 800.0;
+
+  /// Maximum zoom multiplier to prevent too much zoom on large screens
+  static const double _maxZoomMultiplier = 1.4;
+
+  /// Calculate responsive zoom multiplier based on screen size.
+  /// Larger screens get higher zoom (more zoomed in) to see less of the map.
+  double _getZoomMultiplier() {
+    final screenWidth = size.x;
+    if (screenWidth <= _baseScreenWidth) return 1.0;
+
+    // Gradually increase zoom for larger screens
+    final scale = 1.0 + ((screenWidth - _baseScreenWidth) / _baseScreenWidth) * 0.4;
+    return scale.clamp(1.0, _maxZoomMultiplier);
+  }
+
+  /// Get responsive zoom for the current level
+  double _getResponsiveZoom(LevelId levelId) {
+    final baseZoom = levelId == LevelId.mainFloor
+        ? _mainFloorBaseZoom
+        : _upstairsBaseZoom;
+    return baseZoom * _getZoomMultiplier();
+  }
+
+  // ==========================================
   // DEBUG MODE FOR PLACEMENT
   // ==========================================
   /// Set to true to enable debug placement mode at startup
@@ -300,6 +334,15 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     debugPrint('Phase ${currentPhase.name} has $_totalMemoriesInPhase collectible memories ($houseMemories main floor + $upstairsMemories upstairs)');
   }
 
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    // Update camera zoom when screen size changes (e.g., rotation, window resize)
+    if (currentMap != null) {
+      camera.viewfinder.zoom = _getResponsiveZoom(currentLevel);
+    }
+  }
+
   /// Load a specific level
   Future<void> _loadLevel(LevelId levelId) async {
     // Clear any zone music and SFX zones from the previous level
@@ -319,7 +362,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     switch (levelId) {
       case LevelId.mainFloor:
         currentMap = HouseMap();
-        camera.viewfinder.zoom = 0.5; // Zoomed out for large house
+        camera.viewfinder.zoom = _getResponsiveZoom(LevelId.mainFloor);
         // Set spawn position based on context
         // Note: currentLevel still holds the OLD level at this point
         if (_isFirstLoad) {
@@ -334,7 +377,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
         break;
       case LevelId.upstairsNursery:
         currentMap = UpstairsMap();
-        camera.viewfinder.zoom = 0.25; // Closer zoom for small room
+        camera.viewfinder.zoom = _getResponsiveZoom(LevelId.upstairsNursery);
         player.position = Vector2(1334, 800); // Near the exit door
         player.scale = Vector2.all(2.0); // Larger baby for small room
         await AudioManager().switchAmbientMusic(AudioManager.upstairsAmbient);
