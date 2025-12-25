@@ -342,196 +342,150 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   Widget _buildLevelDialog() {
     final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = (screenHeight * 0.35).clamp(180.0, 280.0);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
+    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
 
     return Container(
-      width: 420,
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.9,
-      ),
+      width: dialogWidth,
+      height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Hero banner image from the memory
-            if (memory != null)
-              Stack(
-                children: [
-                  // Memory image - taller to show more
-                  SizedBox(
-                    width: double.infinity,
-                    height: heroHeight,
-                    child: Image.asset(
-                      memory!.stylizedPhotoPath,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: const Color(0xFFD4A574).withValues(alpha: 0.2),
-                          child: const Center(
-                            child: Icon(
-                              Icons.photo,
-                              size: 64,
-                              color: Color(0xFFD4A574),
-                            ),
-                          ),
-                        );
-                      },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed hero image
+          if (memory != null)
+            Image.asset(
+              memory!.stylizedPhotoPath,
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFFD4A574),
+                  child: const Center(
+                    child: Icon(
+                      Icons.photo,
+                      size: 64,
+                      color: Colors.white54,
                     ),
                   ),
-                  // Gradient overlay at bottom for smooth transition
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: 60,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Color(0xFFFFFBF7),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Icon badge overlapping bottom of image
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBF7),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Container(
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFD4A574).withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.stairs,
-                            size: 26,
-                            color: Color(0xFFD4A574),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                );
+              },
+            ),
+
+          // Gradient overlay at bottom for caption readability
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: dialogHeight * 0.4,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
+                ),
               ),
+            ),
+          ),
 
-            // Content padding
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-              child: Column(
-                children: [
-                  // Title
-                  const SizedBox(height: 8),
-
-                  // Description with surface background
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F0EB),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          memory?.caption ?? 'A special memory awaits...',
-                          style: GoogleFonts.caveat(
-                            fontSize: 20,
-                            color: const Color(0xFFD4A574),
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Would you like to leave this area?',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _onLevelDecline,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade600,
-                            side: BorderSide(color: Colors.grey.shade400),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text('Not Now'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _onLevelAccept,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFD4A574),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Let\'s Go!',
-                            style: GoogleFonts.caveat(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+          // Caption at bottom
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  memory?.caption ?? 'A special memory awaits...',
+                  style: GoogleFonts.caveat(
+                    fontSize: 28,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 8,
                       ),
                     ],
                   ),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          // Close button (X) - top left
+          Positioned(
+            top: 12,
+            left: 12,
+            child: _buildCornerButton(
+              icon: Icons.close,
+              onTap: _onLevelDecline,
+              isAccent: false,
+            ),
+          ),
+
+          // Go forward button (arrow) - top right
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _buildCornerButton(
+              icon: Icons.arrow_forward,
+              onTap: _onLevelAccept,
+              isAccent: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCornerButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isAccent,
+    Color? accentColor,
+  }) {
+    final buttonColor = isAccent
+        ? (accentColor ?? const Color(0xFFD4A574))
+        : Colors.black.withValues(alpha: 0.4);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: buttonColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 22,
         ),
       ),
     );
@@ -539,188 +493,125 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   Widget _buildPhaseCompleteDialog() {
     final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = (screenHeight * 0.25).clamp(140.0, 200.0);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
+    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
 
     return Container(
-      width: 420,
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.9,
-      ),
+      width: dialogWidth,
+      height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Hero section with gradient background
-            Stack(
-              children: [
-                // Gradient hero background
-                Container(
-                  width: double.infinity,
-                  height: heroHeight,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFFAED581), // Light green
-                        Color(0xFF8BC34A), // Green
-                        Color(0xFF7CB342), // Darker green
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.child_care,
-                      size: 80,
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-                // Gradient overlay at bottom for smooth transition
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 60,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Color(0xFFFFFBF7),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Icon badge overlapping bottom
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFBF7),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Container(
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8BC34A).withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.directions_walk,
-                          size: 26,
-                          color: Color(0xFF8BC34A),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    'Growing Up!',
-                    style: GoogleFonts.caveat(
-                      fontSize: 28,
-                      color: const Color(0xFF3C3C3C),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Description with surface background
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F0EB),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'You\'ve collected all the crawling memories!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Time to take your first steps...',
-                          style: GoogleFonts.caveat(
-                            fontSize: 20,
-                            color: const Color(0xFF8BC34A),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _onPhaseTransition,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8BC34A),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Start Walking!',
-                        style: GoogleFonts.caveat(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed gradient background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFAED581), // Light green
+                  Color(0xFF8BC34A), // Green
+                  Color(0xFF7CB342), // Darker green
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Large watermark icon
+          Center(
+            child: Icon(
+              Icons.child_care,
+              size: 160,
+              color: Colors.white.withValues(alpha: 0.2),
+            ),
+          ),
+
+          // Gradient overlay at bottom for caption readability
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: dialogHeight * 0.4,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    const Color(0xFF5D9936).withValues(alpha: 0.9),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Caption at bottom
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Growing Up!',
+                  style: GoogleFonts.caveat(
+                    fontSize: 36,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Time to take your first steps...',
+                  style: GoogleFonts.caveat(
+                    fontSize: 22,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          // Go forward button (arrow) - top right (only action for this dialog)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _buildCornerButton(
+              icon: Icons.arrow_forward,
+              onTap: _onPhaseTransition,
+              isAccent: true,
+              accentColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -734,440 +625,296 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   Widget _buildGameCompleteDialog() {
     final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = (screenHeight * 0.35).clamp(180.0, 280.0);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
+    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
 
     return Container(
-      width: 420,
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.9,
-      ),
+      width: dialogWidth,
+      height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Hero image with icon overlay
-            if (memory != null)
-              Stack(
-                children: [
-                  // Main hero image - taller to show more
-                  SizedBox(
-                    width: double.infinity,
-                    height: heroHeight,
-                    child: Image.asset(
-                      memory!.stylizedPhotoPath,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: const Color(0xFFD4A574).withValues(alpha: 0.2),
-                          child: const Center(
-                            child: Icon(
-                              Icons.directions_car,
-                              size: 64,
-                              color: Color(0xFFD4A574),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed hero image - always use exit hero image
+          Image.asset(
+            'assets/photos/exit_hero_image.png',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: const Color(0xFF4CAF50),
+                child: const Center(
+                  child: Icon(
+                    Icons.directions_car,
+                    size: 64,
+                    color: Colors.white54,
                   ),
-                  // Gradient overlay at bottom for smooth transition
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: 60,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Color(0xFFFFFBF7),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Icon badge overlapping bottom of image
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBF7),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Container(
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.directions_car,
-                            size: 26,
-                            color: Color(0xFF4CAF50),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+              );
+            },
+          ),
+
+          // Gradient overlay at bottom for caption readability
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: dialogHeight * 0.45,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.8),
+                  ],
+                ),
               ),
+            ),
+          ),
 
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    'Ready for Adventure!',
-                    style: GoogleFonts.caveat(
-                      fontSize: 28,
-                      color: const Color(0xFF3C3C3C),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Description with surface background
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F0EB),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'You\'ve collected all the precious memories.\nTime for a family road trip!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '🎄 Merry Christmas! 🎄',
-                          style: GoogleFonts.caveat(
-                            fontSize: 20,
-                            color: const Color(0xFFD4A574),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _closeOverlay,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade600,
-                            side: BorderSide(color: Colors.grey.shade400),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text('Stay a bit'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _onStartRoadTrip,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4CAF50),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Let\'s Go!',
-                            style: GoogleFonts.caveat(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+          // Caption at bottom
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Ready for Adventure!',
+                  style: GoogleFonts.caveat(
+                    fontSize: 32,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 8,
                       ),
                     ],
                   ),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '🎄 Merry Christmas! 🎄',
+                  style: GoogleFonts.caveat(
+                    fontSize: 22,
+                    color: const Color(0xFFFFD700),
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // Close button (X) - top left
+          Positioned(
+            top: 12,
+            left: 12,
+            child: _buildCornerButton(
+              icon: Icons.close,
+              onTap: _closeOverlay,
+              isAccent: false,
+            ),
+          ),
+
+          // Go forward button (arrow) - top right
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _buildCornerButton(
+              icon: Icons.arrow_forward,
+              onTap: _onStartRoadTrip,
+              isAccent: true,
+              accentColor: const Color(0xFF4CAF50),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildEndgameNotReadyDialog() {
     final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = (screenHeight * 0.35).clamp(180.0, 280.0);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dialogHeight = (screenHeight * 0.75).clamp(300.0, 500.0);
+    final dialogWidth = (screenWidth * 0.85).clamp(320.0, 480.0);
     final collected = widget.game.memoriesCollected;
     final total = widget.game.totalMemories;
 
     return Container(
-      width: 420,
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.9,
-      ),
+      width: dialogWidth,
+      height: dialogHeight,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Hero image with greyed overlay (locked feel)
-            if (memory != null)
-              Stack(
-                children: [
-                  // Main hero image
-                  SizedBox(
-                    width: double.infinity,
-                    height: heroHeight,
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        Colors.grey.withValues(alpha: 0.5),
-                        BlendMode.saturation,
-                      ),
-                      child: Image.asset(
-                        memory!.stylizedPhotoPath,
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey.shade300,
-                            child: Center(
-                              child: Icon(
-                                Icons.directions_car,
-                                size: 64,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  // Dark overlay for locked effect
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  // Gradient overlay at bottom for smooth transition
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: 60,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Color(0xFFFFFBF7),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Locked icon badge overlapping bottom
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBF7),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Container(
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Icon(
-                                Icons.directions_car,
-                                size: 22,
-                                color: Colors.grey.shade400,
-                              ),
-                              Positioned(
-                                right: 6,
-                                bottom: 6,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.lock,
-                                    size: 10,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed hero image with desaturation
+          if (memory != null)
+            ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                Colors.grey.withValues(alpha: 0.6),
+                BlendMode.saturation,
               ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    'Not Quite Ready Yet...',
-                    style: GoogleFonts.caveat(
-                      fontSize: 28,
-                      color: const Color(0xFF3C3C3C),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Description with surface background and progress
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F0EB),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'There are still more memories to collect\nbefore our road trip!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        // Progress indicator
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.photo_library,
-                              color: Color(0xFFD4A574),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$collected / $total memories',
-                              style: GoogleFonts.caveat(
-                                fontSize: 18,
-                                color: const Color(0xFFD4A574),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _closeOverlay,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD4A574),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+              child: Image.asset(
+                memory!.stylizedPhotoPath,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey.shade600,
+                    child: const Center(
+                      child: Icon(
+                        Icons.directions_car,
+                        size: 64,
+                        color: Colors.white30,
                       ),
-                      child: Text(
-                        'Keep Exploring',
+                    ),
+                  );
+                },
+              ),
+            ),
+
+          // Dark overlay for locked effect
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.3),
+            ),
+          ),
+
+          // Gradient overlay at bottom for caption readability
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: dialogHeight * 0.45,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Lock icon in center
+          Center(
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock,
+                color: Colors.white70,
+                size: 32,
+              ),
+            ),
+          ),
+
+          // Caption and progress at bottom
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Not Quite Ready Yet...',
+                  style: GoogleFonts.caveat(
+                    fontSize: 28,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                // Progress indicator
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.photo_library,
+                        color: Color(0xFFD4A574),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '$collected / $total memories',
                         style: GoogleFonts.caveat(
-                          fontSize: 20,
+                          fontSize: 18,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // Close button (X) - top left (only button for this dialog)
+          Positioned(
+            top: 12,
+            left: 12,
+            child: _buildCornerButton(
+              icon: Icons.close,
+              onTap: _closeOverlay,
+              isAccent: false,
+            ),
+          ),
+        ],
       ),
     );
   }
