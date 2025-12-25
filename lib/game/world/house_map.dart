@@ -6,6 +6,7 @@ import 'package:memory_lane/game/world/memory_item.dart';
 import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
 import 'package:memory_lane/game/world/character.dart';
+import 'package:memory_lane/game/world/walking_character.dart';
 
 /// The game world - a top-down view of the house
 class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
@@ -83,6 +84,18 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         photoPath: 'assets/photos/old_window.jpg',
         date: 'Nov 29, 2025', caption: 'Watching out the window',
         phase: GamePhase.walking
+      ),
+      MemoryItemData.simple(
+          x: 2712, y: 908,
+          photoPath: 'assets/photos/young_road_trip.jpg',
+          date: 'Feb 20, 2025', caption: 'Man it\'s cold outside',
+          phase: GamePhase.crawling
+      ),
+      MemoryItemData.simple(
+          x: 2712, y: 908,
+          photoPath: 'assets/photos/old_road_trip.jpg',
+          date: 'Dec 21, 2025', caption: 'Wow i got big!',
+          phase: GamePhase.walking
       ),
       MemoryItemData(
         x: 1418, y: 355,
@@ -376,6 +389,12 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         musicFile: 'franky.mp3',
         maxVolume: 0.6,
       ),
+      MusicZoneData(
+        x: 2454, y: 651, width: 606, height: 494,
+        zoneId: 'garage',
+        musicFile: 'kpop.mp3',
+        maxVolume: 0.6,
+      ),
     ];
   }
 
@@ -473,6 +492,33 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     ];
   }
 
+  /// Returns the list of walking character data (characters that move between waypoints)
+  List<WalkingCharacterData> getWalkingCharacterData() {
+    return const [
+      // Dad - walks around the office area
+      WalkingCharacterData(
+        x: 2103, y: 506,
+        name: 'Dad',
+        spritePath: 'sprites/father.png',
+        waypoints: [
+          [2103, 506],  // Start position (office)
+          [2103, 691],  // Move down
+          [2354, 698],  // Move right
+        ],
+        columns: 5,
+        rows: 4,
+        displaySize: 64,
+        animationSpeed: 0.15,
+        scale: 2.0,
+        walkSpeed: 40.0,
+        loopWaypoints: false, // Ping-pong between waypoints
+        collisionRadius: 0.0, // No collision
+        interactionMessage: 'Hey buddy! Dad loves you!',
+        waypointPauseDuration: 2.0,
+      ),
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -508,6 +554,12 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     // Add characters
     _addCharacters();
+
+    // Add walking characters
+    _addWalkingCharacters();
+
+    // Add static decorations (car, etc.)
+    await _addDecorations();
 
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
@@ -570,6 +622,34 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     for (final data in getCharacterData()) {
       add(data.toCharacter(showDebug: showDebug));
     }
+  }
+
+  /// Adds walking characters to the map
+  void _addWalkingCharacters() {
+    final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
+
+    for (final data in getWalkingCharacterData()) {
+      add(data.toWalkingCharacter(showDebug: showDebug));
+    }
+  }
+
+  /// Adds static decoration sprites (car, furniture, etc.)
+  Future<void> _addDecorations() async {
+    // SUV in the garage
+    final suvSprite = await game.loadSprite('sprites/suv.png');
+    add(SpriteComponent(
+      sprite: suvSprite,
+      position: Vector2(2800, 831),
+      anchor: Anchor.center,
+      scale: Vector2.all(0.25),
+    ));
+
+    // Collision box for the SUV
+    add(const ObstacleData(
+      x: 2758, y: 670,
+      width: 80, height: 318,
+      label: 'rivianr1s',
+    ).toObstacle(showDebug: MemoryLaneGame.debugObstaclePlacementEnabled));
   }
 
   void _addDebugBounds() {

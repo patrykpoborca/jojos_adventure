@@ -11,7 +11,7 @@ class AudioManager {
 
   /// Default ambient music files per level
   static const String mainFloorAmbient = 'chillhome_trim_a.mp3';
-  static const String upstairsAmbient = 'nursery_trim_a.mp3';
+  static const String upstairsAmbient = 'silent_night.mp3';
 
   static const String _defaultZoneId = '_default_ambient';
 

@@ -261,6 +261,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       debugPrint('Press P to print all placed items');
       debugPrint('Press L to switch levels (debug)');
       debugPrint('Press G to toggle phase (crawling/walking)');
+      debugPrint('Press U to toggle player collision');
       debugPrint('============================');
     }
   }
@@ -365,6 +366,12 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
     onPhaseChanged?.call(nextPhase);
     debugPrint('Toggled to ${nextPhase.name} phase');
+  }
+
+  /// Toggle player collision on/off (for debug)
+  void togglePlayerCollision() {
+    player.collisionEnabled = !player.collisionEnabled;
+    debugPrint('Player collision: ${player.collisionEnabled ? 'ON' : 'OFF'}');
   }
 
   /// Get the playable bounds for the current level

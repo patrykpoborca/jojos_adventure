@@ -192,7 +192,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       ),
     ];
   }
-  
+
 
   /// Returns the list of SFX zone data for the nursery
   List<SfxZoneData> getSfxZoneData() {

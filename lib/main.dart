@@ -110,6 +110,9 @@ class _GameScreenState extends State<GameScreen> {
       } else if (event.logicalKey == LogicalKeyboardKey.keyG) {
         _game.togglePhase();
         return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyU) {
+        _game.togglePlayerCollision();
+        return KeyEventResult.handled;
       }
     }
     return KeyEventResult.ignored;

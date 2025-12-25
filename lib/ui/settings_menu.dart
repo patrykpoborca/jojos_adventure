@@ -87,17 +87,24 @@ class _SettingsMenuState extends State<SettingsMenu>
                         ),
                       ],
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildHeader(),
-                        _buildAudioSection(),
-                        _buildDivider(),
-                        _buildFloorSection(),
-                        _buildDivider(),
-                        _buildPhaseSection(),
-                        const SizedBox(height: 16),
-                      ],
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.8,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildHeader(),
+                            _buildAudioSection(),
+                            _buildDivider(),
+                            _buildFloorSection(),
+                            _buildDivider(),
+                            _buildPhaseSection(),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),

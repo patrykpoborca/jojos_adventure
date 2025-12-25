@@ -7,6 +7,7 @@ import 'package:flame/sprite.dart';
 import '../memory_lane_game.dart';
 import '../world/obstacle.dart';
 import '../world/character.dart';
+import '../world/walking_character.dart';
 
 /// Direction the baby is facing
 enum BabyDirection { down, up, left, right }
@@ -18,6 +19,9 @@ enum MovementMode { crawling, walking }
 class BabyPlayer extends SpriteAnimationComponent
     with HasGameReference<MemoryLaneGame>, CollisionCallbacks {
   final JoystickComponent joystick;
+
+  /// Whether collision is enabled (can be toggled for debug)
+  bool collisionEnabled = true;
 
   /// Whether we're currently colliding
   bool _isColliding = false;
@@ -290,15 +294,23 @@ class BabyPlayer extends SpriteAnimationComponent
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
 
+    // Skip all collision handling if disabled (debug mode)
+    if (!collisionEnabled) return;
+
     // Skip collision with non-obstacle components (memories, etc.)
-    // Check if other is Obstacle, Character, or has these as parent
+    // Check if other is Obstacle, Character, WalkingCharacter, or has these as parent
     final isObstacle = other is Obstacle || other.parent is Obstacle;
     final isCharacter = other is Character || other.parent is Character;
 
-    // Debug: log all collisions
-    // debugPrint('Collision with: ${other.runtimeType}, parent: ${other.parent?.runtimeType}, isObstacle: $isObstacle, isCharacter: $isCharacter');
+    // For WalkingCharacter, also check if collision is enabled
+    bool isWalkingCharacterWithCollision = false;
+    if (other is WalkingCharacter) {
+      isWalkingCharacterWithCollision = other.hasCollision;
+    } else if (other.parent is WalkingCharacter) {
+      isWalkingCharacterWithCollision = (other.parent as WalkingCharacter).hasCollision;
+    }
 
-    if (!isObstacle && !isCharacter) return;
+    if (!isObstacle && !isCharacter && !isWalkingCharacterWithCollision) return;
 
     _isColliding = true;
 
