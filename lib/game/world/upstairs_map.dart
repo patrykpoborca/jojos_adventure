@@ -176,6 +176,22 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     ];
   }
 
+  /// Returns the list of SFX zone data for the nursery
+  List<SfxZoneData> getSfxZoneData() {
+    return const [
+      // Shower/bath running water sound
+      SfxZoneData(
+        x: 248, y: 1420,
+        zoneId: 'bathtime',
+        sfxFile: 'bathtime.mp3',
+        innerRadius: 100.0,  // 2x scaled for upstairs
+        outerRadius: 600.0,  // 2x scaled for upstairs
+        maxVolume: 0.6,
+        oneShot: false,
+      ),
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -202,6 +218,9 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
 
     // Add music zones
     _addMusicZones();
+
+    // Add SFX zones
+    await _addSfxZones();
 
     // Add pets
     _addPets();
@@ -246,6 +265,13 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
 
     for (final data in getMusicZoneData()) {
       add(data.toMusicZone(showDebug: showDebug));
+    }
+  }
+
+  /// Adds SFX zones to the map
+  Future<void> _addSfxZones() async {
+    for (final data in getSfxZoneData()) {
+      await data.register();
     }
   }
 

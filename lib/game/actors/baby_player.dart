@@ -5,6 +5,8 @@ import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 
 import '../memory_lane_game.dart';
+import '../world/obstacle.dart';
+import '../world/pet.dart';
 
 /// Direction the baby is facing
 enum BabyDirection { down, up, left, right }
@@ -14,12 +16,18 @@ enum MovementMode { crawling, walking }
 
 /// The player-controlled baby avatar with sprite animations
 class BabyPlayer extends SpriteAnimationComponent
-    with HasGameReference<MemoryLaneGame> {
+    with HasGameReference<MemoryLaneGame>, CollisionCallbacks {
   final JoystickComponent joystick;
 
-  /// Movement speed in pixels per second
-  static const double crawlSpeed = 60;
-  static const double walkSpeed = 180;
+  /// Stores collision push-back for this frame
+  Vector2 _collisionNudge = Vector2.zero();
+
+  /// Movement speed in pixels per second (base values for main floor)
+  static const double _baseCrawlSpeed = 60;
+  static const double _baseWalkSpeed = 180;
+
+  /// Upstairs scale multiplier (matches player scale difference)
+  static const double _upstairsMultiplier = 2.0;
 
   /// Sprite frame configuration
   static const int frameColumns = 4;
@@ -47,9 +55,16 @@ class BabyPlayer extends SpriteAnimationComponent
           priority: 100, // Render on top of map elements
         );
 
-  /// Current movement speed based on mode
-  double get speed =>
-      (_movementMode == MovementMode.crawling ? crawlSpeed : walkSpeed) * 3;
+  /// Current movement speed based on mode and level
+  double get speed {
+    final baseSpeed = _movementMode == MovementMode.crawling
+        ? _baseCrawlSpeed
+        : _baseWalkSpeed;
+    final levelMultiplier = game.currentLevel == LevelId.upstairsNursery
+        ? _upstairsMultiplier
+        : 1.0;
+    return baseSpeed * 3 * levelMultiplier;
+  }
 
   /// Current movement mode
   MovementMode get movementMode => _movementMode;
@@ -72,6 +87,7 @@ class BabyPlayer extends SpriteAnimationComponent
       radius: displaySize * 0.3,
       position: Vector2(displaySize / 2, displaySize * 0.6),
       anchor: Anchor.center,
+      collisionType: CollisionType.active,
     ));
   }
 
@@ -183,9 +199,37 @@ class BabyPlayer extends SpriteAnimationComponent
       _isMoving = false;
     }
 
+    // Apply collision push-back
+    if (!_collisionNudge.isZero()) {
+      position.add(_collisionNudge);
+      _collisionNudge = Vector2.zero();
+    }
+
     // Update animation if state changed
     if (_isMoving != wasMoving || _currentDirection != previousDirection) {
       _updateAnimation();
+    }
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+
+    // Skip collision with non-obstacle components (memories, etc.)
+    if (other is! Obstacle && other.parent is! Pet) return;
+
+    // Calculate push-back direction from collision
+    if (intersectionPoints.isNotEmpty) {
+      // Find center of intersection
+      final intersectionCenter = intersectionPoints.reduce((a, b) => a + b) /
+          intersectionPoints.length.toDouble();
+
+      // Push away from intersection point
+      final pushDirection = position - intersectionCenter;
+      if (pushDirection.length > 0) {
+        pushDirection.normalize();
+        _collisionNudge = pushDirection * 5.0; // Push back 5 pixels
+      }
     }
   }
 

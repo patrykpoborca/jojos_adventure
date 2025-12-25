@@ -145,14 +145,41 @@ class MemoryItem extends SpriteAnimationComponent
   /// Whether this memory has been collected
   bool _collected = false;
 
-  /// Distance threshold for collecting (in pixels)
-  static const double collectDistance = 150.0;
+  /// Distance threshold for collecting (in pixels) - base value for main floor
+  static const double _baseCollectDistance = 150.0;
 
-  /// Distance at which memories start becoming visible
-  static const double visibilityStartDistance = 400.0;
+  /// Distance at which memories start becoming visible - base value for main floor
+  static const double _baseVisibilityStartDistance = 400.0;
 
-  /// Distance at which memories are fully visible
-  static const double visibilityFullDistance = 200.0;
+  /// Distance at which memories are fully visible - base value for main floor
+  static const double _baseVisibilityFullDistance = 200.0;
+
+  /// Upstairs scale multiplier (matches player scale difference)
+  static const double _upstairsMultiplier = 2.0;
+
+  /// Get current collect distance based on level
+  double get collectDistance {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseCollectDistance * _upstairsMultiplier;
+    }
+    return _baseCollectDistance;
+  }
+
+  /// Get current visibility start distance based on level
+  double get visibilityStartDistance {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseVisibilityStartDistance * _upstairsMultiplier;
+    }
+    return _baseVisibilityStartDistance;
+  }
+
+  /// Get current visibility full distance based on level
+  double get visibilityFullDistance {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseVisibilityFullDistance * _upstairsMultiplier;
+    }
+    return _baseVisibilityFullDistance;
+  }
 
   /// The persistently assigned sprite type for this memory
   late final MemorySpriteType _spriteType;

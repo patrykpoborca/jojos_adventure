@@ -17,8 +17,8 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
   /// Extended radius for the gradient fade (main floor)
   static const double _baseFadeRadius = 150.0;
 
-  /// Upstairs scale multiplier (35% larger)
-  static const double upstairsMultiplier = 1.35;
+  /// Upstairs scale multiplier (matches player scale difference)
+  static const double upstairsMultiplier = 2.0;
 
   /// Get current visibility radius based on level
   double get baseVisibilityRadius {

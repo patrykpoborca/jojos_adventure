@@ -29,7 +29,7 @@ class PetSpriteConfig {
 
 /// An interactive pet character (dog, cat, etc.)
 class Pet extends SpriteAnimationComponent
-    with TapCallbacks, HasGameReference<MemoryLaneGame> {
+    with TapCallbacks, CollisionCallbacks, HasGameReference<MemoryLaneGame> {
   /// The pet's name
   final String name;
 
@@ -45,16 +45,43 @@ class Pet extends SpriteAnimationComponent
   /// Whether the pet is flipped horizontally
   final bool flipped;
 
-  /// Distance threshold for interaction (in pixels)
-  static const double interactDistance = 150.0;
+  /// Distance threshold for interaction (in pixels) - base value for main floor
+  static const double _baseInteractDistance = 150.0;
 
-  /// Distance at which pets start becoming visible (fog of war)
+  /// Distance at which pets start becoming visible (fog of war) - base value
   /// 40% further than memories (400 * 1.4 = 560)
-  static const double visibilityStartDistance = 560.0;
+  static const double _baseVisibilityStartDistance = 560.0;
 
-  /// Distance at which pets are fully visible
+  /// Distance at which pets are fully visible - base value
   /// 40% further than memories (200 * 1.4 = 280)
-  static const double visibilityFullDistance = 280.0;
+  static const double _baseVisibilityFullDistance = 280.0;
+
+  /// Upstairs scale multiplier (matches player scale difference)
+  static const double _upstairsMultiplier = 2.0;
+
+  /// Get current interact distance based on level
+  double get interactDistance {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseInteractDistance * _upstairsMultiplier;
+    }
+    return _baseInteractDistance;
+  }
+
+  /// Get current visibility start distance based on level
+  double get visibilityStartDistance {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseVisibilityStartDistance * _upstairsMultiplier;
+    }
+    return _baseVisibilityStartDistance;
+  }
+
+  /// Get current visibility full distance based on level
+  double get visibilityFullDistance {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseVisibilityFullDistance * _upstairsMultiplier;
+    }
+    return _baseVisibilityFullDistance;
+  }
 
   /// Sleeping Z animation
   double _zTime = 0;
@@ -128,16 +155,35 @@ class Pet extends SpriteAnimationComponent
       collisionType: CollisionType.passive,
     ));
 
+    // Add collision obstacle hitbox (140 radius, scaled for level)
+    final collisionRadius = 140.0 * baseScale;
+    add(CircleHitbox(
+      radius: collisionRadius,
+      position: size / 2,
+      anchor: Anchor.center,
+      collisionType: CollisionType.passive,
+    ));
+
     // Debug visualization
     if (showDebug) {
+      // Interaction range
       add(CircleComponent(
-        radius: interactDistance,
+        radius: _baseInteractDistance,
         position: size / 2,
         anchor: Anchor.center,
         paint: Paint()
           ..color = Colors.blue.withValues(alpha: 0.1)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1,
+      ));
+      // Collision radius
+      add(CircleComponent(
+        radius: collisionRadius,
+        position: size / 2,
+        anchor: Anchor.center,
+        paint: Paint()
+          ..color = Colors.red.withValues(alpha: 0.3)
+          ..style = PaintingStyle.fill,
       ));
     }
   }
