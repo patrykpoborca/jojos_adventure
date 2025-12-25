@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'actors/baby_player.dart';
 import 'audio/audio_manager.dart';
 import 'world/house_map.dart';
+import 'world/memory_item.dart';
 import 'world/upstairs_map.dart';
 
 /// Available levels in the game
@@ -225,6 +226,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   Future<void> _loadLevel(LevelId levelId) async {
     // Clear any zone music from the previous level
     AudioManager().clearZoneMusic();
+
+    // Reset memory sprite bag for fresh distribution
+    MemorySpriteTypes.resetBag();
 
     // Remove current map if exists
     if (currentMap != null) {

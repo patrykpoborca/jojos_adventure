@@ -36,20 +36,58 @@ class MemorySpriteTypes {
       columns: 4,
       rows: 4,
       displaySize: 60.0,
-      animationSpeed: 0.25, // 6 frames × 0.15s = 0.9s loop
+      animationSpeed: 0.25,
     ),
     MemorySpriteType(
       assetPath: 'sprites/memories_2.png',
       columns: 4,
       rows: 4,
       displaySize: 64.0,
-      animationSpeed: 0.25, // 16 frames × 0.1s = 1.6s loop
+      animationSpeed: 0.25,
     ),
   ];
 
   static final Random _random = Random();
 
-  /// Get a random sprite type
+  /// Shuffled bag of sprite indices for even distribution
+  static List<int> _bag = [];
+
+  /// Reset the bag (call on game restart for fresh randomization)
+  static void resetBag() {
+    _bag = [];
+  }
+
+  /// Get next sprite type using bag system (no clustering)
+  /// Uses position for consistent assignment when memories load in different orders
+  static MemorySpriteType getNext(double x, double y) {
+    // Refill bag when empty with shuffled indices
+    if (_bag.isEmpty) {
+      _refillBag();
+    }
+
+    // Use position hash to pick from bag consistently
+    // This ensures same position always gets same type per session
+    final posHash = (x.toInt() * 31 + y.toInt()).abs() % _bag.length;
+    final index = _bag.removeAt(posHash);
+
+    return all[index];
+  }
+
+  /// Refill the bag with multiple copies of each type, shuffled
+  static void _refillBag() {
+    // Add each type multiple times for better distribution
+    const copiesPerType = 3;
+    _bag = [];
+    for (var i = 0; i < all.length; i++) {
+      for (var j = 0; j < copiesPerType; j++) {
+        _bag.add(i);
+      }
+    }
+    // Shuffle the bag
+    _bag.shuffle(_random);
+  }
+
+  /// Get a random sprite type (legacy, use getNext for better distribution)
   static MemorySpriteType getRandom() {
     return all[_random.nextInt(all.length)];
   }
@@ -76,6 +114,9 @@ class MemoryItem extends SpriteAnimationComponent
   /// The randomly selected sprite type for this memory
   late final MemorySpriteType _spriteType;
 
+  /// Whether this memory is flipped horizontally
+  late final bool _flippedX;
+
   /// Scale effect when player is nearby
   static const double normalScale = 1.0;
   static const double activeScale = 1.2; // 20% larger when in range
@@ -88,7 +129,8 @@ class MemoryItem extends SpriteAnimationComponent
     required this.memory,
     this.showDebug = false,
     this.baseScale = 1.0,
-  }) : _spriteType = MemorySpriteTypes.getRandom(),
+  }) : _spriteType = MemorySpriteTypes.getNext(position.x, position.y),
+       _flippedX = Random().nextBool(),
        super(
           position: position,
           size: Vector2.all(80.0 * baseScale), // Initial size, updated in onLoad
@@ -142,6 +184,11 @@ class MemoryItem extends SpriteAnimationComponent
     final randomStartFrame = random.nextInt(frames.length);
     animationTicker?.currentIndex = randomStartFrame;
 
+    // Apply random horizontal flip
+    if (_flippedX) {
+      scale = Vector2(-1.0, 1.0);
+    }
+
     // Add circular hitbox for tap detection (larger than sprite for easier tapping)
     add(CircleHitbox(
       radius: (spriteSize * baseScale) / 2 + 20,
@@ -178,7 +225,9 @@ class MemoryItem extends SpriteAnimationComponent
       } else {
         _currentScale = (_currentScale - scaleSpeed * dt).clamp(normalScale, activeScale);
       }
-      scale = Vector2.all(_currentScale);
+      // Preserve horizontal flip when scaling
+      final xScale = _flippedX ? -_currentScale : _currentScale;
+      scale = Vector2(xScale, _currentScale);
     }
   }
 
