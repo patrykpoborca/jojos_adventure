@@ -29,8 +29,8 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ObstacleData(x: 134, y: 1162, width: 2993, height: 3, label: 'southBoundary'),
       ObstacleData(x: 134, y: 933, width: 143, height: 231, label: 'southWestBoundary'),
       ObstacleData(x: 134, y: 338, width: 103, height: 573, label: 'westBoundary'),
-      ObstacleData(x: 168, y: 446, width: 430, height: 54, label: 'northElCouch'),
-      ObstacleData(x: 297, y: 607, width: 165, height: 55, label: 'ottoman'),
+      ObstacleData(x: 168, y: 346, width: 430, height: 130, label: 'northElCouch'),
+      ObstacleData(x: 320, y: 607, width: 135, height: 55, label: 'ottoman'),
       ObstacleData(x: 337, y: 988, width: 177, height: 88, label: 'whiteChristmasTree'),
       ObstacleData(x: 899, y: 615, width: 136, height: 375, label: 'eastCenterStaircase'),
       ObstacleData(x: 618, y: 608, width: 83, height: 418, label: 'westCenterStaircase'),
@@ -458,7 +458,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     return const [
       // Willow - sleeping dog in the living room
       PetData(
-        x: 431, y: 762,
+        x: 400, y: 762,
         name: 'Willow',
         spritePath: 'sprites/willow.png',
         columns: 8,
@@ -467,6 +467,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         animationSpeed: 0.15,
         scale: 1.3,
         flipped: false,
+        collisionRadius: 35.0,
       ),
     ];
   }

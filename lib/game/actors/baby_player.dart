@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
+import 'package:flutter/foundation.dart';
 
 import '../memory_lane_game.dart';
 import '../world/obstacle.dart';
@@ -19,8 +20,29 @@ class BabyPlayer extends SpriteAnimationComponent
     with HasGameReference<MemoryLaneGame>, CollisionCallbacks {
   final JoystickComponent joystick;
 
-  /// Stores collision push-back for this frame
-  Vector2 _collisionNudge = Vector2.zero();
+  /// Whether we're currently colliding
+  bool _isColliding = false;
+
+  /// Whether we were colliding last frame (for detecting collision start)
+  bool _wasColliding = false;
+
+  /// Accumulated collision direction (normalized)
+  Vector2 _collisionDirection = Vector2.zero();
+
+  /// Position where collision started (for camera freeze)
+  Vector2? _collisionStartPos;
+
+  /// Frozen camera position during collision recovery
+  Vector2? _frozenCameraPos;
+
+  /// Distance threshold to resume camera movement after collision
+  static const double _cameraResumeThreshold = 20.0;
+
+  /// Smooth camera target for gradual unfreezing
+  Vector2 _smoothCameraTarget = Vector2.zero();
+
+  /// Whether the camera target has been initialized
+  bool _cameraTargetInitialized = false;
 
   /// Movement speed in pixels per second (base values for main floor)
   static const double _baseCrawlSpeed = 60;
@@ -179,6 +201,12 @@ class BabyPlayer extends SpriteAnimationComponent
   void update(double dt) {
     super.update(dt);
 
+    // Initialize camera target on first update
+    if (!_cameraTargetInitialized) {
+      _smoothCameraTarget = position.clone();
+      _cameraTargetInitialized = true;
+    }
+
     final wasMoving = _isMoving;
     final previousDirection = _currentDirection;
 
@@ -186,8 +214,17 @@ class BabyPlayer extends SpriteAnimationComponent
     if (!joystick.delta.isZero()) {
       _isMoving = true;
 
-      // Calculate movement
-      final delta = joystick.relativeDelta * speed * dt;
+      // Calculate intended movement
+      var delta = joystick.relativeDelta * speed * dt;
+
+      // If colliding, allow sliding along obstacles
+      if (_isColliding && !_collisionDirection.isZero()) {
+        // Project movement onto the surface tangent (perpendicular to collision normal)
+        final tangent = Vector2(-_collisionDirection.y, _collisionDirection.x);
+        final slideAmount = delta.dot(tangent);
+        delta = tangent * slideAmount;
+      }
+
       position.add(delta);
 
       // Determine direction based on joystick angle
@@ -199,11 +236,15 @@ class BabyPlayer extends SpriteAnimationComponent
       _isMoving = false;
     }
 
-    // Apply collision push-back
-    if (!_collisionNudge.isZero()) {
-      position.add(_collisionNudge);
-      _collisionNudge = Vector2.zero();
-    }
+    // Handle camera freeze on collision
+    _updateCameraTarget();
+
+    // Track collision state for next frame
+    _wasColliding = _isColliding;
+
+    // Reset collision state (will be set again by onCollision if still colliding)
+    _isColliding = false;
+    _collisionDirection = Vector2.zero();
 
     // Update animation if state changed
     if (_isMoving != wasMoving || _currentDirection != previousDirection) {
@@ -211,12 +252,56 @@ class BabyPlayer extends SpriteAnimationComponent
     }
   }
 
+  /// Updates the smooth camera target based on collision state
+  void _updateCameraTarget() {
+    // Detect collision start
+    if (_isColliding && !_wasColliding) {
+      // Just started colliding - freeze camera
+      _collisionStartPos = position.clone();
+      _frozenCameraPos = _smoothCameraTarget.clone();
+    }
+
+    // Check if we should unfreeze
+    if (_frozenCameraPos != null && _collisionStartPos != null) {
+      final distanceFromCollision = position.distanceTo(_collisionStartPos!);
+
+      if (distanceFromCollision > _cameraResumeThreshold || !_isColliding) {
+        // Moved far enough or no longer colliding - unfreeze
+        _frozenCameraPos = null;
+        _collisionStartPos = null;
+      }
+    }
+
+    // Update smooth camera target
+    if (_frozenCameraPos != null) {
+      // Camera is frozen - keep target at frozen position
+      _smoothCameraTarget = _frozenCameraPos!.clone();
+    } else {
+      // Smoothly interpolate towards player position
+      final lerpFactor = 0.15;
+      _smoothCameraTarget.x += (position.x - _smoothCameraTarget.x) * lerpFactor;
+      _smoothCameraTarget.y += (position.y - _smoothCameraTarget.y) * lerpFactor;
+    }
+  }
+
+  /// Get the camera target position (may be frozen during collision)
+  Vector2 get cameraTarget => _smoothCameraTarget;
+
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
 
     // Skip collision with non-obstacle components (memories, etc.)
-    if (other is! Obstacle && other.parent is! Pet) return;
+    // Check if other is Obstacle, Pet, or has Pet/Obstacle as parent
+    final isObstacle = other is Obstacle || other.parent is Obstacle;
+    final isPet = other is Pet || other.parent is Pet;
+
+    // Debug: log all collisions
+    debugPrint('Collision with: ${other.runtimeType}, parent: ${other.parent?.runtimeType}, isObstacle: $isObstacle, isPet: $isPet');
+
+    if (!isObstacle && !isPet) return;
+
+    _isColliding = true;
 
     // Calculate push-back direction from collision
     if (intersectionPoints.isNotEmpty) {
@@ -228,7 +313,10 @@ class BabyPlayer extends SpriteAnimationComponent
       final pushDirection = position - intersectionCenter;
       if (pushDirection.length > 0) {
         pushDirection.normalize();
-        _collisionNudge = pushDirection * 5.0; // Push back 5 pixels
+        _collisionDirection = pushDirection.clone();
+
+        // Push player out of the obstacle
+        position.add(pushDirection * 2.0);
       }
     }
   }

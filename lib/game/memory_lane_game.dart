@@ -129,6 +129,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   late final BabyPlayer player;
   late final JoystickComponent joystick;
+  late final PositionComponent _cameraAnchor;
 
   /// Current level being played
   LevelId currentLevel = LevelId.mainFloor;
@@ -232,14 +233,18 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     player = BabyPlayer(joystick: joystick);
     await world.add(player);
 
+    // Create camera anchor (invisible component that camera follows)
+    _cameraAnchor = PositionComponent(position: player.position.clone());
+    await world.add(_cameraAnchor);
+
     // Load the initial level
     await _loadLevel(currentLevel);
 
     // Add fog of war effect
     await world.add(FogOfWar());
 
-    // Set up camera to follow player
-    camera.follow(player, maxSpeed: 300, snap: true);
+    // Set up camera to follow the anchor (not player directly)
+    camera.follow(_cameraAnchor, maxSpeed: 300, snap: true);
 
     // Add joystick to camera viewport (HUD)
     camera.viewport.add(joystick);
@@ -404,6 +409,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Only update game logic when exploring
     if (state == GameState.exploring) {
       super.update(dt);
+
+      // Update camera anchor to follow player's smooth camera target
+      _cameraAnchor.position = player.cameraTarget;
 
       // Update obstacle preview if placing
       if (showDebugPanel) {

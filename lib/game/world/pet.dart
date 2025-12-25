@@ -45,6 +45,9 @@ class Pet extends SpriteAnimationComponent
   /// Whether the pet is flipped horizontally
   final bool flipped;
 
+  /// Collision radius for blocking player movement (0 = no collision)
+  final double collisionRadius;
+
   /// Distance threshold for interaction (in pixels) - base value for main floor
   static const double _baseInteractDistance = 150.0;
 
@@ -94,6 +97,7 @@ class Pet extends SpriteAnimationComponent
     this.showDebug = false,
     this.baseScale = 1.0,
     this.flipped = false,
+    this.collisionRadius = 0.0,
   }) : super(
           position: position,
           size: Vector2.all(spriteConfig.displaySize * baseScale),
@@ -155,18 +159,32 @@ class Pet extends SpriteAnimationComponent
       collisionType: CollisionType.passive,
     ));
 
-    // Add collision obstacle hitbox (140 radius, scaled for level)
-    final collisionRadius = 140.0 * baseScale;
-    add(CircleHitbox(
-      radius: collisionRadius,
-      position: size / 2,
-      anchor: Anchor.center,
-      collisionType: CollisionType.passive,
-    ));
+    // Add collision obstacle hitbox if radius is set
+    if (collisionRadius > 0) {
+      final scaledCollisionRadius = collisionRadius * baseScale;
+      debugPrint('Pet $name: Adding collision hitbox with radius $scaledCollisionRadius');
+      add(CircleHitbox(
+        radius: scaledCollisionRadius,
+        position: size / 2,
+        anchor: Anchor.center,
+        collisionType: CollisionType.passive,
+      ));
 
-    // Debug visualization
+      // Debug visualization for collision
+      if (showDebug) {
+        add(CircleComponent(
+          radius: scaledCollisionRadius,
+          position: size / 2,
+          anchor: Anchor.center,
+          paint: Paint()
+            ..color = Colors.red.withValues(alpha: 0.3)
+            ..style = PaintingStyle.fill,
+        ));
+      }
+    }
+
+    // Debug visualization for interaction range
     if (showDebug) {
-      // Interaction range
       add(CircleComponent(
         radius: _baseInteractDistance,
         position: size / 2,
@@ -175,15 +193,6 @@ class Pet extends SpriteAnimationComponent
           ..color = Colors.blue.withValues(alpha: 0.1)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1,
-      ));
-      // Collision radius
-      add(CircleComponent(
-        radius: collisionRadius,
-        position: size / 2,
-        anchor: Anchor.center,
-        paint: Paint()
-          ..color = Colors.red.withValues(alpha: 0.3)
-          ..style = PaintingStyle.fill,
       ));
     }
   }
@@ -317,6 +326,7 @@ class PetData {
   final double animationSpeed;
   final double scale;
   final bool flipped;
+  final double collisionRadius;
 
   const PetData({
     required this.x,
@@ -329,6 +339,7 @@ class PetData {
     this.animationSpeed = 0.2,
     this.scale = 1.0,
     this.flipped = false,
+    this.collisionRadius = 0.0,
   });
 
   Pet toPet({bool showDebug = false}) {
@@ -345,6 +356,7 @@ class PetData {
       showDebug: showDebug,
       baseScale: scale,
       flipped: flipped,
+      collisionRadius: collisionRadius,
     );
   }
 }
