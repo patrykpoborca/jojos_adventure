@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 
 import 'actors/baby_player.dart';
 import 'audio/audio_manager.dart';
+import 'input/floating_joystick.dart';
 import 'world/fog_of_war.dart';
 import 'world/house_map.dart';
 import 'world/memory_item.dart';
-import 'world/snow_effect.dart';
+// import 'world/snow_effect.dart'; // Disabled for performance
 import 'world/upstairs_map.dart';
 
 /// Available levels in the game
@@ -50,6 +51,15 @@ enum GamePhase {
 enum DebugPlacementMode {
   obstacle,
   memory,
+}
+
+/// Movement control mode
+enum MovementControlMode {
+  /// Traditional fixed joystick in corner
+  joystick,
+
+  /// Floating/positional - touch anywhere to create virtual joystick
+  positional,
 }
 
 /// Info about a collected memory for HUD display
@@ -152,7 +162,14 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   late final BabyPlayer player;
   late final JoystickComponent joystick;
+  late final FloatingJoystick floatingJoystick;
   late final PositionComponent _cameraAnchor;
+
+  /// Current movement control mode
+  MovementControlMode _controlMode = MovementControlMode.positional;
+
+  /// Get current control mode
+  MovementControlMode get controlMode => _controlMode;
 
   /// Current level being played
   LevelId currentLevel = LevelId.mainFloor;
@@ -290,8 +307,12 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       margin: const EdgeInsets.only(left: 40, bottom: 40),
     );
 
-    // Create player
-    player = BabyPlayer(joystick: joystick);
+    // Create floating joystick for positional mode
+    floatingJoystick = FloatingJoystick();
+    await world.add(floatingJoystick);
+
+    // Create player (pass both joysticks)
+    player = BabyPlayer(joystick: joystick, floatingJoystick: floatingJoystick);
     await world.add(player);
 
     // Create camera anchor (invisible component that camera follows)
@@ -312,6 +333,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
     // Add joystick to camera viewport (HUD)
     camera.viewport.add(joystick);
+
+    // Set initial joystick visibility based on control mode
+    _updateJoystickVisibility();
 
     // Game is ready
     state = GameState.exploring;
@@ -564,6 +588,44 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     showDebugPanel = !showDebugPanel;
     debugPrint('Debug panel: ${showDebugPanel ? "ON" : "OFF"}, callback: ${onDebugPanelToggled != null}');
     onDebugPanelToggled?.call(showDebugPanel);
+  }
+
+  /// Toggles between joystick and positional control modes
+  void toggleControlMode() {
+    _controlMode = _controlMode == MovementControlMode.joystick
+        ? MovementControlMode.positional
+        : MovementControlMode.joystick;
+    _updateJoystickVisibility();
+    debugPrint('Control mode: ${_controlMode.name}');
+  }
+
+  /// Sets the control mode directly
+  void setControlMode(MovementControlMode mode) {
+    if (_controlMode == mode) return;
+    _controlMode = mode;
+    _updateJoystickVisibility();
+    debugPrint('Control mode set to: ${_controlMode.name}');
+  }
+
+  /// Paints for joystick visibility control
+  Paint? _joystickKnobPaint;
+  Paint? _joystickBackgroundPaint;
+
+  /// Updates joystick visibility based on control mode
+  void _updateJoystickVisibility() {
+    // Cache original paints on first call
+    _joystickKnobPaint ??= Paint()..color = const Color(0xAAD4A574);
+    _joystickBackgroundPaint ??= Paint()..color = const Color(0x44D4A574);
+
+    // Show/hide fixed joystick by changing paint alpha
+    if (_controlMode == MovementControlMode.joystick) {
+      (joystick.knob as CircleComponent).paint = _joystickKnobPaint!;
+      (joystick.background as CircleComponent).paint = _joystickBackgroundPaint!;
+    } else {
+      // Make fully transparent
+      (joystick.knob as CircleComponent).paint = Paint()..color = const Color(0x00000000);
+      (joystick.background as CircleComponent).paint = Paint()..color = const Color(0x00000000);
+    }
   }
 
   /// Toggles between obstacle and memory placement modes

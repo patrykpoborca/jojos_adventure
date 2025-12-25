@@ -4,6 +4,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 
+import '../input/floating_joystick.dart';
 import '../memory_lane_game.dart';
 import '../world/obstacle.dart';
 import '../world/character.dart';
@@ -19,6 +20,7 @@ enum MovementMode { crawling, walking }
 class BabyPlayer extends SpriteAnimationComponent
     with HasGameReference<MemoryLaneGame>, CollisionCallbacks {
   final JoystickComponent joystick;
+  final FloatingJoystick floatingJoystick;
 
   /// Whether collision is enabled (can be toggled for debug)
   bool collisionEnabled = true;
@@ -79,7 +81,7 @@ class BabyPlayer extends SpriteAnimationComponent
   /// Keyboard input direction (set from main.dart key handlers)
   Vector2 keyboardDirection = Vector2.zero();
 
-  BabyPlayer({required this.joystick})
+  BabyPlayer({required this.joystick, required this.floatingJoystick})
       : super(
           size: Vector2.all(displaySize), // Square for crawling
           anchor: Anchor.center,
@@ -220,13 +222,24 @@ class BabyPlayer extends SpriteAnimationComponent
     final wasMoving = _isMoving;
     final previousDirection = _currentDirection;
 
-    // Combine joystick and keyboard input
+    // Combine joystick, floating joystick, and keyboard input
     Vector2 inputDirection = Vector2.zero();
 
-    if (!joystick.delta.isZero()) {
-      inputDirection = joystick.relativeDelta.clone();
-    } else if (!keyboardDirection.isZero()) {
-      // Normalize keyboard direction for consistent speed
+    // Check control mode and use appropriate input source
+    if (game.controlMode == MovementControlMode.joystick) {
+      // Fixed joystick mode
+      if (!joystick.delta.isZero()) {
+        inputDirection = joystick.relativeDelta.clone();
+      }
+    } else {
+      // Positional/floating joystick mode
+      if (!floatingJoystick.relativeDelta.isZero()) {
+        inputDirection = floatingJoystick.relativeDelta.clone();
+      }
+    }
+
+    // Keyboard input works in both modes as fallback
+    if (inputDirection.isZero() && !keyboardDirection.isZero()) {
       inputDirection = keyboardDirection.normalized();
     }
 

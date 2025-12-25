@@ -618,6 +618,9 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     final currentPhoto = photos[_currentPhotoIndex];
     final pos = ResponsiveSizing.positionOffset(context, 12);
     final captionPadding = ResponsiveSizing.spacing(context, 16);
+    final hasMultiplePhotos = photos.length > 1;
+    final isFirstPhoto = _currentPhotoIndex == 0;
+    final isLastPhotoInViewer = _currentPhotoIndex >= photos.length - 1;
 
     return Stack(
       fit: StackFit.expand,
@@ -646,7 +649,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
           ),
         ),
 
-        // Caption at bottom
+        // Caption and photo counter at bottom
         if (memory != null)
           Positioned(
             left: captionPadding,
@@ -665,6 +668,21 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Photo counter
+                  if (hasMultiplePhotos)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        bottom: ResponsiveSizing.spacing(context, 6),
+                      ),
+                      child: Text(
+                        '${_currentPhotoIndex + 1} / ${photos.length}',
+                        style: TextStyle(
+                          fontSize: ResponsiveSizing.fontSize(context, 12),
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   if (memory!.date != 'Date')
                     Text(
                       memory!.date,
@@ -684,7 +702,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                   ),
                   SizedBox(height: ResponsiveSizing.spacing(context, 4)),
                   Text(
-                    'Pinch to zoom',
+                    'Pinch to zoom • Tap X to close',
                     style: TextStyle(
                       fontSize: ResponsiveSizing.fontSize(context, 11),
                       color: Colors.white54,
@@ -695,16 +713,55 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
             ),
           ),
 
-        // Close button - top left
+        // Close button - top left (more prominent)
         Positioned(
           top: pos,
           left: pos,
           child: _buildCornerButton(
             icon: Icons.close,
             onTap: _onCloseFullScreen,
-            isAccent: false,
+            isAccent: true,
+            accentColor: const Color(0xFFD4A574), // Warm amber to match game theme
           ),
         ),
+
+        // Previous photo button - left side (only if multiple photos and not first)
+        if (hasMultiplePhotos && !isFirstPhoto)
+          Positioned(
+            left: pos,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _buildCornerButton(
+                icon: Icons.chevron_left,
+                onTap: () {
+                  setState(() {
+                    _currentPhotoIndex--;
+                  });
+                },
+                isAccent: false,
+              ),
+            ),
+          ),
+
+        // Next photo button - right side (only if multiple photos and not last)
+        if (hasMultiplePhotos && !isLastPhotoInViewer)
+          Positioned(
+            right: pos,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _buildCornerButton(
+                icon: Icons.chevron_right,
+                onTap: () {
+                  setState(() {
+                    _currentPhotoIndex++;
+                  });
+                },
+                isAccent: false,
+              ),
+            ),
+          ),
       ],
     );
   }

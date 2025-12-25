@@ -99,6 +99,8 @@ class _SettingsMenuState extends State<SettingsMenu>
                             _buildHeader(),
                             _buildAudioSection(),
                             _buildDivider(),
+                            _buildControlModeSection(),
+                            _buildDivider(),
                             _buildFloorSection(),
                             _buildDivider(),
                             _buildPhaseSection(),
@@ -269,6 +271,57 @@ class _SettingsMenuState extends State<SettingsMenu>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildControlModeSection() {
+    final currentMode = widget.game.controlMode;
+
+    return Padding(
+      padding: ResponsiveSizing.paddingAll(context, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('Controls'),
+          SizedBox(height: ResponsiveSizing.spacing(context, 12)),
+          Row(
+            children: [
+              Expanded(
+                child: _buildToggleButton(
+                  label: 'Joystick',
+                  isSelected: currentMode == MovementControlMode.joystick,
+                  onTap: () {
+                    widget.game.setControlMode(MovementControlMode.joystick);
+                    setState(() {});
+                  },
+                ),
+              ),
+              SizedBox(width: ResponsiveSizing.spacing(context, 12)),
+              Expanded(
+                child: _buildToggleButton(
+                  label: 'Touch',
+                  isSelected: currentMode == MovementControlMode.positional,
+                  onTap: () {
+                    widget.game.setControlMode(MovementControlMode.positional);
+                    setState(() {});
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: ResponsiveSizing.spacing(context, 8)),
+          Text(
+            currentMode == MovementControlMode.joystick
+                ? 'Fixed joystick in corner'
+                : 'Touch anywhere to move',
+            style: TextStyle(
+              fontSize: ResponsiveSizing.fontSize(context, 11),
+              color: Colors.grey.shade500,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
