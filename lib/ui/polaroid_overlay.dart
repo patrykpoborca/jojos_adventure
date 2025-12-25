@@ -23,6 +23,9 @@ enum MemoryViewState {
 
   /// Showing "come back later" dialog (not all memories collected)
   endgameNotReady,
+
+  /// Showing coupon unlock dialog
+  couponUnlock,
 }
 
 /// Polaroid-style overlay for displaying photo memories
@@ -53,6 +56,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         // Skip polaroid for memories that trigger dialogs - go straight to dialog
         if (widget.game.currentMemory?.triggersLevel == true) {
           _viewState = MemoryViewState.levelDialog;
+        } else if (widget.game.currentMemory?.isCouponReward == true) {
+          _viewState = MemoryViewState.couponUnlock;
         } else {
           _viewState = MemoryViewState.polaroidStack;
           // Play memory music if available (only for regular memories)
@@ -67,6 +72,9 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         break;
       case OverlayType.endgameNotReady:
         _viewState = MemoryViewState.endgameNotReady;
+        break;
+      case OverlayType.couponUnlock:
+        _viewState = MemoryViewState.couponUnlock;
         break;
     }
 
@@ -176,6 +184,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         return _buildGameCompleteDialog();
       case MemoryViewState.endgameNotReady:
         return _buildEndgameNotReadyDialog();
+      case MemoryViewState.couponUnlock:
+        return _buildCouponDialog();
     }
   }
 
@@ -944,5 +954,187 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       // TODO: Start the road trip ending sequence (video or montage)
       widget.game.startMontage();
     });
+  }
+
+  Widget _buildCouponDialog() {
+    final dialogHeight = ResponsiveSizing.dialogHeight(context);
+    final dialogWidth = ResponsiveSizing.dialogWidth(context);
+    final pos = ResponsiveSizing.positionOffset(context, 12);
+    final captionPadding = ResponsiveSizing.spacing(context, 16);
+    final captionBottom = ResponsiveSizing.spacing(context, 20);
+
+    // Get coupon text from memory or use default
+    final couponText = memory?.couponText ?? 'One Free Purse Shopping Trip!';
+
+    return Container(
+      width: dialogWidth,
+      height: dialogHeight,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: ResponsiveSizing.borderRadius(context, 20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: ResponsiveSizing.spacing(context, 24),
+            offset: Offset(0, ResponsiveSizing.spacing(context, 12)),
+          ),
+        ],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed hero image
+          if (memory != null)
+            Image.asset(
+              memory!.stylizedPhotoPath,
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFFE91E63),
+                  child: Center(
+                    child: Icon(
+                      Icons.card_giftcard,
+                      size: ResponsiveSizing.iconSize(context, 64),
+                      color: Colors.white54,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+          // Gradient overlay at bottom for caption readability
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: dialogHeight * 0.55,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.85),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Caption at bottom with coupon styling
+          Positioned(
+            left: captionPadding,
+            right: captionPadding,
+            bottom: captionBottom,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Gift icon
+                Container(
+                  width: ResponsiveSizing.dimension(context, 56),
+                  height: ResponsiveSizing.dimension(context, 56),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE91E63),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE91E63).withValues(alpha: 0.4),
+                        blurRadius: ResponsiveSizing.spacing(context, 12),
+                        spreadRadius: ResponsiveSizing.spacing(context, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.card_giftcard,
+                    color: Colors.white,
+                    size: ResponsiveSizing.iconSize(context, 28),
+                  ),
+                ),
+                SizedBox(height: ResponsiveSizing.spacing(context, 12)),
+
+                // Coupon unlocked text
+                Text(
+                  'Coupon Unlocked!',
+                  style: GoogleFonts.caveat(
+                    fontSize: ResponsiveSizing.fontSize(context, 32),
+                    color: const Color(0xFFFFD700),
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: ResponsiveSizing.spacing(context, 8)),
+
+                // Coupon details in a ticket-style container
+                Container(
+                  padding: ResponsiveSizing.paddingSymmetric(
+                    context,
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: ResponsiveSizing.borderRadius(context, 12),
+                    border: Border.all(
+                      color: const Color(0xFFE91E63),
+                      width: 2,
+                      strokeAlign: BorderSide.strokeAlignInside,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: ResponsiveSizing.spacing(context, 8),
+                        offset: Offset(0, ResponsiveSizing.spacing(context, 2)),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        couponText,
+                        style: GoogleFonts.caveat(
+                          fontSize: ResponsiveSizing.fontSize(context, 22),
+                          color: const Color(0xFFE91E63),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: ResponsiveSizing.spacing(context, 4)),
+                      Text(
+                        'Valid: Anytime Mom wants!',
+                        style: TextStyle(
+                          fontSize: ResponsiveSizing.fontSize(context, 12),
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Close button (X) - top right
+          Positioned(
+            top: pos,
+            right: pos,
+            child: _buildCornerButton(
+              icon: Icons.close,
+              onTap: _closeOverlay,
+              isAccent: false,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

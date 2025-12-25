@@ -34,6 +34,7 @@ enum OverlayType {
   phaseComplete,
   gameComplete,
   endgameNotReady, // Shown when player tries endgame before collecting all memories
+  couponUnlock, // Special coupon reward dialog
 }
 
 /// Game phase - progression through the story
@@ -95,6 +96,12 @@ class Memory {
   /// Whether this memory triggers the endgame sequence
   final bool isEndgameTrigger;
 
+  /// Whether this memory unlocks a coupon reward
+  final bool isCouponReward;
+
+  /// Custom coupon text/details (optional)
+  final String? couponText;
+
   const Memory({
     required this.stylizedPhotoPath,
     required this.photos,
@@ -104,6 +111,8 @@ class Memory {
     this.phase = GamePhase.crawling,
     this.musicFile,
     this.isEndgameTrigger = false,
+    this.isCouponReward = false,
+    this.couponText,
   });
 
   /// Convenience constructor for single photo memories
@@ -115,6 +124,8 @@ class Memory {
     this.phase = GamePhase.crawling,
     this.musicFile,
     this.isEndgameTrigger = false,
+    this.isCouponReward = false,
+    this.couponText,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
@@ -123,6 +134,9 @@ class Memory {
 
   /// Whether this memory triggers a level
   bool get triggersLevel => levelTrigger != null;
+
+  /// Whether this memory triggers a special dialog (level, endgame, or coupon)
+  bool get triggersDialog => levelTrigger != null || isCouponReward;
 
   /// Whether this memory should stay visible after collection (level or endgame trigger)
   bool get persistsAfterCollection => triggersLevel || isEndgameTrigger;

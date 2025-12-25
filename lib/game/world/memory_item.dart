@@ -400,6 +400,12 @@ class MemoryItemData {
   /// Whether this memory triggers the endgame
   final bool isEndgameTrigger;
 
+  /// Whether this memory unlocks a coupon reward
+  final bool isCouponReward;
+
+  /// Custom coupon text/details (optional)
+  final String? couponText;
+
   const MemoryItemData({
     required this.x,
     required this.y,
@@ -411,6 +417,8 @@ class MemoryItemData {
     this.phase = GamePhase.crawling,
     this.musicFile,
     this.isEndgameTrigger = false,
+    this.isCouponReward = false,
+    this.couponText,
   });
 
   /// Convenience constructor for simple single-photo memories
@@ -424,6 +432,8 @@ class MemoryItemData {
     this.phase = GamePhase.crawling,
     this.musicFile,
     this.isEndgameTrigger = false,
+    this.isCouponReward = false,
+    this.couponText,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
@@ -439,6 +449,8 @@ class MemoryItemData {
         phase: phase,
         musicFile: musicFile,
         isEndgameTrigger: isEndgameTrigger,
+        isCouponReward: isCouponReward,
+        couponText: couponText,
       ),
       showDebug: showDebug,
       baseScale: scale,

@@ -132,7 +132,18 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         date: 'Nov 12, 2025',
         caption: 'Older changing table!',
         phase: GamePhase.walking,
-      )
+      ),
+
+      // Special coupon memory - purse shopping
+      MemoryItemData(
+        x: 1967, y: 1715,
+        stylizedPhotoPath: 'assets/photos/old_cookie_purses.png',
+        date: 'Dec 25, 2025',
+        caption: "Cookie's favorite purses!",
+        phase: GamePhase.walking,
+        isCouponReward: true,
+        couponText: 'One Free Purse Shopping Trip!',
+      ),
     ];
 
   /// Returns the list of music zone data for the nursery
