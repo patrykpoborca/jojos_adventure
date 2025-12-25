@@ -8,6 +8,53 @@ import 'package:flutter/material.dart';
 
 import '../memory_lane_game.dart';
 
+/// Defines a sprite type for memory items
+class MemorySpriteType {
+  final String assetPath;
+  final int columns;
+  final int rows;
+  final double displaySize;
+  final double animationSpeed;
+
+  const MemorySpriteType({
+    required this.assetPath,
+    required this.columns,
+    required this.rows,
+    this.displaySize = 80.0,
+    this.animationSpeed = 0.15,
+  });
+
+  int get frameCount => columns * rows;
+}
+
+/// Available memory sprite types - add new sprites here
+/// animationSpeed = seconds per frame (higher = slower)
+class MemorySpriteTypes {
+  static const List<MemorySpriteType> all = [
+    MemorySpriteType(
+      assetPath: 'sprites/memories.png',
+      columns: 4,
+      rows: 4,
+      displaySize: 60.0,
+      animationSpeed: 0.25, // 6 frames × 0.15s = 0.9s loop
+    ),
+    MemorySpriteType(
+      assetPath: 'sprites/memories_2.png',
+      columns: 4,
+      rows: 4,
+      displaySize: 64.0,
+      animationSpeed: 0.25, // 16 frames × 0.1s = 1.6s loop
+    ),
+  ];
+
+  static final Random _random = Random();
+
+  /// Get a random sprite type
+  static MemorySpriteType getRandom() {
+    return all[_random.nextInt(all.length)];
+  }
+}
+
 /// A collectible memory item that triggers a photo overlay when touched
 class MemoryItem extends SpriteAnimationComponent
     with CollisionCallbacks, TapCallbacks, HasGameReference<MemoryLaneGame> {
@@ -26,11 +73,8 @@ class MemoryItem extends SpriteAnimationComponent
   /// Distance threshold for collecting (in pixels)
   static const double collectDistance = 150.0;
 
-  /// Sprite sheet configuration
-  static const int sheetColumns = 3;
-  static const int sheetRows = 2;
-  static const double animationSpeed = 0.15;
-  static const double spriteSize = 80.0;
+  /// The randomly selected sprite type for this memory
+  late final MemorySpriteType _spriteType;
 
   /// Scale effect when player is nearby
   static const double normalScale = 1.0;
@@ -44,9 +88,10 @@ class MemoryItem extends SpriteAnimationComponent
     required this.memory,
     this.showDebug = false,
     this.baseScale = 1.0,
-  }) : super(
+  }) : _spriteType = MemorySpriteTypes.getRandom(),
+       super(
           position: position,
-          size: Vector2.all(spriteSize * baseScale),
+          size: Vector2.all(80.0 * baseScale), // Initial size, updated in onLoad
           anchor: Anchor.center,
         );
 
@@ -63,28 +108,32 @@ class MemoryItem extends SpriteAnimationComponent
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Load the sprite sheet (3 columns x 2 rows)
-    final image = await game.images.load('sprites/memories.png');
+    // Update size based on the randomly selected sprite type
+    final spriteSize = _spriteType.displaySize;
+    size = Vector2.all(spriteSize * baseScale);
+
+    // Load the sprite sheet
+    final image = await game.images.load(_spriteType.assetPath);
     // Use floor division to get clean integer frame sizes (avoids sub-pixel rendering issues)
-    final frameWidth = (image.width ~/ sheetColumns).toDouble();
-    final frameHeight = (image.height ~/ sheetRows).toDouble();
+    final frameWidth = (image.width ~/ _spriteType.columns).toDouble();
+    final frameHeight = (image.height ~/ _spriteType.rows).toDouble();
 
     final spriteSheet = SpriteSheet(
       image: image,
       srcSize: Vector2(frameWidth, frameHeight),
     );
 
-    // Create looping animation from all 6 frames (3 columns x 2 rows)
+    // Create looping animation from all frames
     final frames = <Sprite>[];
-    for (var row = 0; row < sheetRows; row++) {
-      for (var col = 0; col < sheetColumns; col++) {
+    for (var row = 0; row < _spriteType.rows; row++) {
+      for (var col = 0; col < _spriteType.columns; col++) {
         frames.add(spriteSheet.getSprite(row, col));
       }
     }
 
     animation = SpriteAnimation.spriteList(
       frames,
-      stepTime: animationSpeed,
+      stepTime: _spriteType.animationSpeed,
       loop: true,
     );
 

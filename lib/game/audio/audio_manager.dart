@@ -7,9 +7,14 @@ class AudioManager {
   factory AudioManager() => _instance;
   AudioManager._internal();
 
-  /// Default ambient music file
-  static const String defaultMusicFile = 'chillhome_trim_a.mp3';
+  /// Default ambient music files per level
+  static const String mainFloorAmbient = 'chillhome_trim_a.mp3';
+  static const String upstairsAmbient = 'nursery_trim_a.mp3';
+
   static const String _defaultZoneId = '_default_ambient';
+
+  /// Currently playing ambient music file
+  String? _currentAmbientFile;
 
   /// Currently playing music tracks (by zone ID)
   final Map<String, _MusicTrack> _activeTracks = {};
@@ -43,16 +48,27 @@ class AudioManager {
     }
   }
 
-  /// Start the default ambient music (call once at game start)
-  Future<void> startAmbientMusic() async {
+  /// Start ambient music with the specified file
+  Future<void> startAmbientMusic([String musicFile = mainFloorAmbient]) async {
     if (!_enabled) return;
 
-    // Already playing
-    if (_activeTracks.containsKey(_defaultZoneId)) return;
+    // Already playing this file
+    if (_activeTracks.containsKey(_defaultZoneId) && _currentAmbientFile == musicFile) {
+      return;
+    }
+
+    // Stop existing ambient if different file
+    if (_activeTracks.containsKey(_defaultZoneId)) {
+      final oldTrack = _activeTracks.remove(_defaultZoneId);
+      _targetVolumes.remove(_defaultZoneId);
+      oldTrack?.player.stop();
+    }
+
+    _currentAmbientFile = musicFile;
 
     try {
       final player = await FlameAudio.loopLongAudio(
-        'music/$defaultMusicFile',
+        'music/$musicFile',
         volume: 0.0,
       );
 
@@ -63,10 +79,16 @@ class AudioManager {
       );
       _targetVolumes[_defaultZoneId] = defaultAmbientVolume;
 
-      debugPrint('Started ambient music: $defaultMusicFile');
+      debugPrint('Started ambient music: $musicFile');
     } catch (e) {
       debugPrint('Error starting ambient music: $e');
     }
+  }
+
+  /// Switch to a different ambient music file (for level transitions)
+  Future<void> switchAmbientMusic(String musicFile) async {
+    if (_currentAmbientFile == musicFile) return;
+    await startAmbientMusic(musicFile);
   }
 
   /// Update the default ambient volume based on active zones
@@ -171,13 +193,30 @@ class AudioManager {
     }
   }
 
-  /// Stop all music immediately
+  /// Stop all zone music (keeps ambient playing) - call when switching levels
+  void clearZoneMusic() {
+    final zonesToStop = _activeTracks.keys
+        .where((id) => id != _defaultZoneId)
+        .toList();
+
+    for (final zoneId in zonesToStop) {
+      _stopZone(zoneId);
+    }
+
+    _activeZones.clear();
+    _updateAmbientVolume();
+
+    debugPrint('Cleared all zone music');
+  }
+
+  /// Stop all music immediately (including ambient)
   void stopAll() {
     for (final track in _activeTracks.values) {
       track.player.stop();
     }
     _activeTracks.clear();
     _targetVolumes.clear();
+    _activeZones.clear();
     debugPrint('Stopped all music');
   }
 

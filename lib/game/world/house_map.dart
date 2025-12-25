@@ -368,6 +368,12 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         musicFile: 'upbeat_trim_a.mp3',
         maxVolume: 0.6,
       ),
+      MusicZoneData(
+        x: 1992, y: 481, width: 482, height: 369,
+        zoneId: 'dads_office',
+        musicFile: 'franky.mp3',
+        maxVolume: 0.6,
+      ),
     ];
   }
 

@@ -208,9 +208,6 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Game is ready
     state = GameState.exploring;
 
-    // Start ambient background music
-    await AudioManager().startAmbientMusic();
-
     if (debugObstaclePlacementEnabled) {
       debugPrint('=== DEBUG PLACEMENT MODE ===');
       debugPrint('Press M to toggle between OBSTACLE and MEMORY mode');
@@ -226,25 +223,30 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   /// Load a specific level
   Future<void> _loadLevel(LevelId levelId) async {
+    // Clear any zone music from the previous level
+    AudioManager().clearZoneMusic();
+
     // Remove current map if exists
     if (currentMap != null) {
       currentMap!.removeFromParent();
       currentMap = null;
     }
 
-    // Create and add the new map
+    // Create and add the new map, set level-specific ambient music
     switch (levelId) {
       case LevelId.mainFloor:
         currentMap = HouseMap();
         camera.viewfinder.zoom = 0.5; // Zoomed out for large house
         player.position = Vector2(500, 500); // Starting position
         player.scale = Vector2.all(1.0); // Normal size for large house
+        await AudioManager().switchAmbientMusic(AudioManager.mainFloorAmbient);
         break;
       case LevelId.upstairsNursery:
         currentMap = UpstairsMap();
         camera.viewfinder.zoom = 0.25; // Closer zoom for small room
         player.position = Vector2(1358, 647); // Near the exit door
         player.scale = Vector2.all(2.0); // Larger baby for small room
+        await AudioManager().switchAmbientMusic(AudioManager.upstairsAmbient);
         break;
     }
 
