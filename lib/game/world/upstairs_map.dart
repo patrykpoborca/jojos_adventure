@@ -172,7 +172,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         animationSpeed: 0.15,
         scale: 3.2, // Match upstairs scale
         flipped: false,
-        collisionRadius: 80.0,
+        collisionRadius: 40.0,
       ),
     ];
   }

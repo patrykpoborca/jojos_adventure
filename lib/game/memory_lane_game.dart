@@ -299,7 +299,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       case LevelId.upstairsNursery:
         currentMap = UpstairsMap();
         camera.viewfinder.zoom = 0.25; // Closer zoom for small room
-        player.position = Vector2(1358, 647); // Near the exit door
+        player.position = Vector2(1334, 800); // Near the exit door
         player.scale = Vector2.all(2.0); // Larger baby for small room
         await AudioManager().switchAmbientMusic(AudioManager.upstairsAmbient);
         break;
@@ -689,6 +689,17 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     overlayType = OverlayType.gameComplete;
     state = GameState.viewingMemory;
     overlays.add('polaroid');
+  }
+
+  /// Shows the settings menu overlay
+  void showSettings() {
+    overlays.add('settings');
+    // Don't change game state - allow game to continue in background
+  }
+
+  /// Hides the settings menu overlay
+  void hideSettings() {
+    overlays.remove('settings');
   }
 
   /// Transition to a new game phase

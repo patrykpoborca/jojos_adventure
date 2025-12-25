@@ -47,6 +47,20 @@ class AudioManager {
     _masterVolume = value.clamp(0.0, 1.0);
   }
 
+  /// Music volume multiplier (applied on top of master)
+  double _musicVolume = 1.0;
+  double get musicVolume => _musicVolume;
+  set musicVolume(double value) {
+    _musicVolume = value.clamp(0.0, 1.0);
+  }
+
+  /// SFX volume multiplier (applied on top of master)
+  double _sfxVolume = 1.0;
+  double get sfxVolume => _sfxVolume;
+  set sfxVolume(double value) {
+    _sfxVolume = value.clamp(0.0, 1.0);
+  }
+
   /// Whether audio is enabled
   bool _enabled = true;
   bool get enabled => _enabled;
@@ -176,8 +190,8 @@ class AudioManager {
             .clamp(targetVolume, track.maxVolume);
       }
 
-      // Apply volume
-      final effectiveVolume = track.currentVolume * _masterVolume;
+      // Apply volume (master * music volume)
+      final effectiveVolume = track.currentVolume * _masterVolume * _musicVolume;
       track.player.setVolume(effectiveVolume);
 
       // If fully faded out, mark for removal (but never remove ambient track)
@@ -239,7 +253,7 @@ class AudioManager {
     try {
       await FlameAudio.play(
         'music/$musicFile',
-        volume: volume * _masterVolume,
+        volume: volume * _masterVolume * _musicVolume,
       );
       debugPrint('Playing memory music: $musicFile');
     } catch (e) {
@@ -339,7 +353,7 @@ class AudioManager {
           // Just entered range, play the sound
           track.hasPlayed = true;
           track.player.seek(Duration.zero);
-          track.player.setVolume(track.maxVolume * _masterVolume);
+          track.player.setVolume(track.maxVolume * _masterVolume * _sfxVolume);
           track.currentVolume = track.maxVolume;
         } else if (!isInRange && wasInRange) {
           // Left range, reset for next entry
@@ -361,8 +375,8 @@ class AudioManager {
             .clamp(track.targetVolume, track.maxVolume);
       }
 
-      // Apply volume
-      final effectiveVolume = track.currentVolume * _masterVolume;
+      // Apply volume (master * sfx volume)
+      final effectiveVolume = track.currentVolume * _masterVolume * _sfxVolume;
       track.player.setVolume(effectiveVolume);
     }
   }

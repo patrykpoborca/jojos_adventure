@@ -297,7 +297,7 @@ class BabyPlayer extends SpriteAnimationComponent
     final isPet = other is Pet || other.parent is Pet;
 
     // Debug: log all collisions
-    debugPrint('Collision with: ${other.runtimeType}, parent: ${other.parent?.runtimeType}, isObstacle: $isObstacle, isPet: $isPet');
+    // debugPrint('Collision with: ${other.runtimeType}, parent: ${other.parent?.runtimeType}, isObstacle: $isObstacle, isPet: $isPet');
 
     if (!isObstacle && !isPet) return;
 
