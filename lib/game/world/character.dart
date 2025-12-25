@@ -8,15 +8,24 @@ import 'package:flutter/material.dart';
 
 import '../memory_lane_game.dart';
 
-/// Defines a pet sprite configuration
-class PetSpriteConfig {
+/// Type of character for different behaviors
+enum CharacterType {
+  /// A pet (dog, cat) - shows sleeping Zs
+  pet,
+
+  /// A person (mom, dad) - no sleeping Zs
+  person,
+}
+
+/// Defines a character sprite configuration
+class CharacterSpriteConfig {
   final String assetPath;
   final int columns;
   final int rows;
   final double displaySize;
   final double animationSpeed;
 
-  const PetSpriteConfig({
+  const CharacterSpriteConfig({
     required this.assetPath,
     this.columns = 4,
     this.rows = 4,
@@ -27,14 +36,14 @@ class PetSpriteConfig {
   int get frameCount => columns * rows;
 }
 
-/// An interactive pet character (dog, cat, etc.)
-class Pet extends SpriteAnimationComponent
+/// An interactive character (pet or person)
+class Character extends SpriteAnimationComponent
     with TapCallbacks, CollisionCallbacks, HasGameReference<MemoryLaneGame> {
-  /// The pet's name
+  /// The character's name
   final String name;
 
   /// Sprite configuration
-  final PetSpriteConfig spriteConfig;
+  final CharacterSpriteConfig spriteConfig;
 
   /// Whether to show debug visualization
   final bool showDebug;
@@ -42,21 +51,25 @@ class Pet extends SpriteAnimationComponent
   /// Base scale multiplier
   final double baseScale;
 
-  /// Whether the pet is flipped horizontally
+  /// Whether the character is flipped horizontally
   final bool flipped;
 
   /// Collision radius for blocking player movement (0 = no collision)
   final double collisionRadius;
 
+  /// Type of character (affects behavior like sleeping Zs)
+  final CharacterType characterType;
+
+  /// Custom interaction message (optional)
+  final String? interactionMessage;
+
   /// Distance threshold for interaction (in pixels) - base value for main floor
   static const double _baseInteractDistance = 150.0;
 
-  /// Distance at which pets start becoming visible (fog of war) - base value
-  /// 40% further than memories (400 * 1.4 = 560)
+  /// Distance at which characters start becoming visible (fog of war) - base value
   static const double _baseVisibilityStartDistance = 560.0;
 
-  /// Distance at which pets are fully visible - base value
-  /// 40% further than memories (200 * 1.4 = 280)
+  /// Distance at which characters are fully visible - base value
   static const double _baseVisibilityFullDistance = 280.0;
 
   /// Upstairs scale multiplier (matches player scale difference)
@@ -86,11 +99,15 @@ class Pet extends SpriteAnimationComponent
     return _baseVisibilityFullDistance;
   }
 
-  /// Sleeping Z animation
+  /// Sleeping Z animation (for pets only)
   double _zTime = 0;
   final List<_SleepingZ> _sleepingZs = [];
 
-  Pet({
+  /// Interaction indicator animation
+  final List<_InteractionHeart> _hearts = [];
+  double _interactionCooldown = 0;
+
+  Character({
     required Vector2 position,
     required this.name,
     required this.spriteConfig,
@@ -98,6 +115,8 @@ class Pet extends SpriteAnimationComponent
     this.baseScale = 1.0,
     this.flipped = false,
     this.collisionRadius = 0.0,
+    this.characterType = CharacterType.pet,
+    this.interactionMessage,
   }) : super(
           position: position,
           size: Vector2.all(spriteConfig.displaySize * baseScale),
@@ -162,7 +181,7 @@ class Pet extends SpriteAnimationComponent
     // Add collision obstacle hitbox if radius is set
     if (collisionRadius > 0) {
       final scaledCollisionRadius = collisionRadius * baseScale;
-      debugPrint('Pet $name: Adding collision hitbox with radius $scaledCollisionRadius');
+      debugPrint('Character $name: Adding collision hitbox with radius $scaledCollisionRadius');
       add(CircleHitbox(
         radius: scaledCollisionRadius,
         position: size / 2,
@@ -215,18 +234,30 @@ class Pet extends SpriteAnimationComponent
       opacity = fadeProgress.clamp(0.0, 1.0);
     }
 
-    // Update sleeping Z animation
-    _zTime += dt;
-    if (_zTime >= 1.5) {
-      _zTime = 0;
-      _spawnSleepingZ();
+    // Update sleeping Z animation (pets only)
+    if (characterType == CharacterType.pet) {
+      _zTime += dt;
+      if (_zTime >= 1.5) {
+        _zTime = 0;
+        _spawnSleepingZ();
+      }
+
+      for (final z in _sleepingZs) {
+        z.update(dt);
+      }
+      _sleepingZs.removeWhere((z) => z.isDone);
     }
 
-    // Update existing Zs
-    for (final z in _sleepingZs) {
-      z.update(dt);
+    // Update interaction hearts
+    for (final heart in _hearts) {
+      heart.update(dt);
     }
-    _sleepingZs.removeWhere((z) => z.isDone);
+    _hearts.removeWhere((h) => h.isDone);
+
+    // Update interaction cooldown
+    if (_interactionCooldown > 0) {
+      _interactionCooldown -= dt;
+    }
   }
 
   void _spawnSleepingZ() {
@@ -236,51 +267,99 @@ class Pet extends SpriteAnimationComponent
     ));
   }
 
+  void _spawnInteractionHearts() {
+    final random = Random();
+    // Spawn 3-5 hearts
+    final count = 3 + random.nextInt(3);
+    for (var i = 0; i < count; i++) {
+      _hearts.add(_InteractionHeart(
+        startX: size.x * 0.3 + random.nextDouble() * size.x * 0.4,
+        startY: size.y * 0.3,
+        delay: i * 0.1,
+        isPerson: characterType == CharacterType.person,
+      ));
+    }
+  }
+
   @override
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Render sleeping Zs
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
     );
 
-    for (final z in _sleepingZs) {
+    // Render sleeping Zs (pets only)
+    if (characterType == CharacterType.pet) {
+      for (final z in _sleepingZs) {
+        textPainter.text = TextSpan(
+          text: 'z',
+          style: TextStyle(
+            fontSize: 14 + z.scale * 8,
+            color: Colors.white.withValues(alpha: z.alpha),
+            fontWeight: FontWeight.bold,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: z.alpha * 0.5),
+                blurRadius: 2,
+              ),
+            ],
+          ),
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(z.x, z.y));
+      }
+    }
+
+    // Render interaction hearts
+    for (final heart in _hearts) {
+      if (heart.delay > 0) continue;
+
       textPainter.text = TextSpan(
-        text: 'z',
+        text: heart.symbol,
         style: TextStyle(
-          fontSize: 14 + z.scale * 8,
-          color: Colors.white.withValues(alpha: z.alpha),
-          fontWeight: FontWeight.bold,
+          fontSize: 16 + heart.scale * 10,
+          color: heart.color.withValues(alpha: heart.alpha),
           shadows: [
             Shadow(
-              color: Colors.black.withValues(alpha: z.alpha * 0.5),
-              blurRadius: 2,
+              color: Colors.black.withValues(alpha: heart.alpha * 0.3),
+              blurRadius: 3,
             ),
           ],
         ),
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(z.x, z.y));
+      textPainter.paint(canvas, Offset(heart.x, heart.y));
     }
   }
 
   @override
   void onTapUp(TapUpEvent event) {
-    if (isPlayerInRange) {
+    if (isPlayerInRange && _interactionCooldown <= 0) {
       _onInteract();
-    } else {
-      debugPrint('Too far to pet $name');
+    } else if (!isPlayerInRange) {
+      debugPrint('Too far to interact with $name');
     }
   }
 
   void _onInteract() {
-    debugPrint('Petting $name!');
-    // Could trigger a sound, animation change, or UI popup here
+    debugPrint('Interacting with $name!');
+
+    // Set cooldown to prevent spam
+    _interactionCooldown = 1.5;
+
+    // Spawn hearts/love effect
+    _spawnInteractionHearts();
+
+    // Show interaction message if set
+    if (interactionMessage != null) {
+      // Could show overlay or toast here
+      debugPrint(interactionMessage!);
+    }
   }
 }
 
-/// Floating Z animation for sleeping pets
+/// Floating Z animation for sleeping characters
 class _SleepingZ {
   double x;
   double y;
@@ -314,8 +393,68 @@ class _SleepingZ {
   bool get isDone => lifetime >= maxLifetime;
 }
 
-/// Data class for defining pets in maps
-class PetData {
+/// Floating heart/love animation for interactions
+class _InteractionHeart {
+  double x;
+  double y;
+  double alpha = 1.0;
+  double scale = 0.0;
+  double lifetime = 0;
+  double delay;
+  final bool isPerson;
+  static const double maxLifetime = 1.5;
+
+  // Different symbols for pets vs people
+  late final String symbol;
+  late final Color color;
+
+  _InteractionHeart({
+    required double startX,
+    required double startY,
+    this.delay = 0,
+    this.isPerson = false,
+  })  : x = startX,
+        y = startY {
+    final random = Random();
+    if (isPerson) {
+      // Hearts and sparkles for people
+      symbol = ['❤', '💕', '✨', '💗'][random.nextInt(4)];
+      color = [Colors.pink, Colors.red, Colors.amber, Colors.pinkAccent][random.nextInt(4)];
+    } else {
+      // Paw prints and hearts for pets
+      symbol = ['❤', '🐾', '💕', '✨'][random.nextInt(4)];
+      color = [Colors.pink, Colors.brown, Colors.red, Colors.amber][random.nextInt(4)];
+    }
+  }
+
+  void update(double dt) {
+    if (delay > 0) {
+      delay -= dt;
+      return;
+    }
+
+    lifetime += dt;
+    final progress = lifetime / maxLifetime;
+
+    // Float up with slight wobble
+    x += dt * 5 * sin(lifetime * 8);
+    y -= dt * 40;
+
+    // Scale up quickly then fade out
+    if (progress < 0.2) {
+      scale = progress / 0.2;
+      alpha = 1.0;
+    } else {
+      scale = 1.0;
+      alpha = 1.0 - ((progress - 0.2) / 0.8);
+    }
+  }
+
+  bool get isDone => lifetime >= maxLifetime;
+}
+
+/// Data class for defining characters in maps
+class CharacterData {
   final double x;
   final double y;
   final String name;
@@ -327,8 +466,10 @@ class PetData {
   final double scale;
   final bool flipped;
   final double collisionRadius;
+  final CharacterType characterType;
+  final String? interactionMessage;
 
-  const PetData({
+  const CharacterData({
     required this.x,
     required this.y,
     required this.name,
@@ -340,13 +481,15 @@ class PetData {
     this.scale = 1.0,
     this.flipped = false,
     this.collisionRadius = 0.0,
+    this.characterType = CharacterType.pet,
+    this.interactionMessage,
   });
 
-  Pet toPet({bool showDebug = false}) {
-    return Pet(
+  Character toCharacter({bool showDebug = false}) {
+    return Character(
       position: Vector2(x, y),
       name: name,
-      spriteConfig: PetSpriteConfig(
+      spriteConfig: CharacterSpriteConfig(
         assetPath: spritePath,
         columns: columns,
         rows: rows,
@@ -357,6 +500,13 @@ class PetData {
       baseScale: scale,
       flipped: flipped,
       collisionRadius: collisionRadius,
+      characterType: characterType,
+      interactionMessage: interactionMessage,
     );
   }
 }
+
+// Keep Pet and PetData as aliases for backwards compatibility
+typedef Pet = Character;
+typedef PetData = CharacterData;
+typedef PetSpriteConfig = CharacterSpriteConfig;

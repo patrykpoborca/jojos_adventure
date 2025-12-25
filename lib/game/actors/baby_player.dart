@@ -3,11 +3,10 @@ import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
-import 'package:flutter/foundation.dart';
 
 import '../memory_lane_game.dart';
 import '../world/obstacle.dart';
-import '../world/pet.dart';
+import '../world/character.dart';
 
 /// Direction the baby is facing
 enum BabyDirection { down, up, left, right }
@@ -292,14 +291,14 @@ class BabyPlayer extends SpriteAnimationComponent
     super.onCollision(intersectionPoints, other);
 
     // Skip collision with non-obstacle components (memories, etc.)
-    // Check if other is Obstacle, Pet, or has Pet/Obstacle as parent
+    // Check if other is Obstacle, Character, or has these as parent
     final isObstacle = other is Obstacle || other.parent is Obstacle;
-    final isPet = other is Pet || other.parent is Pet;
+    final isCharacter = other is Character || other.parent is Character;
 
     // Debug: log all collisions
-    // debugPrint('Collision with: ${other.runtimeType}, parent: ${other.parent?.runtimeType}, isObstacle: $isObstacle, isPet: $isPet');
+    // debugPrint('Collision with: ${other.runtimeType}, parent: ${other.parent?.runtimeType}, isObstacle: $isObstacle, isCharacter: $isCharacter');
 
-    if (!isObstacle && !isPet) return;
+    if (!isObstacle && !isCharacter) return;
 
     _isColliding = true;
 

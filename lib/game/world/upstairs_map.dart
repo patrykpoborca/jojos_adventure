@@ -4,7 +4,7 @@ import 'package:memory_lane/game/memory_lane_game.dart';
 import 'package:memory_lane/game/world/memory_item.dart';
 import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
-import 'package:memory_lane/game/world/pet.dart';
+import 'package:memory_lane/game/world/character.dart';
 
 /// The upstairs nursery level - a cozy baby room
 class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
@@ -158,11 +158,11 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     ];
   }
 
-  /// Returns the list of pet data for the nursery
-  List<PetData> getPetData() {
+  /// Returns the list of character data for the nursery
+  List<CharacterData> getCharacterData() {
     return const [
       // Grinex - sleeping dog in the nursery
-      PetData(
+      CharacterData(
         x: 842, y: 1436,
         name: 'Grinex',
         spritePath: 'sprites/grinex.png',
@@ -173,9 +173,10 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         scale: 3.2, // Match upstairs scale
         flipped: false,
         collisionRadius: 40.0,
+        characterType: CharacterType.pet,
       ),
       // Mother - sitting in the nursery
-      PetData(
+      CharacterData(
         x: 1900, y: 1342,
         name: 'Mom',
         spritePath: 'sprites/mother.png',
@@ -186,9 +187,12 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         scale: 3.2, // Match upstairs scale
         flipped: true,
         collisionRadius: 0.0,
+        characterType: CharacterType.person,
+        interactionMessage: 'I love you, little one!',
       ),
     ];
   }
+  
 
   /// Returns the list of SFX zone data for the nursery
   List<SfxZoneData> getSfxZoneData() {
@@ -237,7 +241,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     await _addSfxZones();
 
     // Add pets
-    _addPets();
+    _addCharacters();
 
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
@@ -289,12 +293,12 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     }
   }
 
-  /// Adds pets to the map
-  void _addPets() {
+  /// Adds characters to the map
+  void _addCharacters() {
     final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
 
-    for (final data in getPetData()) {
-      add(data.toPet(showDebug: showDebug));
+    for (final data in getCharacterData()) {
+      add(data.toCharacter(showDebug: showDebug));
     }
   }
 

@@ -5,7 +5,7 @@ import 'package:memory_lane/game/world/christmas_lights.dart';
 import 'package:memory_lane/game/world/memory_item.dart';
 import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
-import 'package:memory_lane/game/world/pet.dart';
+import 'package:memory_lane/game/world/character.dart';
 
 /// The game world - a top-down view of the house
 class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
@@ -453,11 +453,11 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     ];
   }
 
-  /// Returns the list of pet data
-  List<PetData> getPetData() {
+  /// Returns the list of character data
+  List<CharacterData> getCharacterData() {
     return const [
       // Willow - sleeping dog in the living room
-      PetData(
+      CharacterData(
         x: 400, y: 762,
         name: 'Willow',
         spritePath: 'sprites/willow.png',
@@ -468,6 +468,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         scale: 1.3,
         flipped: false,
         collisionRadius: 35.0,
+        characterType: CharacterType.pet,
       ),
     ];
   }
@@ -505,8 +506,8 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     // Add Christmas lights
     _addChristmasLights();
 
-    // Add pets
-    _addPets();
+    // Add characters
+    _addCharacters();
 
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
@@ -562,12 +563,12 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     }
   }
 
-  /// Adds pets to the map
-  void _addPets() {
+  /// Adds characters to the map
+  void _addCharacters() {
     final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
 
-    for (final data in getPetData()) {
-      add(data.toPet(showDebug: showDebug));
+    for (final data in getCharacterData()) {
+      add(data.toCharacter(showDebug: showDebug));
     }
   }
 
