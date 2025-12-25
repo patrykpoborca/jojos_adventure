@@ -219,6 +219,16 @@ class MemoryItem extends SpriteAnimationComponent
     return distance <= collectDistance;
   }
 
+  /// Mark this memory as already collected (used when loading a level with persisted state)
+  void markAsCollected() {
+    if (_collected) return;
+    _collected = true;
+    // Level-triggering memories stay visible
+    if (!memory.triggersLevel) {
+      opacity = 0.0; // Hide the memory sprite
+    }
+  }
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();

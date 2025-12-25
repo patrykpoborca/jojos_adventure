@@ -34,9 +34,13 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     ];
   }
 
+  /// Returns the list of memory item data (static version for cross-level counting)
+  static List<MemoryItemData> getMemoryDataStatic() => _memoryData;
+
   /// Returns the list of memory item data for the nursery
-  List<MemoryItemData> getMemoryData() {
-    return const [
+  List<MemoryItemData> getMemoryData() => _memoryData;
+
+  static const List<MemoryItemData> _memoryData = [
       // ========================================
       // Phase 1 memories (crawling) - young_ photos
       // ========================================
@@ -142,7 +146,6 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         phase: GamePhase.walking,
       )
     ];
-  }
 
   /// Returns the list of music zone data for the nursery
   List<MusicZoneData> getMusicZoneData() {
@@ -270,11 +273,13 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     final phaseMemories = getMemoryData().where((m) => m.phase == currentPhase);
 
     for (final data in phaseMemories) {
-      add(data.toMemoryItem(showDebug: showDebug, scale: memoryScale));
+      final memoryItem = data.toMemoryItem(showDebug: showDebug, scale: memoryScale);
+      // Check if this memory was already collected
+      if (game.isMemoryCollected(data.stylizedPhotoPath, currentPhase)) {
+        memoryItem.markAsCollected();
+      }
+      add(memoryItem);
     }
-
-    // Update game's memory count for this phase
-    game.setPhaseMemoryCount(phaseMemories.length);
   }
 
   /// Adds music zones to the map

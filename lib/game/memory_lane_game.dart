@@ -237,6 +237,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     _cameraAnchor = PositionComponent(position: player.position.clone());
     await world.add(_cameraAnchor);
 
+    // Calculate total memories for the current phase (across all levels)
+    _calculateTotalMemoriesForPhase();
+
     // Load the initial level
     await _loadLevel(currentLevel);
 
@@ -262,8 +265,27 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       debugPrint('Press L to switch levels (debug)');
       debugPrint('Press G to toggle phase (crawling/walking)');
       debugPrint('Press U to toggle player collision');
+      debugPrint('Press B to collect all memories except closest');
       debugPrint('============================');
     }
+  }
+
+  /// Calculate total memories across all levels for current phase (excluding level triggers)
+  void _calculateTotalMemoriesForPhase() {
+    resetPhaseMemoryCount();
+
+    // Count memories from HouseMap (main floor)
+    final houseMemories = HouseMap.getMemoryDataStatic()
+        .where((m) => m.phase == currentPhase && m.levelTrigger == null)
+        .length;
+
+    // Count memories from UpstairsMap
+    final upstairsMemories = UpstairsMap.getMemoryDataStatic()
+        .where((m) => m.phase == currentPhase && m.levelTrigger == null)
+        .length;
+
+    _totalMemoriesInPhase = houseMemories + upstairsMemories;
+    debugPrint('Phase ${currentPhase.name} has $_totalMemoriesInPhase collectible memories ($houseMemories main floor + $upstairsMemories upstairs)');
   }
 
   /// Load a specific level
@@ -354,6 +376,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     _collectedMemories.clear();
     onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
 
+    // Calculate total memories for the new phase
+    _calculateTotalMemoriesForPhase();
+
     // Update player sprite based on phase
     if (nextPhase == GamePhase.walking) {
       await player.switchToWalking();
@@ -372,6 +397,48 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   void togglePlayerCollision() {
     player.collisionEnabled = !player.collisionEnabled;
     debugPrint('Player collision: ${player.collisionEnabled ? 'ON' : 'OFF'}');
+  }
+
+  /// Debug: Collect all memories except the closest one to the player
+  void debugCollectAllButClosest() {
+    if (currentMap == null) return;
+
+    // Find all uncollected MemoryItem components in the current map
+    final memories = currentMap!.children.whereType<MemoryItem>().where((m) => !m.isCollected).toList();
+
+    if (memories.isEmpty) {
+      debugPrint('No uncollected memories found');
+      return;
+    }
+
+    if (memories.length == 1) {
+      debugPrint('Only 1 memory left - not collecting it');
+      return;
+    }
+
+    // Find the closest memory to the player
+    final playerPos = player.position;
+    MemoryItem? closestMemory;
+    double closestDistance = double.infinity;
+
+    for (final memory in memories) {
+      final distance = memory.position.distanceTo(playerPos);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestMemory = memory;
+      }
+    }
+
+    // Collect all memories except the closest one
+    int collected = 0;
+    for (final memory in memories) {
+      if (memory != closestMemory) {
+        memory.collect();
+        collected++;
+      }
+    }
+
+    debugPrint('Debug: Collected $collected memories, left closest one at distance ${closestDistance.toStringAsFixed(0)}px');
   }
 
   /// Get the playable bounds for the current level
@@ -719,6 +786,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     _collectedMemories.clear();
     onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
 
+    // Calculate total memories for the new phase
+    _calculateTotalMemoriesForPhase();
+
     // Update player sprite for walking phase
     if (newPhase == GamePhase.walking) {
       await player.switchToWalking();
@@ -731,7 +801,26 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     debugPrint('Transitioned to ${newPhase.name} phase');
   }
 
-  /// Set the total memory count for the current phase (called by maps)
+  /// Add to the total memory count for the current phase (called by maps)
+  /// This accumulates across levels. Call resetPhaseMemoryCount before loading levels.
+  void addPhaseMemoryCount(int count) {
+    _totalMemoriesInPhase += count;
+    debugPrint('Phase ${currentPhase.name} now has $_totalMemoriesInPhase total memories');
+  }
+
+  /// Reset the phase memory count (call before loading a new phase)
+  void resetPhaseMemoryCount() {
+    _totalMemoriesInPhase = 0;
+  }
+
+  /// Check if a memory is already collected (by its key)
+  bool isMemoryCollected(String stylizedPhotoPath, GamePhase phase) {
+    final memoryKey = '${stylizedPhotoPath}_${phase.name}';
+    return _collectedMemoryKeys.contains(memoryKey);
+  }
+
+  /// Legacy method for backwards compatibility
+  @Deprecated('Use addPhaseMemoryCount instead')
   void setPhaseMemoryCount(int count) {
     _totalMemoriesInPhase = count;
     debugPrint('Phase ${currentPhase.name} has $count memories');

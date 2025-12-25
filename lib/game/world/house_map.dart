@@ -33,7 +33,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ObstacleData(x: 168, y: 346, width: 430, height: 130, label: 'northElCouch'),
       ObstacleData(x: 320, y: 607, width: 135, height: 55, label: 'ottoman'),
       ObstacleData(x: 337, y: 988, width: 177, height: 88, label: 'whiteChristmasTree'),
-      ObstacleData(x: 899, y: 615, width: 136, height: 375, label: 'eastCenterStaircase'),
+      ObstacleData(x: 899, y: 615, width: 100, height: 375, label: 'eastCenterStaircase'),
       ObstacleData(x: 618, y: 608, width: 83, height: 418, label: 'westCenterStaircase'),
       ObstacleData(x: 572, y: 596, width: 53, height: 162, label: 'livingRoomTv'),
       ObstacleData(x: 898, y: 120, width: 43, height: 334, label: 'builtIn'),
@@ -55,10 +55,14 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     ];
   }
 
+  /// Returns the list of memory item data (static version for cross-level counting)
+  static List<MemoryItemData> getMemoryDataStatic() => _memoryData;
+
   /// Returns the list of memory item data
   /// Format: stylizedPhotoPath = cover, photos = slideshow images, levelTrigger = optional level
-  List<MemoryItemData> getMemoryData() {
-    return const [
+  List<MemoryItemData> getMemoryData() => _memoryData;
+
+  static const List<MemoryItemData> _memoryData = [
       // ========================================
       // Phase 1 memories (crawling) - young_ photos
       // ========================================
@@ -369,7 +373,6 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         phase: GamePhase.walking,
       ),
     ];
-  }
 
   /// Returns the list of music zone data
   /// Add music zones here to define areas with background music
@@ -586,11 +589,13 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     final phaseMemories = getMemoryData().where((m) => m.phase == currentPhase);
 
     for (final data in phaseMemories) {
-      add(data.toMemoryItem(showDebug: showDebug));
+      final memoryItem = data.toMemoryItem(showDebug: showDebug);
+      // Check if this memory was already collected
+      if (game.isMemoryCollected(data.stylizedPhotoPath, currentPhase)) {
+        memoryItem.markAsCollected();
+      }
+      add(memoryItem);
     }
-
-    // Update game's memory count for this phase
-    game.setPhaseMemoryCount(phaseMemories.length);
   }
 
   /// Adds music zones to the map
