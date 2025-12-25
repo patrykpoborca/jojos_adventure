@@ -42,6 +42,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     with SingleTickerProviderStateMixin {
   late MemoryViewState _viewState;
   int _currentPhotoIndex = 0;
+  bool _isFullScreenPhoto = false;
 
   late final AnimationController _animController;
   late final Animation<double> _fadeAnimation;
@@ -111,7 +112,20 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   bool get isLastPhoto => _currentPhotoIndex >= allPhotos.length - 1;
 
-  void _onPolaroidTap() {
+  void _onPhotoTap() {
+    // Open full-screen photo viewer
+    setState(() {
+      _isFullScreenPhoto = true;
+    });
+  }
+
+  void _onCloseFullScreen() {
+    setState(() {
+      _isFullScreenPhoto = false;
+    });
+  }
+
+  void _onNextTap() {
     if (memory == null) return;
 
     if (!isLastPhoto) {
@@ -161,13 +175,9 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       opacity: _fadeAnimation,
       child: Material(
         color: Colors.black54,
-        child: GestureDetector(
-          onTap: _onPolaroidTap,
-          behavior: HitTestBehavior.opaque,
-          child: Center(
-            child: _buildContent(),
-          ),
-        ),
+        child: _isFullScreenPhoto
+            ? _buildFullScreenPhotoViewer()
+            : Center(child: _buildContent()),
       ),
     );
   }
@@ -298,29 +308,54 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Photo area
-                    Container(
-                      width: photoSize,
-                      height: photoSize,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0E0E0),
-                        border: Border.all(
-                          color: const Color(0xFFD0D0D0),
-                          width: 1,
-                        ),
-                      ),
-                      child: Image.asset(
-                        photoPath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.photo,
-                              size: ResponsiveSizing.iconSize(context, 64),
-                              color: const Color(0xFF9E9E9E),
+                    // Photo area - tappable for full screen
+                    GestureDetector(
+                      onTap: !isBackground ? _onPhotoTap : null,
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: photoSize,
+                            height: photoSize,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0E0E0),
+                              border: Border.all(
+                                color: const Color(0xFFD0D0D0),
+                                width: 1,
+                              ),
                             ),
-                          );
-                        },
+                            child: Image.asset(
+                              photoPath,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Icon(
+                                    Icons.photo,
+                                    size: ResponsiveSizing.iconSize(context, 64),
+                                    color: const Color(0xFF9E9E9E),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          // Zoom icon overlay (only on current photo)
+                          if (!isBackground)
+                            Positioned(
+                              right: ResponsiveSizing.spacing(context, 6),
+                              bottom: ResponsiveSizing.spacing(context, 6),
+                              child: Container(
+                                padding: ResponsiveSizing.paddingAll(context, 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  borderRadius: ResponsiveSizing.borderRadius(context, 6),
+                                ),
+                                child: Icon(
+                                  Icons.zoom_in,
+                                  color: Colors.white,
+                                  size: ResponsiveSizing.iconSize(context, 18),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     SizedBox(height: ResponsiveSizing.spacing(context, 12)),
@@ -349,12 +384,46 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: ResponsiveSizing.spacing(context, 8)),
-                      Text(
-                        isLastPhoto ? 'Tap to continue' : 'Tap for next photo',
-                        style: TextStyle(
-                          fontSize: ResponsiveSizing.fontSize(context, 11),
-                          color: Colors.grey.shade500,
+                      SizedBox(height: ResponsiveSizing.spacing(context, 12)),
+                      // Styled Next button
+                      GestureDetector(
+                        onTap: _onNextTap,
+                        child: Container(
+                          padding: ResponsiveSizing.paddingSymmetric(
+                            context,
+                            horizontal: 24,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4A574),
+                            borderRadius: ResponsiveSizing.borderRadius(context, 20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFD4A574).withValues(alpha: 0.3),
+                                blurRadius: ResponsiveSizing.spacing(context, 8),
+                                offset: Offset(0, ResponsiveSizing.spacing(context, 2)),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isLastPhoto ? 'Done' : 'Next',
+                                style: GoogleFonts.caveat(
+                                  fontSize: ResponsiveSizing.fontSize(context, 18),
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: ResponsiveSizing.spacing(context, 4)),
+                              Icon(
+                                isLastPhoto ? Icons.check : Icons.arrow_forward,
+                                color: Colors.white,
+                                size: ResponsiveSizing.iconSize(context, 16),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -539,6 +608,104 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
           size: iconSz,
         ),
       ),
+    );
+  }
+
+  Widget _buildFullScreenPhotoViewer() {
+    final photos = allPhotos;
+    if (photos.isEmpty) return const SizedBox.shrink();
+
+    final currentPhoto = photos[_currentPhotoIndex];
+    final pos = ResponsiveSizing.positionOffset(context, 12);
+    final captionPadding = ResponsiveSizing.spacing(context, 16);
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Black background (already from Material, but ensure full coverage)
+        Container(color: Colors.black),
+
+        // Interactive photo viewer with pinch-zoom and pan
+        InteractiveViewer(
+          minScale: 1.0,
+          maxScale: 4.0,
+          child: Center(
+            child: Image.asset(
+              currentPhoto,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Icon(
+                    Icons.broken_image,
+                    size: ResponsiveSizing.iconSize(context, 64),
+                    color: Colors.white54,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+
+        // Caption at bottom
+        if (memory != null)
+          Positioned(
+            left: captionPadding,
+            right: captionPadding,
+            bottom: ResponsiveSizing.spacing(context, 40),
+            child: Container(
+              padding: ResponsiveSizing.paddingSymmetric(
+                context,
+                horizontal: 16,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: ResponsiveSizing.borderRadius(context, 12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (memory!.date != 'Date')
+                    Text(
+                      memory!.date,
+                      style: GoogleFonts.caveat(
+                        fontSize: ResponsiveSizing.fontSize(context, 14),
+                        color: Colors.white70,
+                      ),
+                    ),
+                  Text(
+                    memory!.caption,
+                    style: GoogleFonts.caveat(
+                      fontSize: ResponsiveSizing.fontSize(context, 20),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: ResponsiveSizing.spacing(context, 4)),
+                  Text(
+                    'Pinch to zoom',
+                    style: TextStyle(
+                      fontSize: ResponsiveSizing.fontSize(context, 11),
+                      color: Colors.white54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Close button - top left
+        Positioned(
+          top: pos,
+          left: pos,
+          child: _buildCornerButton(
+            icon: Icons.close,
+            onTap: _onCloseFullScreen,
+            isAccent: false,
+          ),
+        ),
+      ],
     );
   }
 
