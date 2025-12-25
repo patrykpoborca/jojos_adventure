@@ -253,6 +253,52 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
           ),
         ),
 
+        // Gradient overlay on right side for message
+        Positioned(
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 280,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Message on right side
+        Positioned(
+          top: 0,
+          right: 24,
+          bottom: 100,
+          width: 220,
+          child: Center(
+            child: Text(
+              'Thank you for exploring our memories.\n\nWith love,\nfrom the Poborca family!',
+              style: GoogleFonts.caveat(
+                fontSize: 22,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+
         // Caption and close button at bottom
         Positioned(
           left: 24,

@@ -459,6 +459,16 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         maxVolume: 0.5,
         oneShot: false,
       ),
+      // Keyboard clacking in office area
+      SfxZoneData(
+        x: 2317, y: 550,
+        zoneId: 'keyboard_clacking',
+        sfxFile: 'clacking.mp3',
+        innerRadius: 80,
+        outerRadius: 300,
+        maxVolume: 0.4,
+        oneShot: false,
+      ),
 
     ];
   }
