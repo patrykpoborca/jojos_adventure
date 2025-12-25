@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import '../memory_lane_game.dart';
+import 'christmas_lights.dart';
 
 /// Fog of war component that obscures areas far from the player
 class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
@@ -45,29 +46,66 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
       height: worldHeight * 1.5,
     );
 
-    // Calculate visibility radius with obstacle influence
-    final visRadius = _calculateVisibilityRadius(playerPos);
-    final totalRadius = visRadius + fadeRadius;
+    // Use a layer to combine multiple light sources
+    canvas.saveLayer(fogRect, Paint());
 
-    // Create radial gradient for the visibility hole
+    // Draw base fog
+    canvas.drawRect(
+      fogRect,
+      Paint()..color = Colors.black.withValues(alpha: fogOpacity),
+    );
+
+    // Punch hole for player visibility
+    final visRadius = _calculateVisibilityRadius(playerPos);
+    _drawLightHole(canvas, playerPos, visRadius, fadeRadius);
+
+    // Punch holes for Christmas lights
+    _drawChristmasLightHoles(canvas);
+
+    canvas.restore();
+  }
+
+  /// Draw a visibility hole at a position
+  void _drawLightHole(Canvas canvas, Vector2 pos, double innerRadius, double fadeRadius) {
+    final totalRadius = innerRadius + fadeRadius;
     final gradient = ui.Gradient.radial(
-      Offset(playerPos.x, playerPos.y),
+      Offset(pos.x, pos.y),
       totalRadius,
       [
+        Colors.black, // Will be used to "erase" the fog
+        Colors.black,
         Colors.transparent,
-        Colors.transparent,
-        Colors.black.withValues(alpha: fogOpacity),
       ],
       [
         0.0,
-        visRadius / totalRadius, // Start fade at visibility edge
-        1.0, // Full fog at outer edge
+        innerRadius / totalRadius,
+        1.0,
       ],
     );
 
-    // Draw the fog with a hole around the player
-    final paint = Paint()..shader = gradient;
-    canvas.drawRect(fogRect, paint);
+    canvas.drawCircle(
+      Offset(pos.x, pos.y),
+      totalRadius,
+      Paint()
+        ..shader = gradient
+        ..blendMode = BlendMode.dstOut, // Erase the fog
+    );
+  }
+
+  /// Draw light holes for all Christmas lights in the current map
+  void _drawChristmasLightHoles(Canvas canvas) {
+    final lights = game.currentMap?.children.whereType<ChristmasLights>();
+    if (lights == null) return;
+
+    for (final light in lights) {
+      // Use the triangle's center for fog piercing
+      _drawLightHole(
+        canvas,
+        light.triangleCenter,
+        light.fogPierceRadius * 0.5, // Inner bright area
+        light.fogPierceRadius * 0.5, // Fade area
+      );
+    }
   }
 
   /// Calculate visibility radius based on nearby obstacles

@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:memory_lane/game/memory_lane_game.dart';
+import 'package:memory_lane/game/world/christmas_lights.dart';
 import 'package:memory_lane/game/world/memory_item.dart';
 import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
@@ -377,6 +378,26 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     ];
   }
 
+  /// Returns the list of Christmas lights positions (triangles)
+  List<ChristmasLightsData> getChristmasLightsData() {
+    return const [
+      // Green Christmas tree in dining area
+      ChristmasLightsData(
+        x1: 1387, y1: 143, // Top
+        x2: 1444, y2: 302, // Bottom right
+        x3: 1324, y3: 310, // Bottom left
+        lightsPerEdge: 5,
+      ),
+      // White Christmas tree in living room
+      ChristmasLightsData(
+        x1: 432, y1: 878,  // Top
+        x2: 364, y2: 1071, // Bottom left
+        x3: 494, y3: 1071, // Bottom right
+        lightsPerEdge: 5,
+      ),
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -403,6 +424,9 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     // Add music zones
     _addMusicZones();
+
+    // Add Christmas lights
+    _addChristmasLights();
 
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
@@ -441,6 +465,13 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     for (final data in getMusicZoneData()) {
       add(data.toMusicZone(showDebug: showDebug));
+    }
+  }
+
+  /// Adds Christmas lights to the map
+  void _addChristmasLights() {
+    for (final data in getChristmasLightsData()) {
+      add(data.toComponent());
     }
   }
 
