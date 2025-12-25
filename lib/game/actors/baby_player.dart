@@ -76,6 +76,9 @@ class BabyPlayer extends SpriteAnimationComponent
   BabyDirection _currentDirection = BabyDirection.down;
   bool _isMoving = false;
 
+  /// Keyboard input direction (set from main.dart key handlers)
+  Vector2 keyboardDirection = Vector2.zero();
+
   BabyPlayer({required this.joystick})
       : super(
           size: Vector2.all(displaySize), // Square for crawling
@@ -217,12 +220,22 @@ class BabyPlayer extends SpriteAnimationComponent
     final wasMoving = _isMoving;
     final previousDirection = _currentDirection;
 
-    // Check if joystick is active
+    // Combine joystick and keyboard input
+    Vector2 inputDirection = Vector2.zero();
+
     if (!joystick.delta.isZero()) {
+      inputDirection = joystick.relativeDelta.clone();
+    } else if (!keyboardDirection.isZero()) {
+      // Normalize keyboard direction for consistent speed
+      inputDirection = keyboardDirection.normalized();
+    }
+
+    // Check if there's any input
+    if (!inputDirection.isZero()) {
       _isMoving = true;
 
       // Calculate intended movement
-      var delta = joystick.relativeDelta * speed * dt;
+      var delta = inputDirection * speed * dt;
 
       // If colliding, allow sliding along obstacles
       if (_isColliding && !_collisionDirection.isZero()) {
@@ -234,8 +247,8 @@ class BabyPlayer extends SpriteAnimationComponent
 
       position.add(delta);
 
-      // Determine direction based on joystick angle
-      _currentDirection = _getDirectionFromJoystick();
+      // Determine direction based on input
+      _currentDirection = _getDirectionFromInput(inputDirection);
 
       // Clamp position to house bounds
       _clampToHouseBounds();
@@ -336,9 +349,9 @@ class BabyPlayer extends SpriteAnimationComponent
     }
   }
 
-  /// Determines the cardinal direction from joystick input
-  BabyDirection _getDirectionFromJoystick() {
-    final angle = atan2(joystick.delta.y, joystick.delta.x);
+  /// Determines the cardinal direction from input vector
+  BabyDirection _getDirectionFromInput(Vector2 input) {
+    final angle = atan2(input.y, input.x);
     final degrees = angle * 180 / pi;
 
     // Convert angle to cardinal direction

@@ -58,6 +58,9 @@ class _GameScreenState extends State<GameScreen> {
   bool _showDebugPanel = MemoryLaneGame.showDebugPanel;
   bool _isCinematicMode = false;
 
+  /// Currently pressed movement keys
+  final Set<LogicalKeyboardKey> _pressedMovementKeys = {};
+
   @override
   void initState() {
     super.initState();
@@ -92,10 +95,61 @@ class _GameScreenState extends State<GameScreen> {
     super.dispose();
   }
 
+  /// Movement keys mapping
+  static final _movementKeys = {
+    LogicalKeyboardKey.keyW,
+    LogicalKeyboardKey.keyA,
+    LogicalKeyboardKey.keyS,
+    LogicalKeyboardKey.keyD,
+    LogicalKeyboardKey.arrowUp,
+    LogicalKeyboardKey.arrowDown,
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowRight,
+  };
+
+  /// Update player keyboard direction based on pressed keys
+  void _updateKeyboardDirection() {
+    final direction = Vector2.zero();
+
+    // Up
+    if (_pressedMovementKeys.contains(LogicalKeyboardKey.keyW) ||
+        _pressedMovementKeys.contains(LogicalKeyboardKey.arrowUp)) {
+      direction.y -= 1;
+    }
+    // Down
+    if (_pressedMovementKeys.contains(LogicalKeyboardKey.keyS) ||
+        _pressedMovementKeys.contains(LogicalKeyboardKey.arrowDown)) {
+      direction.y += 1;
+    }
+    // Left
+    if (_pressedMovementKeys.contains(LogicalKeyboardKey.keyA) ||
+        _pressedMovementKeys.contains(LogicalKeyboardKey.arrowLeft)) {
+      direction.x -= 1;
+    }
+    // Right
+    if (_pressedMovementKeys.contains(LogicalKeyboardKey.keyD) ||
+        _pressedMovementKeys.contains(LogicalKeyboardKey.arrowRight)) {
+      direction.x += 1;
+    }
+
+    _game.player.keyboardDirection = direction;
+  }
+
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    // Handle movement keys (WASD and arrows)
+    if (_movementKeys.contains(event.logicalKey)) {
+      if (event is KeyDownEvent) {
+        _pressedMovementKeys.add(event.logicalKey);
+      } else if (event is KeyUpEvent) {
+        _pressedMovementKeys.remove(event.logicalKey);
+      }
+      _updateKeyboardDirection();
+      return KeyEventResult.handled;
+    }
+
     if (event is KeyDownEvent) {
-      // D key always works to toggle debug panel
-      if (event.logicalKey == LogicalKeyboardKey.keyD) {
+      // Backtick key (`) toggles debug panel
+      if (event.logicalKey == LogicalKeyboardKey.backquote) {
         _game.toggleDebugPanel();
         return KeyEventResult.handled;
       }

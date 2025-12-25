@@ -273,8 +273,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Load and add the tiled background (behind everything)
     await _loadBackground();
 
-    // Add snow effect (renders on background, outside level bounds)
-    await world.add(SnowEffectFactory.createForGame(this));
+    // Snow effect disabled for performance on mobile devices
+    // (10,000 particles with gradient shaders was too heavy)
+    // await world.add(SnowEffectFactory.createForGame(this));
 
     // Create joystick for movement control
     joystick = JoystickComponent(

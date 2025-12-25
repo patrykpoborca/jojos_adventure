@@ -193,7 +193,7 @@ class SnowEffectFactory {
     ];
 
     return SnowEffect(
-      flakeCount: 10000,
+      flakeCount: 1000,
       spawnArea: spawnArea,
       excludeAreas: excludeAreas,
       includeZones: includeZones,
