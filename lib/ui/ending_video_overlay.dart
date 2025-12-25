@@ -208,116 +208,140 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
   }
 
   Widget _buildEndCard() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black,
-            const Color(0xFF1a1a2e),
-            const Color(0xFF16213e),
-          ],
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Full-bleed cozy end game image
+        Image.asset(
+          'assets/photos/exit_end_game_goodbye.png',
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback gradient if image fails to load
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF1a1a2e),
+                    Color(0xFF16213e),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
-      ),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
+
+        // Gradient overlay at bottom for text readability
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 280,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.85),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Caption and close button at bottom
+        Positioned(
+          left: 24,
+          right: 24,
+          bottom: 40,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Christmas tree icon
-              const Text(
-                '🎄',
-                style: TextStyle(fontSize: 64),
-              ),
-              const SizedBox(height: 24),
-
               // Title
               Text(
                 'The End',
                 style: GoogleFonts.caveat(
-                  fontSize: 48,
+                  fontSize: 52,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Subtitle
-              Text(
-                'Memory Lane',
-                style: GoogleFonts.caveat(
-                  fontSize: 32,
-                  color: const Color(0xFFD4A574),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Message
-              Text(
-                'Thank you for exploring our memories.\nWith love, from the Poborca family!',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white70,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Christmas message
-              Text(
-                'Merry Christmas!',
-                style: GoogleFonts.caveat(
-                  fontSize: 28,
-                  color: const Color(0xFFD4A574),
-                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 10,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+
+              // Christmas message
+              Text(
+                '🎄 Merry Christmas! 🎄',
+                style: GoogleFonts.caveat(
+                  fontSize: 28,
+                  color: const Color(0xFFFFD700),
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
                 '2024 - 2025',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.white54,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 4,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 40),
-
-              // Hearts
-              const Text(
-                '❤️ 👶 ❤️',
-                style: TextStyle(fontSize: 32),
-              ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
 
               // Close button
-              ElevatedButton(
-                onPressed: _onClose,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4A574),
-                  foregroundColor: Colors.white,
+              GestureDetector(
+                onTap: _onClose,
+                child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 16,
+                    horizontal: 40,
+                    vertical: 14,
                   ),
-                  shape: RoundedRectangleBorder(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD4A574),
                     borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ),
-                child: Text(
-                  'Close',
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.caveat(
+                      fontSize: 24,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
