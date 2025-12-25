@@ -63,7 +63,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       // Phase 1 memories (crawling) - young_ photos
       // ========================================
       MemoryItemData.simple(
-        x: 188, y: 243,
+        x: 230, y: 243,
         photoPath: 'assets/photos/young_some_times_parents_travel.jpg',
         date: 'Jul 30, 2025', caption: 'Parents travel sometimes too!',
       ),
@@ -174,7 +174,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       // Phase 2 memories (walking) - old_ photos
       // ========================================
       MemoryItemData.simple(
-        x: 188, y: 243,
+        x: 230, y: 243,
         photoPath: 'assets/photos/old_jojo_travels_too.jpg',
         date: 'Oct 10, 2025', caption: 'JoJo likes to come too sometimes!',
         phase: GamePhase.walking,
@@ -251,7 +251,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 1054, y: 305,
-        photoPath: 'assets/photos/old_board_game.png',
+        photoPath: 'assets/photos/old_board_game2.png',
         date: 'Date', caption: 'I like crisps',
         phase: GamePhase.walking,
       ),
@@ -276,7 +276,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       // Stairs memory - triggers upstairs level!
       MemoryItemData(
-        x: 1850, y: 950,
+        x: 1958, y: 1116,
         stylizedPhotoPath: 'assets/photos/old_bathtime.jpg',
         date: 'Nov 3, 2025',
         caption: 'Climbing the stairs...',
@@ -477,7 +477,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     return const [
       // Willow - sleeping dog in the living room
       CharacterData(
-        x: 400, y: 762,
+        x: 400, y: 832,
         name: 'Willow',
         spritePath: 'sprites/willow.png',
         columns: 8,
@@ -510,6 +510,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         displaySize: 64,
         animationSpeed: 0.15,
         scale: 2.0,
+        scaleX: 0.9, // 10% narrower
         walkSpeed: 40.0,
         loopWaypoints: false, // Ping-pong between waypoints
         collisionRadius: 0.0, // No collision

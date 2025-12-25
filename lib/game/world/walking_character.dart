@@ -26,8 +26,11 @@ class WalkingCharacter extends SpriteAnimationComponent
   final double displaySize;
   final double animationSpeed;
 
-  /// Base scale multiplier
+  /// Base scale multiplier (Y axis)
   final double baseScale;
+
+  /// X scale multiplier (relative to baseScale, 1.0 = same as baseScale)
+  final double scaleX;
 
   /// Movement speed in pixels per second
   final double walkSpeed;
@@ -88,6 +91,7 @@ class WalkingCharacter extends SpriteAnimationComponent
     this.displaySize = 100.0,
     this.animationSpeed = 0.15,
     this.baseScale = 1.0,
+    this.scaleX = 1.0,
     this.walkSpeed = 60.0,
     this.loopWaypoints = false,
     this.collisionRadius = 0.0,
@@ -96,7 +100,7 @@ class WalkingCharacter extends SpriteAnimationComponent
     this.showDebug = false,
   }) : super(
           position: position,
-          size: Vector2.all(displaySize * baseScale),
+          size: Vector2(displaySize * baseScale * scaleX, displaySize * baseScale),
           anchor: Anchor.center,
         );
 
@@ -135,7 +139,7 @@ class WalkingCharacter extends SpriteAnimationComponent
     await super.onLoad();
 
     final spriteSize = displaySize;
-    size = Vector2.all(spriteSize * baseScale);
+    size = Vector2(spriteSize * baseScale * scaleX, spriteSize * baseScale);
 
     // Load sprite sheet
     final image = await game.images.load(spritePath);
@@ -493,6 +497,7 @@ class WalkingCharacterData {
   final double displaySize;
   final double animationSpeed;
   final double scale;
+  final double scaleX; // X scale relative to scale (1.0 = same width, 0.9 = 10% narrower)
   final double walkSpeed;
   final bool loopWaypoints;
   final double collisionRadius;
@@ -510,6 +515,7 @@ class WalkingCharacterData {
     this.displaySize = 100.0,
     this.animationSpeed = 0.15,
     this.scale = 1.0,
+    this.scaleX = 1.0,
     this.walkSpeed = 60.0,
     this.loopWaypoints = false,
     this.collisionRadius = 0.0,
@@ -528,6 +534,7 @@ class WalkingCharacterData {
       displaySize: displaySize,
       animationSpeed: animationSpeed,
       baseScale: scale,
+      scaleX: scaleX,
       walkSpeed: walkSpeed,
       loopWaypoints: loopWaypoints,
       collisionRadius: collisionRadius,
