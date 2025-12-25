@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:memory_lane/game/memory_lane_game.dart';
 import 'package:memory_lane/game/world/memory_item.dart';
+import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
 
 /// The game world - a top-down view of the house
@@ -239,9 +240,14 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         date: 'Date', caption: 'I like crisps',
         phase: GamePhase.walking,
       ),
-      MemoryItemData.simple(
+      MemoryItemData(
         x: 1251, y: 650,
-        photoPath: 'assets/photos/old_cookies.jpg',
+        stylizedPhotoPath: 'assets/photos/old_cookies.jpg',
+        photos: [
+          'assets/photos/old_cookies_1.jpg',
+          'assets/photos/old_cookies_2.jpg',
+          'assets/photos/old_cookies_3.jpg',
+        ],
         date: 'Dec 24, 2025', caption: 'Hey, this is recent!',
         phase: GamePhase.walking,
       ),
@@ -311,14 +317,14 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         phase: GamePhase.walking,
       ),
       MemoryItemData.simple(
-        x: 1739, y: 528,
+        x: 1060, y: 910,
         photoPath: 'assets/photos/old_grandma_cuddles.jpg',
         date: 'May 4, 2025', caption: 'Shakes with grandma!',
         phase: GamePhase.crawling,
       ),
 
       MemoryItemData.simple(
-        x: 1739, y: 528,
+        x: 1521, y: 854,
         photoPath: 'assets/photos/young_not_quite_here.jpg',
         date: 'Jul 28, 2025', caption: 'This is from grandmas!',
         phase: GamePhase.crawling,
@@ -350,6 +356,21 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     ];
   }
 
+  /// Returns the list of music zone data
+  /// Add music zones here to define areas with background music
+  List<MusicZoneData> getMusicZoneData() {
+    // ObstacleData(x: 1546, y: 123, width: 1646, height: 359, label: 'Obstacle'),
+    return const [
+      // Example: Living room area with cozy music
+      MusicZoneData(
+        x: 1546, y: 123, width: 1800, height: 450,
+        zoneId: 'outdoor',
+        musicFile: 'upbeat_trim_a.mp3',
+        maxVolume: 0.6,
+      ),
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -373,6 +394,9 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     // Add memory items
     _addMemories();
+
+    // Add music zones
+    _addMusicZones();
 
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
@@ -403,6 +427,15 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     // Update game's memory count for this phase
     game.setPhaseMemoryCount(phaseMemories.length);
+  }
+
+  /// Adds music zones to the map
+  void _addMusicZones() {
+    final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
+
+    for (final data in getMusicZoneData()) {
+      add(data.toMusicZone(showDebug: showDebug));
+    }
   }
 
   void _addDebugBounds() {

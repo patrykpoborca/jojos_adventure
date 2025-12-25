@@ -17,6 +17,9 @@ class MemoryItem extends SpriteAnimationComponent
   /// Whether to show debug visualization
   final bool showDebug;
 
+  /// Base scale multiplier for this memory
+  final double baseScale;
+
   /// Whether this memory has been collected
   bool _collected = false;
 
@@ -40,9 +43,10 @@ class MemoryItem extends SpriteAnimationComponent
     required Vector2 position,
     required this.memory,
     this.showDebug = false,
+    this.baseScale = 1.0,
   }) : super(
           position: position,
-          size: Vector2.all(spriteSize),
+          size: Vector2.all(spriteSize * baseScale),
           anchor: Anchor.center,
         );
 
@@ -61,8 +65,9 @@ class MemoryItem extends SpriteAnimationComponent
 
     // Load the sprite sheet (3 columns x 2 rows)
     final image = await game.images.load('sprites/memories.png');
-    final frameWidth = image.width / sheetColumns;
-    final frameHeight = image.height / sheetRows;
+    // Use floor division to get clean integer frame sizes (avoids sub-pixel rendering issues)
+    final frameWidth = (image.width ~/ sheetColumns).toDouble();
+    final frameHeight = (image.height ~/ sheetRows).toDouble();
 
     final spriteSheet = SpriteSheet(
       image: image,
@@ -90,7 +95,7 @@ class MemoryItem extends SpriteAnimationComponent
 
     // Add circular hitbox for tap detection (larger than sprite for easier tapping)
     add(CircleHitbox(
-      radius: spriteSize / 2 + 20,
+      radius: (spriteSize * baseScale) / 2 + 20,
       position: size / 2,
       anchor: Anchor.center,
       collisionType: CollisionType.passive,
@@ -183,6 +188,9 @@ class MemoryItemData {
   /// Which phase this memory belongs to
   final GamePhase phase;
 
+  /// Optional music file to play when viewing
+  final String? musicFile;
+
   const MemoryItemData({
     required this.x,
     required this.y,
@@ -192,6 +200,7 @@ class MemoryItemData {
     required this.caption,
     this.levelTrigger,
     this.phase = GamePhase.crawling,
+    this.musicFile,
   });
 
   /// Convenience constructor for simple single-photo memories
@@ -203,10 +212,11 @@ class MemoryItemData {
     required this.caption,
     this.levelTrigger,
     this.phase = GamePhase.crawling,
+    this.musicFile,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
-  MemoryItem toMemoryItem({bool showDebug = false}) {
+  MemoryItem toMemoryItem({bool showDebug = false, double scale = 1.0}) {
     return MemoryItem(
       position: Vector2(x, y),
       memory: Memory(
@@ -216,8 +226,10 @@ class MemoryItemData {
         caption: caption,
         levelTrigger: levelTrigger,
         phase: phase,
+        musicFile: musicFile,
       ),
       showDebug: showDebug,
+      baseScale: scale,
     );
   }
 }

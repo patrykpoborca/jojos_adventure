@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:memory_lane/game/memory_lane_game.dart';
 import 'package:memory_lane/game/world/memory_item.dart';
+import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
 
 /// The upstairs nursery level - a cozy baby room
@@ -98,6 +99,16 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       ),
 
       MemoryItemData(
+        x: 1353,
+        y: 786,
+        stylizedPhotoPath: 'assets/photos/old_down_stairs.jpg',
+        date: 'Oct 18, 2025',
+        caption: 'Back downstairs...',
+        levelTrigger: 'mainFloor',
+        phase: GamePhase.walking,
+      ),
+
+      MemoryItemData(
         x: 192,
         y: 1444,
         stylizedPhotoPath: 'assets/photos/young_bath_time.jpg',
@@ -141,6 +152,20 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     ];
   }
 
+  /// Returns the list of music zone data for the nursery
+  List<MusicZoneData> getMusicZoneData() {
+    return const [
+      // Example: Nursery ambient music
+      // MusicZoneData(
+      //   x: 84, y: 800,
+      //   width: 2000, height: 1000,
+      //   zoneId: 'nursery',
+      //   musicFile: 'lullaby.mp3',
+      //   maxVolume: 0.5,
+      // ),
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -165,6 +190,9 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     // Add memory items
     _addMemories();
 
+    // Add music zones
+    _addMusicZones();
+
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
       _addDebugBounds();
@@ -180,6 +208,9 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     }
   }
 
+  /// Scale for memory items on this map (larger for upstairs)
+  static const double memoryScale = 2.5;
+
   /// Adds memory items for the current game phase
   void _addMemories() {
     final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
@@ -189,11 +220,20 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     final phaseMemories = getMemoryData().where((m) => m.phase == currentPhase);
 
     for (final data in phaseMemories) {
-      add(data.toMemoryItem(showDebug: showDebug));
+      add(data.toMemoryItem(showDebug: showDebug, scale: memoryScale));
     }
 
     // Update game's memory count for this phase
     game.setPhaseMemoryCount(phaseMemories.length);
+  }
+
+  /// Adds music zones to the map
+  void _addMusicZones() {
+    final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
+
+    for (final data in getMusicZoneData()) {
+      add(data.toMusicZone(showDebug: showDebug));
+    }
   }
 
   void _addDebugBounds() {

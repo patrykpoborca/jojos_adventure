@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import 'actors/baby_player.dart';
+import 'audio/audio_manager.dart';
 import 'world/house_map.dart';
 import 'world/upstairs_map.dart';
 
@@ -66,6 +67,9 @@ class Memory {
   /// Which phase this memory belongs to
   final GamePhase phase;
 
+  /// Optional music file to play when viewing this memory
+  final String? musicFile;
+
   const Memory({
     required this.stylizedPhotoPath,
     required this.photos,
@@ -73,6 +77,7 @@ class Memory {
     required this.caption,
     this.levelTrigger,
     this.phase = GamePhase.crawling,
+    this.musicFile,
   });
 
   /// Convenience constructor for single photo memories
@@ -82,6 +87,7 @@ class Memory {
     required this.caption,
     this.levelTrigger,
     this.phase = GamePhase.crawling,
+    this.musicFile,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
@@ -202,6 +208,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Game is ready
     state = GameState.exploring;
 
+    // Start ambient background music
+    await AudioManager().startAmbientMusic();
+
     if (debugObstaclePlacementEnabled) {
       debugPrint('=== DEBUG PLACEMENT MODE ===');
       debugPrint('Press M to toggle between OBSTACLE and MEMORY mode');
@@ -311,13 +320,13 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
     // Scale the background to cover a large area (bigger than any level)
     // Main floor is ~3100x1200, so we need something larger
-    const targetWidth = 5000.0;
+    const targetWidth = 6336.0;
     const targetHeight = 3000.0;
 
     // Single large background, centered with negative offset
     final bgComponent = SpriteComponent(
       sprite: bgSprite,
-      position: Vector2(-500, -500),
+      position: Vector2(-750, -500),
       size: Vector2(targetWidth, targetHeight),
       priority: -100, // Render behind everything
     );
@@ -327,6 +336,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   @override
   void update(double dt) {
+    // Update audio manager (handles music fading)
+    AudioManager().update(dt);
+
     // Only update game logic when exploring
     if (state == GameState.exploring) {
       super.update(dt);

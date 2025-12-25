@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../game/audio/audio_manager.dart';
 import '../game/memory_lane_game.dart';
 
 /// View state for the memory overlay
@@ -46,6 +47,8 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     switch (widget.game.overlayType) {
       case OverlayType.memory:
         _viewState = MemoryViewState.polaroidStack;
+        // Play memory music if available
+        _playMemoryMusic();
         break;
       case OverlayType.phaseComplete:
         _viewState = MemoryViewState.phaseComplete;
@@ -63,6 +66,13 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
     _animController.forward();
+  }
+
+  void _playMemoryMusic() {
+    final musicFile = widget.game.currentMemory?.musicFile;
+    if (musicFile != null) {
+      AudioManager().playMemoryMusic(musicFile);
+    }
   }
 
   @override
@@ -276,14 +286,17 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
                 // Only show text on current polaroid
                 if (!isBackground && memory != null) ...[
-                  Text(
-                    memory!.date,
-                    style: GoogleFonts.caveat(
-                      fontSize: 14,
-                      color: const Color(0xFF6B5B4F),
+                  // Only show date if it's not a placeholder
+                  if (memory!.date != 'Date') ...[
+                    Text(
+                      memory!.date,
+                      style: GoogleFonts.caveat(
+                        fontSize: 14,
+                        color: const Color(0xFF6B5B4F),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
+                    const SizedBox(height: 2),
+                  ],
                   Text(
                     memory!.caption,
                     style: GoogleFonts.caveat(
