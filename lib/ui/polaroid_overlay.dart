@@ -264,6 +264,12 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     final scale = isBackground ? 1.0 - (stackIndex * 0.02) : 1.0;
     final padding = ResponsiveSizing.spacing(context, 16);
     final borderPadding = ResponsiveSizing.spacing(context, 40);
+    final polaroidWidth = photoSize + borderPadding;
+
+    // Wreath sizing - extends beyond polaroid to drape over edges
+    final wreathOverhang = ResponsiveSizing.spacing(context, 24);
+    final wreathWidth = polaroidWidth + (wreathOverhang * 2);
+    final wreathHeight = wreathWidth * 0.6; // Aspect ratio for draping effect
 
     return Transform.translate(
       offset: Offset(offsetX, offsetY),
@@ -271,87 +277,110 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         angle: rotation,
         child: Transform.scale(
           scale: scale,
-          child: Container(
-            width: photoSize + borderPadding,
-            padding: EdgeInsets.all(padding),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBF7),
-              borderRadius: ResponsiveSizing.borderRadius(context, 4),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isBackground ? 0.15 : 0.3),
-                  blurRadius: ResponsiveSizing.spacing(context, isBackground ? 10 : 20),
-                  offset: Offset(0, ResponsiveSizing.spacing(context, isBackground ? 5 : 10)),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Photo area
-                Container(
-                  width: photoSize,
-                  height: photoSize,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    border: Border.all(
-                      color: const Color(0xFFD0D0D0),
-                      width: 1,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Polaroid card
+              Container(
+                width: polaroidWidth,
+                padding: EdgeInsets.all(padding),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBF7),
+                  borderRadius: ResponsiveSizing.borderRadius(context, 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isBackground ? 0.15 : 0.3),
+                      blurRadius: ResponsiveSizing.spacing(context, isBackground ? 10 : 20),
+                      offset: Offset(0, ResponsiveSizing.spacing(context, isBackground ? 5 : 10)),
                     ),
-                  ),
-                  child: Image.asset(
-                    photoPath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Center(
-                        child: Icon(
-                          Icons.photo,
-                          size: ResponsiveSizing.iconSize(context, 64),
-                          color: const Color(0xFF9E9E9E),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Photo area
+                    Container(
+                      width: photoSize,
+                      height: photoSize,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E0E0),
+                        border: Border.all(
+                          color: const Color(0xFFD0D0D0),
+                          width: 1,
                         ),
-                      );
+                      ),
+                      child: Image.asset(
+                        photoPath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              Icons.photo,
+                              size: ResponsiveSizing.iconSize(context, 64),
+                              color: const Color(0xFF9E9E9E),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveSizing.spacing(context, 12)),
+
+                    // Only show text on current polaroid
+                    if (!isBackground && memory != null) ...[
+                      // Only show date if it's not a placeholder
+                      if (memory!.date != 'Date') ...[
+                        Text(
+                          memory!.date,
+                          style: GoogleFonts.caveat(
+                            fontSize: ResponsiveSizing.fontSize(context, 14),
+                            color: const Color(0xFF6B5B4F),
+                          ),
+                        ),
+                        SizedBox(height: ResponsiveSizing.spacing(context, 2)),
+                      ],
+                      Text(
+                        memory!.caption,
+                        style: GoogleFonts.caveat(
+                          fontSize: ResponsiveSizing.fontSize(context, 18),
+                          color: const Color(0xFF3C3C3C),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: ResponsiveSizing.spacing(context, 8)),
+                      Text(
+                        isLastPhoto ? 'Tap to continue' : 'Tap for next photo',
+                        style: TextStyle(
+                          fontSize: ResponsiveSizing.fontSize(context, 11),
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                    if (isBackground)
+                      SizedBox(height: photoSize * 0.15),
+                  ],
+                ),
+              ),
+
+              // Wreath overlay - drapes over top and sides
+              Positioned(
+                top: -wreathHeight * 0.35,
+                left: -wreathOverhang,
+                child: IgnorePointer(
+                  child: Image.asset(
+                    'assets/photos/wreath.png',
+                    width: wreathWidth,
+                    height: wreathHeight,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox.shrink();
                     },
                   ),
                 ),
-                SizedBox(height: ResponsiveSizing.spacing(context, 12)),
-
-                // Only show text on current polaroid
-                if (!isBackground && memory != null) ...[
-                  // Only show date if it's not a placeholder
-                  if (memory!.date != 'Date') ...[
-                    Text(
-                      memory!.date,
-                      style: GoogleFonts.caveat(
-                        fontSize: ResponsiveSizing.fontSize(context, 14),
-                        color: const Color(0xFF6B5B4F),
-                      ),
-                    ),
-                    SizedBox(height: ResponsiveSizing.spacing(context, 2)),
-                  ],
-                  Text(
-                    memory!.caption,
-                    style: GoogleFonts.caveat(
-                      fontSize: ResponsiveSizing.fontSize(context, 18),
-                      color: const Color(0xFF3C3C3C),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: ResponsiveSizing.spacing(context, 8)),
-                  Text(
-                    isLastPhoto ? 'Tap to continue' : 'Tap for next photo',
-                    style: TextStyle(
-                      fontSize: ResponsiveSizing.fontSize(context, 11),
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-                if (isBackground)
-                  SizedBox(height: photoSize * 0.15),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
