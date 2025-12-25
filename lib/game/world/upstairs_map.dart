@@ -4,6 +4,7 @@ import 'package:memory_lane/game/memory_lane_game.dart';
 import 'package:memory_lane/game/world/memory_item.dart';
 import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
+import 'package:memory_lane/game/world/pet.dart';
 
 /// The upstairs nursery level - a cozy baby room
 class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
@@ -77,15 +78,6 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         photoPath: 'assets/photos/young_changing_station.jpg',
         date: 'Feb 1, 2025',
         caption: 'Diaper duty',
-        phase: GamePhase.crawling,
-      ),
-
-      MemoryItemData.simple(
-        x: 868,
-        y: 842,
-        photoPath: 'assets/photos/young_changing_station.jpg',
-        date: 'Feb 1, 2025',
-        caption: 'I like to chill while we change',
         phase: GamePhase.crawling,
       ),
       MemoryItemData(
@@ -166,6 +158,24 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     ];
   }
 
+  /// Returns the list of pet data for the nursery
+  List<PetData> getPetData() {
+    return const [
+      // Grinex - sleeping dog in the nursery
+      PetData(
+        x: 842, y: 1436,
+        name: 'Grinex',
+        spritePath: 'sprites/grinex.png',
+        columns: 8,
+        rows: 8,
+        displaySize: 120,
+        animationSpeed: 0.15,
+        scale: 3.2, // Match upstairs scale
+        flipped: false,
+      ),
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -192,6 +202,9 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
 
     // Add music zones
     _addMusicZones();
+
+    // Add pets
+    _addPets();
 
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
@@ -233,6 +246,15 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
 
     for (final data in getMusicZoneData()) {
       add(data.toMusicZone(showDebug: showDebug));
+    }
+  }
+
+  /// Adds pets to the map
+  void _addPets() {
+    final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
+
+    for (final data in getPetData()) {
+      add(data.toPet(showDebug: showDebug));
     }
   }
 

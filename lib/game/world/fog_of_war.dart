@@ -11,11 +11,30 @@ import 'obstacle.dart';
 /// Fog of war component that obscures areas far from the player
 /// Features organic edges that interact with obstacles
 class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
-  /// Base visibility radius around the player
-  static const double baseVisibilityRadius = 300.0;
+  /// Base visibility radius around the player (main floor)
+  static const double _baseVisibilityRadius = 300.0;
 
-  /// Extended radius for the gradient fade
-  static const double fadeRadius = 150.0;
+  /// Extended radius for the gradient fade (main floor)
+  static const double _baseFadeRadius = 150.0;
+
+  /// Upstairs scale multiplier (35% larger)
+  static const double upstairsMultiplier = 1.35;
+
+  /// Get current visibility radius based on level
+  double get baseVisibilityRadius {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseVisibilityRadius * upstairsMultiplier;
+    }
+    return _baseVisibilityRadius;
+  }
+
+  /// Get current fade radius based on level
+  double get fadeRadius {
+    if (game.currentLevel == LevelId.upstairsNursery) {
+      return _baseFadeRadius * upstairsMultiplier;
+    }
+    return _baseFadeRadius;
+  }
 
   /// Fog darkness (0.0 = transparent, 1.0 = fully opaque)
   static const double fogOpacity = 0.85;

@@ -5,6 +5,7 @@ import 'package:memory_lane/game/world/christmas_lights.dart';
 import 'package:memory_lane/game/world/memory_item.dart';
 import 'package:memory_lane/game/world/music_zone.dart';
 import 'package:memory_lane/game/world/obstacle.dart';
+import 'package:memory_lane/game/world/pet.dart';
 
 /// The game world - a top-down view of the house
 class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
@@ -452,6 +453,24 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     ];
   }
 
+  /// Returns the list of pet data
+  List<PetData> getPetData() {
+    return const [
+      // Willow - sleeping dog in the living room
+      PetData(
+        x: 431, y: 762,
+        name: 'Willow',
+        spritePath: 'sprites/willow.png',
+        columns: 8,
+        rows: 8,
+        displaySize: 120,
+        animationSpeed: 0.15,
+        scale: 1.3,
+        flipped: false,
+      ),
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -484,6 +503,9 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     // Add Christmas lights
     _addChristmasLights();
+
+    // Add pets
+    _addPets();
 
     // Debug: Add a visual indicator for playable bounds
     if (MemoryLaneGame.debugObstaclePlacementEnabled) {
@@ -536,6 +558,15 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
   void _addChristmasLights() {
     for (final data in getChristmasLightsData()) {
       add(data.toComponent());
+    }
+  }
+
+  /// Adds pets to the map
+  void _addPets() {
+    final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
+
+    for (final data in getPetData()) {
+      add(data.toPet(showDebug: showDebug));
     }
   }
 

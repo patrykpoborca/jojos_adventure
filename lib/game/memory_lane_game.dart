@@ -133,6 +133,12 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Current level being played
   LevelId currentLevel = LevelId.mainFloor;
 
+  /// Previous level (for spawn position logic)
+  LevelId? _previousLevel;
+
+  /// Whether this is the first load of the game
+  bool _isFirstLoad = true;
+
   /// Reference to the current map component
   PositionComponent? currentMap;
 
@@ -274,7 +280,14 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       case LevelId.mainFloor:
         currentMap = HouseMap();
         camera.viewfinder.zoom = 0.5; // Zoomed out for large house
-        player.position = Vector2(500, 500); // Starting position
+        // Set spawn position based on context
+        if (_isFirstLoad) {
+          player.position = Vector2(417, 219); // First game load position
+        } else if (_previousLevel == LevelId.upstairsNursery) {
+          player.position = Vector2(756, 543); // Coming from upstairs
+        } else {
+          player.position = Vector2(417, 219); // Default to first load position
+        }
         player.scale = Vector2.all(1.0); // Normal size for large house
         await AudioManager().switchAmbientMusic(AudioManager.mainFloorAmbient);
         break;
@@ -288,8 +301,13 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     }
 
     await world.add(currentMap!);
+
+    // Track level transitions
+    _previousLevel = currentLevel;
     currentLevel = levelId;
-    debugPrint('Loaded level: $levelId');
+    _isFirstLoad = false;
+
+    debugPrint('Loaded level: $levelId (previous: $_previousLevel, firstLoad: $_isFirstLoad)');
   }
 
   /// Switch to a different level
