@@ -45,6 +45,13 @@ class MemorySpriteTypes {
       displaySize: 64.0,
       animationSpeed: 0.25,
     ),
+    MemorySpriteType(
+      assetPath: 'sprites/memories_3.png',
+      columns: 4,
+      rows: 4,
+      displaySize: 64.0,
+      animationSpeed: 0.25,
+    ),
   ];
 
   static final Random _random = Random();
@@ -110,6 +117,12 @@ class MemoryItem extends SpriteAnimationComponent
 
   /// Distance threshold for collecting (in pixels)
   static const double collectDistance = 150.0;
+
+  /// Distance at which memories start becoming visible
+  static const double visibilityStartDistance = 400.0;
+
+  /// Distance at which memories are fully visible
+  static const double visibilityFullDistance = 200.0;
 
   /// The randomly selected sprite type for this memory
   late final MemorySpriteType _spriteType;
@@ -216,6 +229,21 @@ class MemoryItem extends SpriteAnimationComponent
     super.update(dt);
 
     if (_collected) return;
+
+    final playerPos = game.player.position;
+    final distance = position.distanceTo(playerPos);
+
+    // Update opacity based on distance (fog of war effect)
+    if (distance >= visibilityStartDistance) {
+      opacity = 0.0;
+    } else if (distance <= visibilityFullDistance) {
+      opacity = 1.0;
+    } else {
+      // Gradual fade between full and start distances
+      final fadeRange = visibilityStartDistance - visibilityFullDistance;
+      final fadeProgress = (visibilityStartDistance - distance) / fadeRange;
+      opacity = fadeProgress.clamp(0.0, 1.0);
+    }
 
     // Smoothly scale up/down based on player proximity
     final targetScale = isPlayerInRange ? activeScale : normalScale;

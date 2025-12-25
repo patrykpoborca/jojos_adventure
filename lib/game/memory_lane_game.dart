@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'actors/baby_player.dart';
 import 'audio/audio_manager.dart';
+import 'world/fog_of_war.dart';
 import 'world/house_map.dart';
 import 'world/memory_item.dart';
 import 'world/upstairs_map.dart';
@@ -199,6 +200,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
     // Load the initial level
     await _loadLevel(currentLevel);
+
+    // Add fog of war effect
+    await world.add(FogOfWar());
 
     // Set up camera to follow player
     camera.follow(player, maxSpeed: 300, snap: true);
