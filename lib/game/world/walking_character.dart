@@ -100,7 +100,7 @@ class WalkingCharacter extends SpriteAnimationComponent
     this.showDebug = false,
   }) : super(
           position: position,
-          size: Vector2(displaySize * baseScale * scaleX, displaySize * baseScale),
+          size: Vector2.all(displaySize * baseScale), // Placeholder, recalculated in onLoad
           anchor: Anchor.center,
         );
 
@@ -138,13 +138,16 @@ class WalkingCharacter extends SpriteAnimationComponent
   Future<void> onLoad() async {
     await super.onLoad();
 
-    final spriteSize = displaySize;
-    size = Vector2(spriteSize * baseScale * scaleX, spriteSize * baseScale);
-
     // Load sprite sheet
     final image = await game.images.load(spritePath);
     final frameWidth = (image.width ~/ columns).toDouble();
     final frameHeight = (image.height ~/ rows).toDouble();
+
+    // Calculate size maintaining aspect ratio (displaySize is the height)
+    final aspectRatio = frameWidth / frameHeight;
+    final spriteHeight = displaySize * baseScale;
+    final spriteWidth = spriteHeight * aspectRatio * scaleX;
+    size = Vector2(spriteWidth, spriteHeight);
 
     final spriteSheet = SpriteSheet(
       image: image,
@@ -195,7 +198,7 @@ class WalkingCharacter extends SpriteAnimationComponent
 
     // Add hitbox for tap detection
     add(CircleHitbox(
-      radius: (spriteSize * baseScale) / 2 + 30,
+      radius: spriteHeight / 2 + 30,
       position: size / 2,
       anchor: Anchor.center,
       collisionType: CollisionType.passive,

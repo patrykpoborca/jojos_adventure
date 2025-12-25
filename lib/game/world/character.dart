@@ -318,7 +318,7 @@ class Character extends SpriteAnimationComponent
       textPainter.text = TextSpan(
         text: heart.symbol,
         style: TextStyle(
-          fontSize: 16 + heart.scale * 10,
+          fontSize: 21 + heart.scale * 13, // 30% larger
           color: heart.color.withValues(alpha: heart.alpha),
           shadows: [
             Shadow(

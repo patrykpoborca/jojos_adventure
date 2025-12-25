@@ -23,7 +23,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     return const [
       // Room boundaries
       ObstacleData(x: 84, y: 84, width: 1088, height: 714, label: 'northLeftWall'),
-      ObstacleData(x: 85, y: 828, width: 349, height: 511, label: 'crib'),
+      ObstacleData(x: 85, y: 828, width: 349, height: 475, label: 'crib'),
       ObstacleData(x: 84, y: 1261, width: 43, height: 542, label: 'westWall'),
       ObstacleData(x: 84, y: 1780, width: 2072, height: 23, label: 'southWall'),
       ObstacleData(x: 2126, y: 84, width: 29, height: 1720, label: 'westWall'),

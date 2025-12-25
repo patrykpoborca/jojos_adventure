@@ -38,7 +38,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ObstacleData(x: 572, y: 596, width: 53, height: 162, label: 'livingRoomTv'),
       ObstacleData(x: 898, y: 120, width: 43, height: 334, label: 'builtIn'),
       ObstacleData(x: 1074, y: 288, width: 240, height: 119, label: 'diningTable'),
-      ObstacleData(x: 1306, y: 158, width: 149, height: 105, label: 'greenChristmasTree'),
+      ObstacleData(x: 1256, y: 138, width: 240, height: 120, label: 'greenChristmasTree'),
       ObstacleData(x: 1561, y: 338, width: 156, height: 124, label: 'patioTable'),
       ObstacleData(x: 1855, y: 384, width: 145, height: 340, label: 'fireplaceWall'),
       ObstacleData(x: 1451, y: 678, width: 309, height: 45, label: 'southPatioWall'),
@@ -98,8 +98,9 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       MemoryItemData.simple(
           x: 2712, y: 908,
           photoPath: 'assets/photos/old_road_trip.jpg',
-          date: 'Dec 21, 2025', caption: 'Wow i got big!',
-          phase: GamePhase.walking
+          date: 'Dec 21, 2025', caption: 'Ready for a road trip?',
+          phase: GamePhase.walking,
+          isEndgameTrigger: true,
       ),
       MemoryItemData(
         x: 1418, y: 355,
@@ -359,14 +360,6 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         date: 'Oct 7, 2025', caption: 'Secret outside adventure, it was in the yard right?!',
         phase: GamePhase.walking,
       ),
-
-
-      MemoryItemData.simple(
-        x: 3174, y: 299,
-        photoPath: 'assets/photos/old_window.jpg',
-        date: 'Nov 29, 2025', caption: 'Hanging in the snow',
-        phase: GamePhase.walking,
-      ),
     ];
 
   /// Returns the list of music zone data
@@ -507,9 +500,9 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         rows: 4,
         displaySize: 64,
         animationSpeed: 0.15,
-        scale: 2.0,
+        scale: 3.0,
         scaleX: 0.9, // 10% narrower
-        walkSpeed: 40.0,
+        walkSpeed: 60.0,
         loopWaypoints: false, // Ping-pong between waypoints
         collisionRadius: 0.0, // No collision
         interactionMessage: 'Hey buddy! Dad loves you!',

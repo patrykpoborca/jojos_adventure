@@ -223,8 +223,8 @@ class MemoryItem extends SpriteAnimationComponent
   void markAsCollected() {
     if (_collected) return;
     _collected = true;
-    // Level-triggering memories stay visible
-    if (!memory.triggersLevel) {
+    // Level-triggering and endgame memories stay visible
+    if (!memory.persistsAfterCollection) {
       opacity = 0.0; // Hide the memory sprite
     }
   }
@@ -331,9 +331,9 @@ class MemoryItem extends SpriteAnimationComponent
 
   @override
   void onTapUp(TapUpEvent event) {
-    // Level-triggering memories can always be tapped (even after collection)
+    // Persistent memories (level/endgame triggers) can always be tapped
     // Regular memories can only be tapped once
-    if (_collected && !memory.triggersLevel) return;
+    if (_collected && !memory.persistsAfterCollection) return;
 
     if (isPlayerInRange) {
       collect();
@@ -345,9 +345,9 @@ class MemoryItem extends SpriteAnimationComponent
 
   /// Called when the player collects this memory
   void collect() {
-    // Level-triggering memories can be triggered multiple times
+    // Persistent memories can be triggered multiple times
     // Regular memories can only be collected once
-    if (_collected && !memory.triggersLevel) return;
+    if (_collected && !memory.persistsAfterCollection) return;
 
     // Only mark as collected on first collection (for counting purposes)
     if (!_collected) {
@@ -356,9 +356,9 @@ class MemoryItem extends SpriteAnimationComponent
 
     game.triggerMemory(memory);
 
-    // Level-triggering memories stay visible and interactive
+    // Persistent memories stay visible and interactive
     // Regular memories are removed after collection
-    if (!memory.triggersLevel) {
+    if (!memory.persistsAfterCollection) {
       removeFromParent();
     }
   }
@@ -368,7 +368,7 @@ class MemoryItem extends SpriteAnimationComponent
     if (_collected) return;
     _collected = true;
     game.collectMemorySilently(memory);
-    if (!memory.triggersLevel) {
+    if (!memory.persistsAfterCollection) {
       removeFromParent();
     }
   }
@@ -397,6 +397,9 @@ class MemoryItemData {
   /// Optional music file to play when viewing
   final String? musicFile;
 
+  /// Whether this memory triggers the endgame
+  final bool isEndgameTrigger;
+
   const MemoryItemData({
     required this.x,
     required this.y,
@@ -407,6 +410,7 @@ class MemoryItemData {
     this.levelTrigger,
     this.phase = GamePhase.crawling,
     this.musicFile,
+    this.isEndgameTrigger = false,
   });
 
   /// Convenience constructor for simple single-photo memories
@@ -419,6 +423,7 @@ class MemoryItemData {
     this.levelTrigger,
     this.phase = GamePhase.crawling,
     this.musicFile,
+    this.isEndgameTrigger = false,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
@@ -433,6 +438,7 @@ class MemoryItemData {
         levelTrigger: levelTrigger,
         phase: phase,
         musicFile: musicFile,
+        isEndgameTrigger: isEndgameTrigger,
       ),
       showDebug: showDebug,
       baseScale: scale,

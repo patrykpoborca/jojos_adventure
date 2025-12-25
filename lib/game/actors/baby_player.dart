@@ -49,7 +49,7 @@ class BabyPlayer extends SpriteAnimationComponent
 
   /// Movement speed in pixels per second (base values for main floor)
   static const double _baseCrawlSpeed = 60;
-  static const double _baseWalkSpeed = 180;
+  static const double _baseWalkSpeed = 108; // 180 reduced by 40%
 
   /// Upstairs scale multiplier (matches player scale difference)
   static const double _upstairsMultiplier = 2.0;
@@ -61,6 +61,9 @@ class BabyPlayer extends SpriteAnimationComponent
 
   /// Display size for the baby sprite
   static const double displaySize = 64 * 2;
+
+  /// Walking sprite aspect ratio (calculated in onLoad)
+  double _walkingAspectRatio = 1.0;
 
   // Animation maps for each movement mode
   late final Map<BabyDirection, SpriteAnimation> _crawlAnimations;
@@ -75,7 +78,7 @@ class BabyPlayer extends SpriteAnimationComponent
 
   BabyPlayer({required this.joystick})
       : super(
-          size: Vector2.all(displaySize),
+          size: Vector2.all(displaySize), // Square for crawling
           anchor: Anchor.center,
           priority: 100, // Render on top of map elements
         );
@@ -119,23 +122,24 @@ class BabyPlayer extends SpriteAnimationComponent
   Future<void> _loadAnimations() async {
     // Load crawling sprite sheet
     final crawlImage = await game.images.load('sprites/crawling_sprite.png');
+    final crawlFrameWidth = crawlImage.width / frameColumns;
+    final crawlFrameHeight = crawlImage.height / frameRows;
     final crawlSheet = SpriteSheet(
       image: crawlImage,
-      srcSize: Vector2(
-        crawlImage.width / frameColumns,
-        crawlImage.height / frameRows,
-      ),
+      srcSize: Vector2(crawlFrameWidth, crawlFrameHeight),
     );
 
     // Load walking sprite sheet
     final walkImage = await game.images.load('sprites/walking_sprite.png');
+    final walkFrameWidth = walkImage.width / frameColumns;
+    final walkFrameHeight = walkImage.height / frameRows;
     final walkSheet = SpriteSheet(
       image: walkImage,
-      srcSize: Vector2(
-        walkImage.width / frameColumns,
-        walkImage.height / frameRows,
-      ),
+      srcSize: Vector2(walkFrameWidth, walkFrameHeight),
     );
+
+    // Store walking sprite aspect ratio for when we switch to walking
+    _walkingAspectRatio = walkFrameWidth / walkFrameHeight;
 
     // Create crawling animations for each direction
     _crawlAnimations = {
@@ -384,6 +388,10 @@ class BabyPlayer extends SpriteAnimationComponent
     if (_movementMode == MovementMode.walking) return;
 
     _movementMode = MovementMode.walking;
+
+    // Apply proper aspect ratio for walking sprite
+    size = Vector2(displaySize * _walkingAspectRatio, displaySize);
+
     _updateAnimation();
   }
 
@@ -395,21 +403,26 @@ class BabyPlayer extends SpriteAnimationComponent
   /// Resets to crawling mode (if needed)
   void resetToCrawling() {
     _movementMode = MovementMode.crawling;
+
+    // Restore square size for crawling
+    size = Vector2.all(displaySize);
+
     _updateAnimation();
   }
 
   /// Keeps the player within the current map boundaries
   void _clampToHouseBounds() {
     final bounds = game.currentPlayableBounds;
-    final halfSize = displaySize / 2;
+    final halfWidth = size.x / 2;
+    final halfHeight = size.y / 2;
 
     position.x = position.x.clamp(
-      bounds.left + halfSize,
-      bounds.right - halfSize,
+      bounds.left + halfWidth,
+      bounds.right - halfWidth,
     );
     position.y = position.y.clamp(
-      bounds.top + halfSize,
-      bounds.bottom - halfSize,
+      bounds.top + halfHeight,
+      bounds.bottom - halfHeight,
     );
   }
 }

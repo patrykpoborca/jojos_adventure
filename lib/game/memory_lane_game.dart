@@ -33,6 +33,7 @@ enum OverlayType {
   memory,
   phaseComplete,
   gameComplete,
+  endgameNotReady, // Shown when player tries endgame before collecting all memories
 }
 
 /// Game phase - progression through the story
@@ -91,6 +92,9 @@ class Memory {
   /// Optional music file to play when viewing this memory
   final String? musicFile;
 
+  /// Whether this memory triggers the endgame sequence
+  final bool isEndgameTrigger;
+
   const Memory({
     required this.stylizedPhotoPath,
     required this.photos,
@@ -99,6 +103,7 @@ class Memory {
     this.levelTrigger,
     this.phase = GamePhase.crawling,
     this.musicFile,
+    this.isEndgameTrigger = false,
   });
 
   /// Convenience constructor for single photo memories
@@ -109,6 +114,7 @@ class Memory {
     this.levelTrigger,
     this.phase = GamePhase.crawling,
     this.musicFile,
+    this.isEndgameTrigger = false,
   })  : stylizedPhotoPath = photoPath,
         photos = const [];
 
@@ -117,6 +123,9 @@ class Memory {
 
   /// Whether this memory triggers a level
   bool get triggersLevel => levelTrigger != null;
+
+  /// Whether this memory should stay visible after collection (level or endgame trigger)
+  bool get persistsAfterCollection => triggersLevel || isEndgameTrigger;
 }
 
 /// Main game class for Memory Lane
@@ -686,7 +695,23 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     if (state != GameState.exploring) return;
 
     currentMemory = memory;
-    overlayType = OverlayType.memory;
+
+    // Handle endgame trigger specially
+    if (memory.isEndgameTrigger) {
+      // Check if all walking phase memories are collected (excluding endgame trigger itself)
+      final allMemoriesCollected = _memoriesCollectedInPhase >= _totalMemoriesInPhase;
+
+      if (allMemoriesCollected) {
+        overlayType = OverlayType.gameComplete;
+        debugPrint('Endgame triggered! All memories collected.');
+      } else {
+        overlayType = OverlayType.endgameNotReady;
+        debugPrint('Endgame not ready: $_memoriesCollectedInPhase/$_totalMemoriesInPhase memories collected');
+      }
+    } else {
+      overlayType = OverlayType.memory;
+    }
+
     state = GameState.viewingMemory;
     overlays.add('polaroid');
   }
