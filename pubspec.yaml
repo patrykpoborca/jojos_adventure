@@ -18,6 +18,9 @@ dependencies:
   # Fonts for memory captions
   google_fonts: ^6.2.1
 
+  # Video playback for ending scene
+  video_player: ^2.9.2
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -35,3 +38,4 @@ flutter:
     - assets/audio/sfx/
     - assets/audio/music/
     - assets/photos/
+    - assets/video/

@@ -47,17 +47,6 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
 
       // Door memory - returns to main floor (phase 1)
       MemoryItemData(
-        x: 1136,
-        y: 1297,
-        stylizedPhotoPath: 'assets/photos/young_middle_nursery.jpg',
-        photos: [
-          'assets/photos/young_middle_nursery.jpg'
-        ],
-        date: 'Jun 23, 2025',
-        caption: 'Back downstairs...',
-        phase: GamePhase.crawling,
-      ),
-      MemoryItemData(
         x: 1564,
         y: 1327,
         stylizedPhotoPath: 'assets/photos/young_recliner.jpg',
@@ -87,7 +76,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       MemoryItemData(
         x: 1353,
         y: 786,
-        stylizedPhotoPath: 'assets/photos/young_downstairs.jpg',
+        stylizedPhotoPath: 'assets/photos/young_going_down_stairs.png',
         date: 'Apr 19, 2025',
         caption: 'Back downstairs...',
         levelTrigger: 'mainFloor',
@@ -97,7 +86,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       MemoryItemData(
         x: 1353,
         y: 786,
-        stylizedPhotoPath: 'assets/photos/old_down_stairs.jpg',
+        stylizedPhotoPath: 'assets/photos/old_going_down_stairs.png',
         date: 'Oct 18, 2025',
         caption: 'Back downstairs...',
         levelTrigger: 'mainFloor',

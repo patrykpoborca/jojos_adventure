@@ -97,7 +97,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
           x: 2712, y: 908,
-          photoPath: 'assets/photos/old_road_trip.jpg',
+          photoPath: 'assets/photos/exit_hero_image.png',
           date: 'Dec 21, 2025', caption: 'Ready for a road trip?',
           phase: GamePhase.walking,
           isEndgameTrigger: true,
@@ -507,6 +507,27 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         collisionRadius: 0.0, // No collision
         interactionMessage: 'Hey buddy! Dad loves you!',
         waypointPauseDuration: 2.0,
+      ),
+      // Grandma - walks around the outdoor/yard area
+      WalkingCharacterData(
+        x: 2975, y: 306,
+        name: 'Grandma',
+        spritePath: 'sprites/grandma.png',
+        waypoints: [
+          [2975, 306],  // Start position
+          [2200, 306],  // Walk left
+        ],
+        columns: 4,
+        rows: 4,
+        displaySize: 64,
+        animationSpeed: 0.15,
+        scale: 3.0,
+        scaleX: 0.9,
+        walkSpeed: 50.0, // Slightly slower than dad
+        loopWaypoints: false, // Ping-pong between waypoints
+        collisionRadius: 0.0,
+        interactionMessage: 'Hello my little sweetheart!',
+        waypointPauseDuration: 2.5,
       ),
     ];
   }

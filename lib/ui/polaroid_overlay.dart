@@ -587,10 +587,13 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   Widget _buildGameCompleteDialog() {
     final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = (screenHeight * 0.25).clamp(120.0, 200.0);
+    final heroHeight = (screenHeight * 0.15).clamp(80.0, 140.0);
 
     return Container(
-      width: 400,
+      width: 380,
+      constraints: BoxConstraints(
+        maxHeight: screenHeight * 0.85,
+      ),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF7),
@@ -603,129 +606,131 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Hero image - road trip photo
-          if (memory != null)
-            SizedBox(
-              width: double.infinity,
-              height: heroHeight,
-              child: Image.asset(
-                memory!.stylizedPhotoPath,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: const Color(0xFFD4A574).withValues(alpha: 0.2),
-                    child: const Center(
-                      child: Icon(
-                        Icons.directions_car,
-                        size: 48,
-                        color: Color(0xFFD4A574),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Hero image - road trip photo
+            if (memory != null)
+              SizedBox(
+                width: double.infinity,
+                height: heroHeight,
+                child: Image.asset(
+                  memory!.stylizedPhotoPath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: const Color(0xFFD4A574).withValues(alpha: 0.2),
+                      child: const Center(
+                        child: Icon(
+                          Icons.directions_car,
+                          size: 48,
+                          color: Color(0xFFD4A574),
+                        ),
                       ),
+                    );
+                  },
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
                     ),
-                  );
-                },
+                    child: const Icon(
+                      Icons.directions_car,
+                      size: 30,
+                      color: Color(0xFF4CAF50),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Title
+                  Text(
+                    'Ready for Adventure!',
+                    style: GoogleFonts.caveat(
+                      fontSize: 28,
+                      color: const Color(0xFF3C3C3C),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Description
+                  Text(
+                    'You\'ve collected all the precious memories.\nTime for a family road trip!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '🎄 Merry Christmas! 🎄',
+                    style: GoogleFonts.caveat(
+                      fontSize: 20,
+                      color: const Color(0xFFD4A574),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _closeOverlay,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey.shade600,
+                            side: BorderSide(color: Colors.grey.shade400),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Stay a bit'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _onStartRoadTrip,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4CAF50),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Let\'s Go!',
+                            style: GoogleFonts.caveat(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-
-          Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.directions_car,
-                    size: 40,
-                    color: Color(0xFF4CAF50),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                Text(
-                  'Ready for Adventure!',
-                  style: GoogleFonts.caveat(
-                    fontSize: 32,
-                    color: const Color(0xFF3C3C3C),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Description
-                Text(
-                  'You\'ve collected all the precious memories.\nTime for a family road trip!',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '🎄 Merry Christmas! 🎄',
-                  style: GoogleFonts.caveat(
-                    fontSize: 22,
-                    color: const Color(0xFFD4A574),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _closeOverlay,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey.shade600,
-                          side: BorderSide(color: Colors.grey.shade400),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Stay a bit longer'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _onStartRoadTrip,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4CAF50),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Let\'s Go!',
-                          style: GoogleFonts.caveat(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -736,7 +741,9 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
     return Container(
       width: 380,
-      padding: const EdgeInsets.all(28),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF7),
         borderRadius: BorderRadius.circular(16),
@@ -748,9 +755,11 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Icon - locked car
           Container(
             width: 100,
@@ -863,6 +872,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
             ),
           ),
         ],
+        ),
       ),
     );
   }

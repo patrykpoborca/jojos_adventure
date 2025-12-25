@@ -203,6 +203,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Callback to notify UI when debug panel is toggled
   void Function(bool visible)? onDebugPanelToggled;
 
+  /// Callback to notify UI when cinematic mode changes (ending video)
+  void Function(bool cinematic)? onCinematicModeChanged;
+
   /// List of placed obstacles (for output)
   final List<String> _placedObstacles = [];
 
@@ -852,10 +855,18 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Get list of collected memories for HUD display
   List<CollectedMemoryInfo> get collectedMemories => List.unmodifiable(_collectedMemories);
 
-  /// Starts the end montage sequence
+  /// Starts the ending video sequence
   void startMontage() {
     state = GameState.montage;
-    // TODO: Implement montage sequence
+    onCinematicModeChanged?.call(true);
+    overlays.add('endingVideo');
+  }
+
+  /// Hides the ending video overlay
+  void hideEndingVideo() {
+    overlays.remove('endingVideo');
+    onCinematicModeChanged?.call(false);
+    state = GameState.complete;
   }
 }
 
