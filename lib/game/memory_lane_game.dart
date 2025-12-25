@@ -399,46 +399,40 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     debugPrint('Player collision: ${player.collisionEnabled ? 'ON' : 'OFF'}');
   }
 
-  /// Debug: Collect all memories except the closest one to the player
-  void debugCollectAllButClosest() {
+  /// Debug: Collect all memories for current phase (triggers phase transition)
+  void debugCollectAllMemories() {
     if (currentMap == null) return;
 
-    // Find all uncollected MemoryItem components in the current map
-    final memories = currentMap!.children.whereType<MemoryItem>().where((m) => !m.isCollected).toList();
+    // Find ALL MemoryItem components for debugging
+    final allMemories = currentMap!.children.whereType<MemoryItem>().toList();
+    debugPrint('Debug: Found ${allMemories.length} total MemoryItem components');
+    for (final m in allMemories) {
+      debugPrint('  - ${m.memory.caption}: collected=${m.isCollected}, triggersLevel=${m.memory.triggersLevel}');
+    }
+
+    // Find all uncollected MemoryItem components in the current map (excluding level triggers)
+    final memories = allMemories
+        .where((m) => !m.isCollected && !m.memory.triggersLevel)
+        .toList();
 
     if (memories.isEmpty) {
-      debugPrint('No uncollected memories found');
+      debugPrint('No uncollected memories found in current level');
       return;
     }
 
-    if (memories.length == 1) {
-      debugPrint('Only 1 memory left - not collecting it');
-      return;
-    }
-
-    // Find the closest memory to the player
-    final playerPos = player.position;
-    MemoryItem? closestMemory;
-    double closestDistance = double.infinity;
-
-    for (final memory in memories) {
-      final distance = memory.position.distanceTo(playerPos);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestMemory = memory;
-      }
-    }
-
-    // Collect all memories except the closest one
+    // Collect all memories silently (no overlay)
     int collected = 0;
     for (final memory in memories) {
-      if (memory != closestMemory) {
-        memory.collect();
-        collected++;
-      }
+      memory.collectSilently();
+      collected++;
     }
 
-    debugPrint('Debug: Collected $collected memories, left closest one at distance ${closestDistance.toStringAsFixed(0)}px');
+    debugPrint('Debug: Collected $collected memories from current level');
+  }
+
+  /// Silently collect a memory (for debug) - tracks it without showing overlay
+  void collectMemorySilently(Memory memory) {
+    _onMemoryCollected(memory);
   }
 
   /// Get the playable bounds for the current level

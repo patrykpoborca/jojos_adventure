@@ -362,6 +362,16 @@ class MemoryItem extends SpriteAnimationComponent
       removeFromParent();
     }
   }
+
+  /// Silently collect this memory (for debug) - no overlay shown
+  void collectSilently() {
+    if (_collected) return;
+    _collected = true;
+    game.collectMemorySilently(memory);
+    if (!memory.triggersLevel) {
+      removeFromParent();
+    }
+  }
 }
 
 /// Helper class to define memory item data

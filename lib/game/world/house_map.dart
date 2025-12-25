@@ -44,7 +44,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ObstacleData(x: 1451, y: 678, width: 309, height: 45, label: 'southPatioWall'),
       ObstacleData(x: 1470, y: 130, width: 47, height: 575, label: 'westPatioWall'),
       ObstacleData(x: 1984, y: 429, width: 485, height: 51, label: 'officeNorthWall'),
-      ObstacleData(x: 2395, y: 464, width: 57, height: 701, label: 'eastHouseWallToGarage'),
+      ObstacleData(x: 2395, y: 464, width: 57, height: 575, label: 'eastHouseWallToGarage'),
       ObstacleData(x: 1952, y: 810, width: 483, height: 30, label: 'southOfficeWall'),
       ObstacleData(x: 1950, y: 947, width: 196, height: 38, label: 'southBathroomWall'),
       ObstacleData(x: 2140, y: 801, width: 269, height: 165, label: 'dogShowerAndShelves'),
@@ -162,11 +162,6 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         x: 2021, y: 868,
         photoPath: 'assets/photos/young_stinky_bathroom.jpg',
         date: 'Apr 30, 2025', caption: 'Smelly poop with mum',
-      ),
-      MemoryItemData.simple(
-        x: 3178, y: 993,
-        photoPath: 'assets/photos/young_bath_time.jpg',
-        date: 'Jan 22, 2025', caption: 'Hanging with kevork?',
       ),
       MemoryItemData.simple(
         x: 1298, y: 665,

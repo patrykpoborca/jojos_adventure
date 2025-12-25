@@ -105,8 +105,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       ),
 
       MemoryItemData(
-        x: 192,
-        y: 1444,
+        x: 235, y: 1442,
         stylizedPhotoPath: 'assets/photos/young_bath_time.jpg',
         date: 'Jan 22, 2025',
         caption: 'Back downstairs...',
@@ -166,7 +165,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     return const [
       // Grinex - sleeping dog in the nursery
       CharacterData(
-        x: 842, y: 1436,
+        x: 922, y: 1436,
         name: 'Grinex',
         spritePath: 'sprites/grinex.png',
         columns: 8,
@@ -270,16 +269,25 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
     final currentPhase = game.currentPhase;
 
     // Filter memories by current phase
-    final phaseMemories = getMemoryData().where((m) => m.phase == currentPhase);
+    final phaseMemories = getMemoryData().where((m) => m.phase == currentPhase).toList();
 
+    debugPrint('Upstairs: Adding ${phaseMemories.length} memories for phase ${currentPhase.name}');
+
+    int addedCount = 0;
+    int collectedCount = 0;
     for (final data in phaseMemories) {
       final memoryItem = data.toMemoryItem(showDebug: showDebug, scale: memoryScale);
       // Check if this memory was already collected
-      if (game.isMemoryCollected(data.stylizedPhotoPath, currentPhase)) {
+      final isCollected = game.isMemoryCollected(data.stylizedPhotoPath, currentPhase);
+      if (isCollected) {
         memoryItem.markAsCollected();
+        collectedCount++;
+      } else {
+        addedCount++;
       }
       add(memoryItem);
     }
+    debugPrint('Upstairs: $addedCount uncollected, $collectedCount already collected');
   }
 
   /// Adds music zones to the map

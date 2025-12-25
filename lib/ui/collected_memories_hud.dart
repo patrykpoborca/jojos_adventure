@@ -17,16 +17,19 @@ class CollectedMemoriesHud extends StatefulWidget {
 
 class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
   List<CollectedMemoryInfo> _collectedMemories = [];
+  int _totalMemories = 0;
 
   @override
   void initState() {
     super.initState();
     _collectedMemories = widget.game.collectedMemories;
+    _totalMemories = widget.game.totalMemories;
 
     widget.game.onMemoriesCollectedChanged = (memories) {
       if (mounted) {
         setState(() {
           _collectedMemories = memories;
+          _totalMemories = widget.game.totalMemories;
         });
       }
     };
@@ -50,8 +53,11 @@ class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
   @override
   Widget build(BuildContext context) {
     final grouped = _groupedMemories;
+    final collected = _collectedMemories.length;
+    final total = _totalMemories;
 
-    if (grouped.isEmpty) {
+    // Always show the counter if there are memories to collect
+    if (total == 0) {
       return const SizedBox.shrink();
     }
 
@@ -70,29 +76,45 @@ class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: grouped.entries.map((entry) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: _AnimatedMemorySprite(
-                spriteTypeIndex: entry.key,
-                count: entry.value,
+          children: [
+            // Memory sprites grouped by type
+            ...grouped.entries.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _AnimatedMemorySprite(
+                  spriteTypeIndex: entry.key,
+                ),
+              );
+            }),
+            // Collected/Total counter
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
               ),
-            );
-          }).toList(),
+              child: Text(
+                '$collected/$total',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Animated memory sprite with jostling movement and count
+/// Animated memory sprite display
 class _AnimatedMemorySprite extends StatefulWidget {
   final int spriteTypeIndex;
-  final int count;
 
   const _AnimatedMemorySprite({
     required this.spriteTypeIndex,
-    required this.count,
   });
 
   @override
@@ -125,63 +147,41 @@ class _AnimatedMemorySpriteState extends State<_AnimatedMemorySprite> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Static first frame with glow
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.amber.withValues(alpha: 0.3),
-                blurRadius: 6,
-                spreadRadius: 1,
+    // Static first frame with glow
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.3),
+            blurRadius: 6,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: _spriteSheet != null
+            ? CustomPaint(
+                size: const Size(32, 32),
+                painter: _SpriteFramePainter(
+                  spriteSheet: _spriteSheet!,
+                  frameIndex: 0, // Always first frame
+                  columns: _spriteType.columns,
+                  rows: _spriteType.rows,
+                ),
+              )
+            : Container(
+                color: Colors.amber.withValues(alpha: 0.2),
+                child: const Icon(
+                  Icons.photo_album,
+                  color: Colors.amber,
+                  size: 16,
+                ),
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: _spriteSheet != null
-                ? CustomPaint(
-                    size: const Size(32, 32),
-                    painter: _SpriteFramePainter(
-                      spriteSheet: _spriteSheet!,
-                      frameIndex: 0, // Always first frame
-                      columns: _spriteType.columns,
-                      rows: _spriteType.rows,
-                    ),
-                  )
-                : Container(
-                    color: Colors.amber.withValues(alpha: 0.2),
-                    child: const Icon(
-                      Icons.photo_album,
-                      color: Colors.amber,
-                      size: 16,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 3),
-        // Count multiplier
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-          decoration: BoxDecoration(
-            color: Colors.amber.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: Text(
-            'x${widget.count}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

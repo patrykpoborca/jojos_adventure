@@ -114,7 +114,7 @@ class _GameScreenState extends State<GameScreen> {
         _game.togglePlayerCollision();
         return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.keyB) {
-        _game.debugCollectAllButClosest();
+        _game.debugCollectAllMemories();
         return KeyEventResult.handled;
       }
     }
