@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 
+import '../game/audio/audio_manager.dart';
 import '../game/memory_lane_game.dart';
 import 'responsive_sizing.dart';
 
@@ -17,6 +18,9 @@ class EndingVideoOverlay extends StatefulWidget {
 
 class _EndingVideoOverlayState extends State<EndingVideoOverlay>
     with SingleTickerProviderStateMixin {
+  static const String _endgameMusicFile = 'buble.mp3';
+  static const String _endgameZoneId = '_endgame_music';
+
   late VideoPlayerController _controller;
   bool _isInitialized = false;
   bool _showEndCard = false;
@@ -73,11 +77,21 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
 
     if (position >= duration && duration.inMilliseconds > 0) {
       if (!_showEndCard) {
-        setState(() {
-          _showEndCard = true;
-        });
+        _showEndCardWithMusic();
       }
     }
+  }
+
+  void _showEndCardWithMusic() {
+    setState(() {
+      _showEndCard = true;
+    });
+    // Start background music for end card
+    AudioManager().playZoneMusic(
+      _endgameZoneId,
+      _endgameMusicFile,
+      maxVolume: 0.7,
+    );
   }
 
   @override
@@ -90,12 +104,13 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
 
   void _onSkip() {
     _controller.pause();
-    setState(() {
-      _showEndCard = true;
-    });
+    _showEndCardWithMusic();
   }
 
   void _onClose() {
+    // Fade out the end game music
+    AudioManager().fadeOutZone(_endgameZoneId);
+
     _fadeController.reverse().then((_) {
       widget.game.hideEndingVideo();
     });
@@ -188,11 +203,7 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
           ),
           SizedBox(height: ResponsiveSizing.spacing(context, 24)),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _showEndCard = true;
-              });
-            },
+            onPressed: _showEndCardWithMusic,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD4A574),
               padding: ResponsiveSizing.paddingSymmetric(
