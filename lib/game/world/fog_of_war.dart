@@ -88,8 +88,10 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
   ) {
     final obstacles = _getNearbyObstacles(center, innerRadius + outerFade + 100);
 
-    // Build organic path by casting rays
-    final innerPath = Path();
+    // Calculate the average/max radius for gradient sizing
+    double maxOuterRadius = 0;
+
+    // Build the outer boundary path with organic wobble and obstacle shadows
     final outerPath = Path();
 
     for (var i = 0; i < rayCount; i++) {
@@ -108,60 +110,53 @@ class FogOfWar extends PositionComponent with HasGameReference<MemoryLaneGame> {
       );
       final shadowFactor = _calculateShadowFactor(center, rayEnd, obstacles);
 
-      // Apply wobble and shadow to radius
-      final effectiveInnerRadius = innerRadius * totalWobble * shadowFactor;
-      final effectiveOuterRadius = (innerRadius + outerFade) * totalWobble * shadowFactor;
+      // Calculate effective outer radius for this ray
+      final effectiveRadius = (innerRadius + outerFade) * totalWobble * shadowFactor;
+      maxOuterRadius = math.max(maxOuterRadius, effectiveRadius);
 
-      // Calculate points
-      final innerX = center.x + math.cos(angle) * effectiveInnerRadius;
-      final innerY = center.y + math.sin(angle) * effectiveInnerRadius;
-      final outerX = center.x + math.cos(angle) * effectiveOuterRadius;
-      final outerY = center.y + math.sin(angle) * effectiveOuterRadius;
+      final x = center.x + math.cos(angle) * effectiveRadius;
+      final y = center.y + math.sin(angle) * effectiveRadius;
 
       if (i == 0) {
-        innerPath.moveTo(innerX, innerY);
-        outerPath.moveTo(outerX, outerY);
+        outerPath.moveTo(x, y);
       } else {
-        // Use quadratic curves for smoother edges
+        // Use curves for smoother edges
         final prevAngle = ((i - 0.5) / rayCount) * 2 * math.pi;
-        final ctrlWobble = 1.0 + math.sin(prevAngle * 5 + _time) * edgeWobble * 0.3;
+        final prevWobble = 1.0 + math.sin(prevAngle * 5 + _time) * edgeWobble * 0.3;
+        final ctrlRadius = effectiveRadius * prevWobble;
 
-        final ctrlInnerX = center.x + math.cos(prevAngle) * effectiveInnerRadius * ctrlWobble;
-        final ctrlInnerY = center.y + math.sin(prevAngle) * effectiveInnerRadius * ctrlWobble;
-        final ctrlOuterX = center.x + math.cos(prevAngle) * effectiveOuterRadius * ctrlWobble;
-        final ctrlOuterY = center.y + math.sin(prevAngle) * effectiveOuterRadius * ctrlWobble;
+        final ctrlX = center.x + math.cos(prevAngle) * ctrlRadius;
+        final ctrlY = center.y + math.sin(prevAngle) * ctrlRadius;
 
-        innerPath.quadraticBezierTo(ctrlInnerX, ctrlInnerY, innerX, innerY);
-        outerPath.quadraticBezierTo(ctrlOuterX, ctrlOuterY, outerX, outerY);
+        outerPath.quadraticBezierTo(ctrlX, ctrlY, x, y);
       }
     }
-
-    innerPath.close();
     outerPath.close();
 
-    // Draw outer fade zone
-    final fadeGradient = ui.Gradient.radial(
+    // Create a radial gradient that fades from transparent (center) to opaque (edge)
+    // The gradient covers the full area but the path clips it to our organic shape
+    final gradient = ui.Gradient.radial(
       Offset(center.x, center.y),
-      innerRadius + outerFade,
+      maxOuterRadius,
       [
-        Colors.black.withValues(alpha: 0.7),
-        Colors.transparent,
+        Colors.black, // Full erase at center
+        Colors.black, // Stay solid through inner zone
+        Colors.black.withValues(alpha: 0.5), // Start fading
+        Colors.transparent, // Fully transparent at edge (no erase = fog remains)
       ],
-      [0.5, 1.0],
+      [
+        0.0,
+        0.35, // Inner clear zone (35% of radius)
+        0.7,  // Mid transition
+        1.0,  // Outer edge
+      ],
     );
 
+    // Draw the organic shape with gradient - this erases fog
     canvas.drawPath(
       outerPath,
       Paint()
-        ..shader = fadeGradient
-        ..blendMode = BlendMode.dstOut,
-    );
-
-    // Draw solid inner visibility
-    canvas.drawPath(
-      innerPath,
-      Paint()
-        ..color = Colors.black
+        ..shader = gradient
         ..blendMode = BlendMode.dstOut,
     );
   }
