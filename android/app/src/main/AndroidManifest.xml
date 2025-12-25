@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for Google Fonts to download fonts at runtime -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="memory_lane"
         android:name="${applicationName}"
