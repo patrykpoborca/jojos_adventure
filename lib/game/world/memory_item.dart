@@ -66,25 +66,48 @@ class MemorySpriteTypes {
   /// Shuffled bag of sprite indices for even distribution
   static List<int> _bag = [];
 
+  /// Persistent map of memory key -> sprite type index
+  /// This ensures memories keep the same sprite across level loads
+  static final Map<String, int> _assignedSprites = {};
+
   /// Reset the bag (call on game restart for fresh randomization)
+  /// Note: Does NOT clear assigned sprites - those persist for the session
   static void resetBag() {
     _bag = [];
   }
 
-  /// Get next sprite type using bag system (no clustering)
-  /// Uses position for consistent assignment when memories load in different orders
-  static MemorySpriteType getNext(double x, double y) {
-    // Refill bag when empty with shuffled indices
+  /// Fully reset all sprite assignments (call on new game)
+  static void resetAll() {
+    _bag = [];
+    _assignedSprites.clear();
+  }
+
+  /// Get sprite type for a memory, using persistent assignment
+  /// Uses memoryKey (e.g., stylizedPhotoPath) for consistent assignment
+  static MemorySpriteType getForMemory(String memoryKey) {
+    // Check if already assigned
+    if (_assignedSprites.containsKey(memoryKey)) {
+      return all[_assignedSprites[memoryKey]!];
+    }
+
+    // Assign a new sprite from the bag
     if (_bag.isEmpty) {
       _refillBag();
     }
 
-    // Use position hash to pick from bag consistently
-    // This ensures same position always gets same type per session
-    final posHash = (x.toInt() * 31 + y.toInt()).abs() % _bag.length;
-    final index = _bag.removeAt(posHash);
+    // Pick from bag using key hash for some consistency
+    final keyHash = memoryKey.hashCode.abs() % _bag.length;
+    final index = _bag.removeAt(keyHash);
+
+    // Store the assignment
+    _assignedSprites[memoryKey] = index;
 
     return all[index];
+  }
+
+  /// Get the sprite type index for a memory key (for tracking collected memories)
+  static int? getSpriteIndexForMemory(String memoryKey) {
+    return _assignedSprites[memoryKey];
   }
 
   /// Refill the bag with multiple copies of each type, shuffled
@@ -101,7 +124,7 @@ class MemorySpriteTypes {
     _bag.shuffle(_random);
   }
 
-  /// Get a random sprite type (legacy, use getNext for better distribution)
+  /// Get a random sprite type (legacy, use getForMemory for persistence)
   static MemorySpriteType getRandom() {
     return all[_random.nextInt(all.length)];
   }
@@ -131,7 +154,7 @@ class MemoryItem extends SpriteAnimationComponent
   /// Distance at which memories are fully visible
   static const double visibilityFullDistance = 200.0;
 
-  /// The randomly selected sprite type for this memory
+  /// The persistently assigned sprite type for this memory
   late final MemorySpriteType _spriteType;
 
   /// Whether this memory is flipped horizontally
@@ -149,7 +172,7 @@ class MemoryItem extends SpriteAnimationComponent
     required this.memory,
     this.showDebug = false,
     this.baseScale = 1.0,
-  }) : _spriteType = MemorySpriteTypes.getNext(position.x, position.y),
+  }) : _spriteType = MemorySpriteTypes.getForMemory(memory.stylizedPhotoPath),
        _flippedX = Random().nextBool(),
        super(
           position: position,
@@ -158,6 +181,9 @@ class MemoryItem extends SpriteAnimationComponent
         );
 
   bool get isCollected => _collected;
+
+  /// Get the sprite type assigned to this memory
+  MemorySpriteType get spriteType => _spriteType;
 
   /// Check if player is close enough to collect
   bool get isPlayerInRange {

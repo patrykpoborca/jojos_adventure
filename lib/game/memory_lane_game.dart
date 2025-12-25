@@ -7,6 +7,7 @@ import 'audio/audio_manager.dart';
 import 'world/fog_of_war.dart';
 import 'world/house_map.dart';
 import 'world/memory_item.dart';
+import 'world/snow_effect.dart';
 import 'world/upstairs_map.dart';
 
 /// Available levels in the game
@@ -47,6 +48,24 @@ enum GamePhase {
 enum DebugPlacementMode {
   obstacle,
   memory,
+}
+
+/// Info about a collected memory for HUD display
+class CollectedMemoryInfo {
+  /// The memory's unique key (stylizedPhotoPath)
+  final String memoryKey;
+
+  /// Index into MemorySpriteTypes.all for the sprite
+  final int spriteTypeIndex;
+
+  /// Caption of the memory
+  final String caption;
+
+  const CollectedMemoryInfo({
+    required this.memoryKey,
+    required this.spriteTypeIndex,
+    required this.caption,
+  });
 }
 
 /// Memory data class representing a photo memory
@@ -129,6 +148,12 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Set of collected memory keys (to avoid double-counting)
   final Set<String> _collectedMemoryKeys = {};
 
+  /// List of collected memories with their sprite type indices (for HUD display)
+  final List<CollectedMemoryInfo> _collectedMemories = [];
+
+  /// Callback when collected memories list changes (for HUD updates)
+  void Function(List<CollectedMemoryInfo> memories)? onMemoriesCollectedChanged;
+
   /// Callback when phase changes
   void Function(GamePhase newPhase)? onPhaseChanged;
 
@@ -181,6 +206,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Load and add the tiled background (behind everything)
     await _loadBackground();
 
+    // Add snow effect (renders on background, outside level bounds)
+    await world.add(SnowEffectFactory.createForGame(this));
+
     // Create joystick for movement control
     joystick = JoystickComponent(
       knob: CircleComponent(
@@ -228,8 +256,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   /// Load a specific level
   Future<void> _loadLevel(LevelId levelId) async {
-    // Clear any zone music from the previous level
+    // Clear any zone music and SFX zones from the previous level
     AudioManager().clearZoneMusic();
+    AudioManager().clearSfxZones();
 
     // Reset memory sprite bag for fresh distribution
     MemorySpriteTypes.resetBag();
@@ -298,6 +327,8 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     currentPhase = nextPhase;
     _memoriesCollectedInPhase = 0;
     _collectedMemoryKeys.clear();
+    _collectedMemories.clear();
+    onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
 
     // Update player sprite based on phase
     if (nextPhase == GamePhase.walking) {
@@ -346,7 +377,10 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   @override
   void update(double dt) {
-    // Update audio manager (handles music fading)
+    // Update player position for SFX distance calculations
+    AudioManager().updatePlayerPosition(player.position.x, player.position.y);
+
+    // Update audio manager (handles music fading and SFX zones)
     AudioManager().update(dt);
 
     // Only update game logic when exploring
@@ -587,6 +621,17 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
         _memoriesCollectedInPhase++;
         debugPrint('Memory collected: $_memoriesCollectedInPhase/$_totalMemoriesInPhase in ${currentPhase.name} phase');
 
+        // Track collected memory with sprite type for HUD
+        final spriteIndex = MemorySpriteTypes.getSpriteIndexForMemory(memory.stylizedPhotoPath);
+        if (spriteIndex != null) {
+          _collectedMemories.add(CollectedMemoryInfo(
+            memoryKey: memory.stylizedPhotoPath,
+            spriteTypeIndex: spriteIndex,
+            caption: memory.caption,
+          ));
+          onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
+        }
+
         // Check if all memories in this phase are collected
         if (_memoriesCollectedInPhase >= _totalMemoriesInPhase && !memory.triggersLevel) {
           _onPhaseComplete();
@@ -627,6 +672,8 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     currentPhase = newPhase;
     _memoriesCollectedInPhase = 0;
     _collectedMemoryKeys.clear();
+    _collectedMemories.clear();
+    onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
 
     // Update player sprite for walking phase
     if (newPhase == GamePhase.walking) {
@@ -649,6 +696,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Get memories collected progress
   int get memoriesCollected => _memoriesCollectedInPhase;
   int get totalMemories => _totalMemoriesInPhase;
+
+  /// Get list of collected memories for HUD display
+  List<CollectedMemoryInfo> get collectedMemories => List.unmodifiable(_collectedMemories);
 
   /// Starts the end montage sequence
   void startMontage() {

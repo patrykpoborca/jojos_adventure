@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'game/memory_lane_game.dart';
+import 'ui/collected_memories_hud.dart';
 import 'ui/debug_obstacle_overlay.dart';
 import 'ui/polaroid_overlay.dart';
 
@@ -160,6 +161,9 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
               ),
+
+              // Collected memories HUD (top left)
+              CollectedMemoriesHud(game: _game),
 
               // Debug overlay (toggle with D key)
               if (_showDebugPanel)

@@ -112,3 +112,54 @@ class MusicZoneData {
     );
   }
 }
+
+/// Data class for defining SFX zones (point-based with distance falloff)
+class SfxZoneData {
+  /// Position of the sound source
+  final double x;
+  final double y;
+
+  /// Unique identifier for this SFX zone
+  final String zoneId;
+
+  /// SFX file to play (relative to assets/audio/sfx/)
+  final String sfxFile;
+
+  /// Radius within which sound is at full volume
+  final double innerRadius;
+
+  /// Radius beyond which sound is silent
+  final double outerRadius;
+
+  /// Maximum volume (0.0 to 1.0)
+  final double maxVolume;
+
+  /// If true, plays once when entering range, resets when leaving
+  /// If false, loops continuously with distance-based volume
+  final bool oneShot;
+
+  const SfxZoneData({
+    required this.x,
+    required this.y,
+    required this.zoneId,
+    required this.sfxFile,
+    this.innerRadius = 50.0,
+    this.outerRadius = 300.0,
+    this.maxVolume = 0.8,
+    this.oneShot = false,
+  });
+
+  /// Register this SFX zone with the AudioManager
+  Future<void> register() async {
+    await AudioManager().registerSfxZone(
+      zoneId: zoneId,
+      sfxFile: sfxFile,
+      x: x,
+      y: y,
+      innerRadius: innerRadius,
+      outerRadius: outerRadius,
+      maxVolume: maxVolume,
+      loop: !oneShot,
+    );
+  }
+}

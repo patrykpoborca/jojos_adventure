@@ -328,9 +328,12 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   }
 
   Widget _buildLevelDialog() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final heroHeight = (screenHeight * 0.25).clamp(120.0, 200.0);
+
     return Container(
       width: 350,
-      padding: const EdgeInsets.all(24),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF7),
         borderRadius: BorderRadius.circular(16),
@@ -345,77 +348,138 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icon
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD4A574).withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.explore,
-              size: 40,
-              color: Color(0xFFD4A574),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Title
-          Text(
-            'New Memory Unlocked!',
-            style: GoogleFonts.caveat(
-              fontSize: 28,
-              color: const Color(0xFF3C3C3C),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Description
-          Text(
-            'Would you like to explore this special memory?',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-
-          // Buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _onLevelDecline,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey.shade600,
-                    side: BorderSide(color: Colors.grey.shade400),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+          // Hero banner image from the memory
+          if (memory != null)
+            Stack(
+              children: [
+                // Memory image
+                SizedBox(
+                  width: double.infinity,
+                  height: heroHeight,
+                  child: Image.asset(
+                    memory!.stylizedPhotoPath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: const Color(0xFFD4A574).withValues(alpha: 0.2),
+                        child: const Center(
+                          child: Icon(
+                            Icons.photo,
+                            size: 48,
+                            color: Color(0xFFD4A574),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                // Gradient overlay for text readability
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: heroHeight * 0.5,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.4),
+                        ],
+                      ),
                     ),
                   ),
-                  child: const Text('Not Now'),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _onLevelAccept,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4A574),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                // Memory caption overlay
+                Positioned(
+                  bottom: 12,
+                  left: 16,
+                  right: 16,
+                  child: Text(
+                    memory!.caption,
+                    style: GoogleFonts.caveat(
+                      fontSize: 20,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: const Text('Let\'s Go!'),
                 ),
-              ),
-            ],
+              ],
+            ),
+
+          // Content padding
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                // Title
+                Text(
+                  'New Memory Unlocked!',
+                  style: GoogleFonts.caveat(
+                    fontSize: 28,
+                    color: const Color(0xFF3C3C3C),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Description
+                Text(
+                  'Would you like to explore this special memory?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _onLevelDecline,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade600,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Not Now'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _onLevelAccept,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD4A574),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Let\'s Go!'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

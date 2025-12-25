@@ -367,7 +367,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         x: 1546, y: 123, width: 1800, height: 450,
         zoneId: 'outdoor',
         musicFile: 'upbeat_trim_a.mp3',
-        maxVolume: 0.6,
+        maxVolume: 0.4,
       ),
       MusicZoneData(
         x: 1992, y: 481, width: 482, height: 369,
@@ -398,6 +398,60 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     ];
   }
 
+  /// Returns the list of SFX zone data (point-based with distance falloff)
+  List<SfxZoneData> getSfxZoneData() {
+    return const [
+      // TV in living room - continuous static/noise
+      SfxZoneData(
+        x: 598, y: 680,
+        zoneId: 'living_room_tv',
+        sfxFile: 'sxefil.mp3',
+        innerRadius: 80,
+        outerRadius: 350,
+        maxVolume: 0.4,
+        oneShot: false,
+      ),
+      // Fireplace crackling
+      SfxZoneData(
+        x: 1927, y: 550,
+        zoneId: 'fireplace',
+        sfxFile: 'fire.mp3',
+        innerRadius: 100,
+        outerRadius: 400,
+        maxVolume: 0.5,
+        oneShot: false,
+      ),
+      SfxZoneData(
+        x: 1770, y: 160,
+        zoneId: 'barbecue',
+        sfxFile: 'sizzle.mp3',
+        innerRadius: 100,
+        outerRadius: 400,
+        maxVolume: 0.5,
+        oneShot: false,
+      ),
+      SfxZoneData(
+        x: 1770, y: 160,
+        zoneId: 'barbecue',
+        sfxFile: 'sizzle.mp3',
+        innerRadius: 100,
+        outerRadius: 400,
+        maxVolume: 0.5,
+        oneShot: false,
+      ),
+      SfxZoneData(
+        x: 978, y: 1075,
+        zoneId: 'bark',
+        sfxFile: 'bark.mp3',
+        innerRadius: 150,
+        outerRadius: 300,
+        maxVolume: 0.5,
+        oneShot: false,
+      ),
+
+    ];
+  }
+
   /// The full size of the map image
   Vector2 get mapSize => backgroundSprite.size;
 
@@ -424,6 +478,9 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     // Add music zones
     _addMusicZones();
+
+    // Add SFX zones
+    await _addSfxZones();
 
     // Add Christmas lights
     _addChristmasLights();
@@ -465,6 +522,13 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
 
     for (final data in getMusicZoneData()) {
       add(data.toMusicZone(showDebug: showDebug));
+    }
+  }
+
+  /// Adds SFX zones to the map (registers with AudioManager)
+  Future<void> _addSfxZones() async {
+    for (final data in getSfxZoneData()) {
+      await data.register();
     }
   }
 
