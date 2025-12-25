@@ -174,6 +174,19 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
         flipped: false,
         collisionRadius: 40.0,
       ),
+      // Mother - sitting in the nursery
+      PetData(
+        x: 1900, y: 1342,
+        name: 'Mom',
+        spritePath: 'sprites/mother.png',
+        columns: 10,
+        rows: 2,
+        displaySize: 120,
+        animationSpeed: 0.4,
+        scale: 3.2, // Match upstairs scale
+        flipped: true,
+        collisionRadius: 0.0,
+      ),
     ];
   }
 
