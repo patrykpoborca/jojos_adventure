@@ -127,8 +127,8 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 495, y: 937,
-        photoPath: 'assets/photos/young_couch_sleep.jpg',
-        date: 'Jan 5, 2025', caption: 'Christmas lights',
+        photoPath: 'assets/photos/young_christmas_tree.png',
+        date: 'Jan 8, 2025', caption: 'Super boy',
       ),
       MemoryItemData.simple(
           x: 379, y: 491,
