@@ -49,9 +49,14 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     // Set initial view state based on game's overlay type
     switch (widget.game.overlayType) {
       case OverlayType.memory:
-        _viewState = MemoryViewState.polaroidStack;
-        // Play memory music if available
-        _playMemoryMusic();
+        // Skip polaroid for memories that trigger dialogs - go straight to dialog
+        if (widget.game.currentMemory?.triggersLevel == true) {
+          _viewState = MemoryViewState.levelDialog;
+        } else {
+          _viewState = MemoryViewState.polaroidStack;
+          // Play memory music if available (only for regular memories)
+          _playMemoryMusic();
+        }
         break;
       case OverlayType.phaseComplete:
         _viewState = MemoryViewState.phaseComplete;
@@ -337,262 +342,12 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
 
   Widget _buildLevelDialog() {
     final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = (screenHeight * 0.25).clamp(120.0, 200.0);
+    final heroHeight = (screenHeight * 0.35).clamp(180.0, 280.0);
 
     return Container(
-      width: 350,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Hero banner image from the memory
-          if (memory != null)
-            Stack(
-              children: [
-                // Memory image
-                SizedBox(
-                  width: double.infinity,
-                  height: heroHeight,
-                  child: Image.asset(
-                    memory!.stylizedPhotoPath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: const Color(0xFFD4A574).withValues(alpha: 0.2),
-                        child: const Center(
-                          child: Icon(
-                            Icons.photo,
-                            size: 48,
-                            color: Color(0xFFD4A574),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                // Gradient overlay for text readability
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: heroHeight * 0.5,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Memory caption overlay
-                Positioned(
-                  bottom: 12,
-                  left: 16,
-                  right: 16,
-                  child: Text(
-                    memory!.caption,
-                    style: GoogleFonts.caveat(
-                      fontSize: 20,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-
-          // Content padding
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                // Title
-                Text(
-                  'New Memory Unlocked!',
-                  style: GoogleFonts.caveat(
-                    fontSize: 28,
-                    color: const Color(0xFF3C3C3C),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Description
-                Text(
-                  'Would you like to explore this special memory?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _onLevelDecline,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey.shade600,
-                          side: BorderSide(color: Colors.grey.shade400),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Not Now'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _onLevelAccept,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD4A574),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Let\'s Go!'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhaseCompleteDialog() {
-    return Container(
-      width: 380,
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Icon
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: const Color(0xFF8BC34A).withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.child_care,
-              size: 50,
-              color: Color(0xFF8BC34A),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Title
-          Text(
-            'Growing Up!',
-            style: GoogleFonts.caveat(
-              fontSize: 32,
-              color: const Color(0xFF3C3C3C),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Description
-          Text(
-            'You\'ve collected all the crawling memories!\nTime to take your first steps...',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 28),
-
-          // Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _onPhaseTransition,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8BC34A),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Start Walking!',
-                style: GoogleFonts.caveat(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _onPhaseTransition() {
-    _animController.reverse().then((_) {
-      widget.game.resumeGame();
-      widget.game.transitionToPhase(GamePhase.walking);
-    });
-  }
-
-  Widget _buildGameCompleteDialog() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = (screenHeight * 0.15).clamp(80.0, 140.0);
-
-    return Container(
-      width: 380,
+      width: 420,
       constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.85,
+        maxHeight: screenHeight * 0.9,
       ),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -610,50 +365,486 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Hero image - road trip photo
+            // Hero banner image from the memory
             if (memory != null)
-              SizedBox(
-                width: double.infinity,
-                height: heroHeight,
-                child: Image.asset(
-                  memory!.stylizedPhotoPath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: const Color(0xFFD4A574).withValues(alpha: 0.2),
-                      child: const Center(
-                        child: Icon(
-                          Icons.directions_car,
-                          size: 48,
-                          color: Color(0xFFD4A574),
+              Stack(
+                children: [
+                  // Memory image - taller to show more
+                  SizedBox(
+                    width: double.infinity,
+                    height: heroHeight,
+                    child: Image.asset(
+                      memory!.stylizedPhotoPath,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: const Color(0xFFD4A574).withValues(alpha: 0.2),
+                          child: const Center(
+                            child: Icon(
+                              Icons.photo,
+                              size: 64,
+                              color: Color(0xFFD4A574),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Gradient overlay at bottom for smooth transition
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 60,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Color(0xFFFFFBF7),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                  // Icon badge overlapping bottom of image
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBF7),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4A574).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.stairs,
+                            size: 26,
+                            color: Color(0xFFD4A574),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
+            // Content padding
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              child: Column(
+                children: [
+                  // Title
+                  const SizedBox(height: 8),
+
+                  // Description with surface background
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F0EB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          memory?.caption ?? 'A special memory awaits...',
+                          style: GoogleFonts.caveat(
+                            fontSize: 20,
+                            color: const Color(0xFFD4A574),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Would you like to leave this area?',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _onLevelDecline,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey.shade600,
+                            side: BorderSide(color: Colors.grey.shade400),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Not Now'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _onLevelAccept,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFD4A574),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Let\'s Go!',
+                            style: GoogleFonts.caveat(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhaseCompleteDialog() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final heroHeight = (screenHeight * 0.25).clamp(140.0, 200.0);
+
+    return Container(
+      width: 420,
+      constraints: BoxConstraints(
+        maxHeight: screenHeight * 0.9,
+      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF7),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Hero section with gradient background
+            Stack(
+              children: [
+                // Gradient hero background
+                Container(
+                  width: double.infinity,
+                  height: heroHeight,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFAED581), // Light green
+                        Color(0xFF8BC34A), // Green
+                        Color(0xFF7CB342), // Darker green
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.child_care,
+                      size: 80,
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+                // Gradient overlay at bottom for smooth transition
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 60,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Color(0xFFFFFBF7),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Icon badge overlapping bottom
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFBF7),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8BC34A).withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.directions_walk,
+                          size: 26,
+                          color: Color(0xFF8BC34A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Icon
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.directions_car,
-                      size: 30,
-                      color: Color(0xFF4CAF50),
+                  // Title
+                  Text(
+                    'Growing Up!',
+                    style: GoogleFonts.caveat(
+                      fontSize: 28,
+                      color: const Color(0xFF3C3C3C),
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
+                  // Description with surface background
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F0EB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'You\'ve collected all the crawling memories!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                            height: 1.4,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Time to take your first steps...',
+                          style: GoogleFonts.caveat(
+                            fontSize: 20,
+                            color: const Color(0xFF8BC34A),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _onPhaseTransition,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8BC34A),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Start Walking!',
+                        style: GoogleFonts.caveat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onPhaseTransition() {
+    _animController.reverse().then((_) {
+      widget.game.resumeGame();
+      widget.game.transitionToPhase(GamePhase.walking);
+    });
+  }
+
+  Widget _buildGameCompleteDialog() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final heroHeight = (screenHeight * 0.35).clamp(180.0, 280.0);
+
+    return Container(
+      width: 420,
+      constraints: BoxConstraints(
+        maxHeight: screenHeight * 0.9,
+      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF7),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Hero image with icon overlay
+            if (memory != null)
+              Stack(
+                children: [
+                  // Main hero image - taller to show more
+                  SizedBox(
+                    width: double.infinity,
+                    height: heroHeight,
+                    child: Image.asset(
+                      memory!.stylizedPhotoPath,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: const Color(0xFFD4A574).withValues(alpha: 0.2),
+                          child: const Center(
+                            child: Icon(
+                              Icons.directions_car,
+                              size: 64,
+                              color: Color(0xFFD4A574),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Gradient overlay at bottom for smooth transition
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 60,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Color(0xFFFFFBF7),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Icon badge overlapping bottom of image
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBF7),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.directions_car,
+                            size: 26,
+                            color: Color(0xFF4CAF50),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   // Title
                   Text(
                     'Ready for Adventure!',
@@ -665,23 +856,34 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                   ),
                   const SizedBox(height: 8),
 
-                  // Description
-                  Text(
-                    'You\'ve collected all the precious memories.\nTime for a family road trip!',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
+                  // Description with surface background
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F0EB),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '🎄 Merry Christmas! 🎄',
-                    style: GoogleFonts.caveat(
-                      fontSize: 20,
-                      color: const Color(0xFFD4A574),
-                      fontWeight: FontWeight.bold,
+                    child: Column(
+                      children: [
+                        Text(
+                          'You\'ve collected all the precious memories.\nTime for a family road trip!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                            height: 1.4,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '🎄 Merry Christmas! 🎄',
+                          style: GoogleFonts.caveat(
+                            fontSize: 20,
+                            color: const Color(0xFFD4A574),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -736,14 +938,17 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
   }
 
   Widget _buildEndgameNotReadyDialog() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final heroHeight = (screenHeight * 0.35).clamp(180.0, 280.0);
     final collected = widget.game.memoriesCollected;
     final total = widget.game.totalMemories;
 
     return Container(
-      width: 380,
+      width: 420,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: screenHeight * 0.9,
       ),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF7),
         borderRadius: BorderRadius.circular(16),
@@ -756,122 +961,212 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
         ],
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-          // Icon - locked car
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              shape: BoxShape.circle,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  Icons.directions_car,
-                  size: 50,
-                  color: Colors.grey.shade400,
-                ),
-                Positioned(
-                  right: 20,
-                  bottom: 20,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.lock,
-                      size: 20,
-                      color: Colors.grey.shade500,
+            // Hero image with greyed overlay (locked feel)
+            if (memory != null)
+              Stack(
+                children: [
+                  // Main hero image
+                  SizedBox(
+                    width: double.infinity,
+                    height: heroHeight,
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        Colors.grey.withValues(alpha: 0.5),
+                        BlendMode.saturation,
+                      ),
+                      child: Image.asset(
+                        memory!.stylizedPhotoPath,
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade300,
+                            child: Center(
+                              child: Icon(
+                                Icons.directions_car,
+                                size: 64,
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Title
-          Text(
-            'Not Quite Ready Yet...',
-            style: GoogleFonts.caveat(
-              fontSize: 28,
-              color: const Color(0xFF3C3C3C),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Description
-          Text(
-            'There are still more memories to collect\nbefore our road trip!',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-
-          // Progress indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD4A574).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.photo_library,
-                  color: Color(0xFFD4A574),
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '$collected / $total memories',
-                  style: GoogleFonts.caveat(
-                    fontSize: 20,
-                    color: const Color(0xFFD4A574),
-                    fontWeight: FontWeight.bold,
+                  // Dark overlay for locked effect
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.2),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
+                  // Gradient overlay at bottom for smooth transition
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 60,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Color(0xFFFFFBF7),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Locked icon badge overlapping bottom
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBF7),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Icon(
+                                Icons.directions_car,
+                                size: 22,
+                                color: Colors.grey.shade400,
+                              ),
+                              Positioned(
+                                right: 6,
+                                bottom: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.lock,
+                                    size: 10,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
-          // Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _closeOverlay,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD4A574),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Keep Exploring',
-                style: GoogleFonts.caveat(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title
+                  Text(
+                    'Not Quite Ready Yet...',
+                    style: GoogleFonts.caveat(
+                      fontSize: 28,
+                      color: const Color(0xFF3C3C3C),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Description with surface background and progress
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F0EB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'There are still more memories to collect\nbefore our road trip!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                            height: 1.4,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        // Progress indicator
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.photo_library,
+                              color: Color(0xFFD4A574),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$collected / $total memories',
+                              style: GoogleFonts.caveat(
+                                fontSize: 18,
+                                color: const Color(0xFFD4A574),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _closeOverlay,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD4A574),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Keep Exploring',
+                        style: GoogleFonts.caveat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );

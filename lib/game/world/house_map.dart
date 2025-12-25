@@ -154,9 +154,9 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       // Triggers upstairs nursery level (stays in crawling phase)
       MemoryItemData(
         x: 744, y: 581,
-        stylizedPhotoPath: 'assets/photos/young_in_crib.jpg',
+        stylizedPhotoPath: 'assets/photos/young_in_crib.png',
         date: 'Feb 4, 2025',
-        caption: 'Going to bed 1',
+        caption: 'Let\'s go to the nursery',
         levelTrigger: 'upstairsNursery',
       ),
       MemoryItemData.simple(

@@ -321,9 +321,10 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
         currentMap = HouseMap();
         camera.viewfinder.zoom = 0.5; // Zoomed out for large house
         // Set spawn position based on context
+        // Note: currentLevel still holds the OLD level at this point
         if (_isFirstLoad) {
           player.position = Vector2(417, 219); // First game load position
-        } else if (_previousLevel == LevelId.upstairsNursery) {
+        } else if (currentLevel == LevelId.upstairsNursery) {
           player.position = Vector2(756, 543); // Coming from upstairs
         } else {
           player.position = Vector2(417, 219); // Default to first load position

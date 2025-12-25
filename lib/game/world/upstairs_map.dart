@@ -58,7 +58,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       MemoryItemData.simple(
         x: 470,
         y: 1106,
-        photoPath: 'assets/photos/young_in_crib.jpg',
+        photoPath: 'assets/photos/young_in_crib.png',
         date: 'Feb 4, 2025',
         caption: 'Sweet dreams',
         phase: GamePhase.crawling,
@@ -76,7 +76,7 @@ class UpstairsMap extends PositionComponent with HasGameReference<MemoryLaneGame
       MemoryItemData(
         x: 1353,
         y: 786,
-        stylizedPhotoPath: 'assets/photos/young_going_down_stairs.png',
+        stylizedPhotoPath: 'assets/photos/young_exit_nursery.png',
         date: 'Apr 19, 2025',
         caption: 'Back downstairs...',
         levelTrigger: 'mainFloor',
