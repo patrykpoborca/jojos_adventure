@@ -15,6 +15,12 @@ class AudioManager {
 
   static const String _defaultZoneId = '_default_ambient';
 
+  /// Whether audio has been unlocked by user interaction (for web)
+  bool _audioUnlocked = !kIsWeb; // Auto-unlocked on non-web platforms
+
+  /// Pending ambient music to play after unlock
+  String? _pendingAmbientMusic;
+
   /// Currently playing ambient music file
   String? _currentAmbientFile;
 
@@ -71,9 +77,34 @@ class AudioManager {
     }
   }
 
+  /// Whether audio has been unlocked (for web autoplay policy)
+  bool get isUnlocked => _audioUnlocked;
+
+  /// Unlock audio after user interaction (required for web)
+  /// Call this on first touch/tap/click
+  Future<void> unlockAudio() async {
+    if (_audioUnlocked) return;
+
+    _audioUnlocked = true;
+    debugPrint('Audio unlocked by user interaction');
+
+    // Play any pending ambient music
+    if (_pendingAmbientMusic != null) {
+      await startAmbientMusic(_pendingAmbientMusic!);
+      _pendingAmbientMusic = null;
+    }
+  }
+
   /// Start ambient music with the specified file
   Future<void> startAmbientMusic([String musicFile = mainFloorAmbient]) async {
     if (!_enabled) return;
+
+    // On web, defer until audio is unlocked by user interaction
+    if (!_audioUnlocked) {
+      _pendingAmbientMusic = musicFile;
+      debugPrint('Audio deferred until user interaction (web): $musicFile');
+      return;
+    }
 
     // Already playing this file
     if (_activeTracks.containsKey(_defaultZoneId) && _currentAmbientFile == musicFile) {

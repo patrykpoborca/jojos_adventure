@@ -141,6 +141,12 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         date: 'Jan 5, 2025', caption: 'Nap times',
         phase: GamePhase.crawling
       ),
+    MemoryItemData.simple(
+        x: 575, y: 245,
+        photoPath: 'assets/photos/young_game_start_memory.png',
+        date: 'December 13, 2023', caption: 'Welcome to the house! Collect the memories!',
+        phase: GamePhase.crawling
+    ),
 
       MemoryItemData(
           x: 271, y: 645,
@@ -478,7 +484,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     return const [
       // Willow - sleeping dog in the living room
       CharacterData(
-        x: 400, y: 832,
+        x: 320, y: 935,
         name: 'Willow',
         spritePath: 'sprites/willow.png',
         columns: 8,
@@ -487,7 +493,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         animationSpeed: 0.15,
         scale: 1.3,
         flipped: false,
-        collisionRadius: 35.0,
+        collisionRadius: 25.0,
         characterType: CharacterType.pet,
       ),
     ];

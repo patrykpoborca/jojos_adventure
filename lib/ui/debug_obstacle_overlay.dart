@@ -93,7 +93,7 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Title with mode indicator
+            // Title with mode indicator and close button
             Row(
               children: [
                 Icon(
@@ -106,16 +106,34 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  _currentMode == DebugPlacementMode.obstacle
-                      ? 'OBSTACLE MODE'
-                      : 'MEMORY MODE',
-                  style: TextStyle(
-                    color: _currentMode == DebugPlacementMode.obstacle
-                        ? Colors.amber
-                        : Colors.lightBlueAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                Expanded(
+                  child: Text(
+                    _currentMode == DebugPlacementMode.obstacle
+                        ? 'OBSTACLE MODE'
+                        : 'MEMORY MODE',
+                    style: TextStyle(
+                      color: _currentMode == DebugPlacementMode.obstacle
+                          ? Colors.amber
+                          : Colors.lightBlueAccent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => widget.game.toggleDebugPanel(),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.6)),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.red,
+                      size: 18,
+                    ),
                   ),
                 ),
               ],

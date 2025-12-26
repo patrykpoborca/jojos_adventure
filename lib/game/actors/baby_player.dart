@@ -116,9 +116,10 @@ class BabyPlayer extends SpriteAnimationComponent
     animation = _crawlIdle;
 
     // Add hitbox for collision detection (smaller than sprite for better feel)
+    // Offset +50 on Y to better align with Willow character's feet
     add(CircleHitbox(
       radius: displaySize * 0.3,
-      position: Vector2(displaySize / 2, displaySize * 0.6),
+      position: Vector2(displaySize / 2, displaySize * 0.6 + 50),
       anchor: Anchor.center,
       collisionType: CollisionType.active,
     ));

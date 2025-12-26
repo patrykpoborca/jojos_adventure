@@ -790,28 +790,10 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Full-bleed gradient background
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFAED581), // Light green
-                  Color(0xFF8BC34A), // Green
-                  Color(0xFF7CB342), // Darker green
-                ],
-              ),
-            ),
-          ),
-
-          // Large watermark icon
-          Center(
-            child: Icon(
-              Icons.child_care,
-              size: ResponsiveSizing.iconSize(context, 160),
-              color: Colors.white.withValues(alpha: 0.2),
-            ),
+          // Photo background
+          Image.asset(
+            'assets/photos/old_learned_towalk_transition.png',
+            fit: BoxFit.cover,
           ),
 
           // Gradient overlay at bottom for caption readability
@@ -827,7 +809,7 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    const Color(0xFF5D9936).withValues(alpha: 0.9),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                 ),
               ),

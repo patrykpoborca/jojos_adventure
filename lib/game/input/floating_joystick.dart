@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
+import '../audio/audio_manager.dart';
 import '../memory_lane_game.dart';
 
 /// A floating joystick that appears wherever the user touches
@@ -49,6 +50,9 @@ class FloatingJoystick extends PositionComponent
   @override
   void onDragStart(DragStartEvent event) {
     super.onDragStart(event);
+
+    // Unlock audio on first user interaction (required for web)
+    AudioManager().unlockAudio();
 
     // Don't capture input if game is not in exploring state
     if (game.state != GameState.exploring) return;

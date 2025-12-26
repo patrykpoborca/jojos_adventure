@@ -194,6 +194,12 @@ class MemoryItem extends SpriteAnimationComponent
 
   double _currentScale = normalScale;
 
+  /// Whether this memory is highlighted as the nearest one
+  bool _isHighlighted = false;
+
+  /// The glow effect component
+  _SparkleGlow? _sparkleGlow;
+
   MemoryItem({
     required Vector2 position,
     required this.memory,
@@ -211,6 +217,25 @@ class MemoryItem extends SpriteAnimationComponent
 
   /// Get the sprite type assigned to this memory
   MemorySpriteType get spriteType => _spriteType;
+
+  /// Whether this memory is highlighted (nearest to player)
+  bool get isHighlighted => _isHighlighted;
+
+  /// Set the highlighted state (called from game to mark nearest memory)
+  set isHighlighted(bool value) {
+    if (_isHighlighted == value) return;
+    _isHighlighted = value;
+
+    if (_isHighlighted && _sparkleGlow == null) {
+      // Add sparkle glow effect
+      _sparkleGlow = _SparkleGlow(memorySize: size.x);
+      add(_sparkleGlow!);
+    } else if (!_isHighlighted && _sparkleGlow != null) {
+      // Remove sparkle glow effect
+      _sparkleGlow?.removeFromParent();
+      _sparkleGlow = null;
+    }
+  }
 
   /// Check if player is close enough to collect
   bool get isPlayerInRange {
@@ -455,5 +480,85 @@ class MemoryItemData {
       showDebug: showDebug,
       baseScale: scale,
     );
+  }
+}
+
+/// Sparkle glow effect that pulses around a memory item
+class _SparkleGlow extends PositionComponent with HasGameReference<MemoryLaneGame> {
+  final double memorySize;
+
+  /// Animation phase (0 to 2π)
+  double _phase = 0.0;
+
+  /// Pulse speed in radians per second
+  static const double _pulseSpeed = 5.0;
+
+  /// Base glow radius multiplier
+  static const double _baseRadius = 0.8;
+
+  /// Pulse amplitude (how much the glow expands/contracts)
+  static const double _pulseAmplitude = 0.15;
+
+  _SparkleGlow({required this.memorySize})
+      : super(
+          position: Vector2.all(memorySize / 2),
+          anchor: Anchor.center,
+          priority: -1, // Render behind the sprite
+        );
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _phase = (_phase + _pulseSpeed * dt) % (2 * pi);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    // Calculate pulsing radius
+    final pulseValue = sin(_phase);
+    final radius = memorySize * (_baseRadius + _pulseAmplitude * pulseValue);
+
+    // Draw outer glow (larger, more transparent)
+    final outerPaint = Paint()
+      ..color = const Color(0xFFFFD700).withValues(alpha: 0.2 + 0.1 * pulseValue)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.4);
+    canvas.drawCircle(Offset.zero, radius * 1.3, outerPaint);
+
+    // Draw middle glow
+    final middlePaint = Paint()
+      ..color = const Color(0xFFFFD700).withValues(alpha: 0.3 + 0.15 * pulseValue)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.25);
+    canvas.drawCircle(Offset.zero, radius, middlePaint);
+
+    // Draw inner bright core
+    final innerPaint = Paint()
+      ..color = const Color(0xFFFFFFAA).withValues(alpha: 0.4 + 0.2 * pulseValue)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.15);
+    canvas.drawCircle(Offset.zero, radius * 0.6, innerPaint);
+
+    // Draw sparkle rays
+    _drawSparkleRays(canvas, radius, pulseValue);
+  }
+
+  void _drawSparkleRays(Canvas canvas, double radius, double pulseValue) {
+    final rayPaint = Paint()
+      ..color = const Color(0xFFFFFFDD).withValues(alpha: 0.5 + 0.3 * pulseValue)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    // Draw 4 rays that rotate slowly
+    final rayRotation = _phase * 0.3; // Slower rotation
+    for (var i = 0; i < 4; i++) {
+      final angle = rayRotation + (i * pi / 2);
+      final innerRadius = radius * 0.5;
+      final outerRadius = radius * (1.1 + 0.2 * pulseValue);
+
+      final start = Offset(cos(angle) * innerRadius, sin(angle) * innerRadius);
+      final end = Offset(cos(angle) * outerRadius, sin(angle) * outerRadius);
+
+      canvas.drawLine(start, end, rayPaint);
+    }
   }
 }

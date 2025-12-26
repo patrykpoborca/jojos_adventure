@@ -1,8 +1,11 @@
 import 'dart:math' show atan2, pi;
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'actors/baby_player.dart';
 import 'audio/audio_manager.dart';
@@ -155,8 +158,11 @@ class Memory {
 }
 
 /// Main game class for Memory Lane
-class MemoryLaneGame extends FlameGame with HasCollisionDetection {
+class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   GameState state = GameState.loading;
+
+  /// Currently pressed movement keys (for keyboard input)
+  final Set<LogicalKeyboardKey> _pressedKeys = {};
   Memory? currentMemory;
 
   /// Type of overlay to show (memory, phase complete, or game complete)
@@ -199,6 +205,15 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   /// List of collected memories with their sprite type indices (for HUD display)
   final List<CollectedMemoryInfo> _collectedMemories = [];
+
+  /// Currently highlighted memory (nearest to player within threshold)
+  MemoryItem? _highlightedMemory;
+
+  /// Distance threshold for highlighting nearest memory
+  static const double _highlightThreshold = 300.0;
+
+  /// Upstairs multiplier for highlight threshold
+  static const double _highlightThresholdUpstairsMultiplier = 2.0;
 
   /// Callback when collected memories list changes (for HUD updates)
   void Function(List<CollectedMemoryInfo> memories)? onMemoriesCollectedChanged;
@@ -327,9 +342,6 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Calculate total memories for the current phase (across all levels)
     _calculateTotalMemoriesForPhase();
 
-    // Load the initial level
-    await _loadLevel(currentLevel);
-
     // Add fog of war effect
     await world.add(FogOfWar());
 
@@ -342,8 +354,14 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     // Set initial joystick visibility based on control mode
     _updateJoystickVisibility();
 
-    // Game is ready
-    state = GameState.exploring;
+    // On web: Show start screen first (requires user interaction to unlock audio)
+    // On mobile: Load level immediately and start playing
+    if (kIsWeb) {
+      showStartScreen();
+    } else {
+      await _loadLevel(currentLevel);
+      state = GameState.exploring;
+    }
 
     if (debugObstaclePlacementEnabled) {
       debugPrint('=== DEBUG PLACEMENT MODE ===');
@@ -599,11 +617,115 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       // Update camera anchor to follow player's smooth camera target
       _cameraAnchor.position = player.cameraTarget;
 
+      // Update which memory is highlighted (nearest within threshold)
+      _updateNearestMemoryHighlight();
+
       // Update obstacle preview if placing
       if (showDebugPanel) {
         updatePreview();
       }
     }
+
+    // Update keyboard direction for player
+    _updateKeyboardDirection();
+  }
+
+  /// Movement keys for WASD and arrows
+  static final _movementKeys = {
+    LogicalKeyboardKey.keyW,
+    LogicalKeyboardKey.keyA,
+    LogicalKeyboardKey.keyS,
+    LogicalKeyboardKey.keyD,
+    LogicalKeyboardKey.arrowUp,
+    LogicalKeyboardKey.arrowDown,
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowRight,
+  };
+
+  /// Update player keyboard direction based on pressed keys
+  void _updateKeyboardDirection() {
+    final direction = Vector2.zero();
+
+    // Up
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyW) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowUp)) {
+      direction.y -= 1;
+    }
+    // Down
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyS) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowDown)) {
+      direction.y += 1;
+    }
+    // Left
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyA) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowLeft)) {
+      direction.x -= 1;
+    }
+    // Right
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyD) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowRight)) {
+      direction.x += 1;
+    }
+
+    player.keyboardDirection = direction;
+  }
+
+  @override
+  KeyEventResult onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    // Unlock audio on first key press (required for web)
+    if (event is KeyDownEvent) {
+      AudioManager().unlockAudio();
+    }
+
+    // Track movement keys
+    if (_movementKeys.contains(event.logicalKey)) {
+      if (event is KeyDownEvent) {
+        _pressedKeys.add(event.logicalKey);
+      } else if (event is KeyUpEvent) {
+        _pressedKeys.remove(event.logicalKey);
+      }
+      return KeyEventResult.handled;
+    }
+
+    // Debug keys only on key down
+    if (event is KeyDownEvent) {
+      // Backtick toggles debug panel
+      if (event.logicalKey == LogicalKeyboardKey.backquote) {
+        toggleDebugPanel();
+        return KeyEventResult.handled;
+      }
+
+      // Other debug keys only when panel is visible
+      if (showDebugPanel) {
+        if (event.logicalKey == LogicalKeyboardKey.space) {
+          handleObstaclePlacement();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
+          cancelObstaclePlacement();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyP) {
+          printAllObstacles();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyM) {
+          togglePlacementMode();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyL) {
+          toggleLevel();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyG) {
+          togglePhase();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyU) {
+          togglePlayerCollision();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyB) {
+          debugCollectAllMemories();
+          return KeyEventResult.handled;
+        }
+      }
+    }
+
+    return KeyEventResult.ignored;
   }
 
   /// Toggles the debug panel visibility
@@ -955,6 +1077,24 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     onOverlayChanged?.call(false);
   }
 
+  /// Shows the start screen overlay
+  void showStartScreen() {
+    overlays.add('startScreen');
+  }
+
+  /// Hides the start screen and starts the game
+  Future<void> hideStartScreen() async {
+    overlays.remove('startScreen');
+
+    // On web, level wasn't loaded yet - load it now after user interaction
+    if (kIsWeb && currentMap == null) {
+      await _loadLevel(currentLevel);
+    }
+
+    // Game is now ready to play
+    state = GameState.exploring;
+  }
+
   /// Transition to a new game phase
   Future<void> transitionToPhase(GamePhase newPhase) async {
     if (newPhase == currentPhase) return;
@@ -1086,6 +1226,50 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     }
 
     return nearestDistance;
+  }
+
+  /// Updates which memory is highlighted based on player proximity
+  void _updateNearestMemoryHighlight() {
+    if (currentMap == null) return;
+
+    // Calculate threshold based on level
+    final threshold = currentLevel == LevelId.upstairsNursery
+        ? _highlightThreshold * _highlightThresholdUpstairsMultiplier
+        : _highlightThreshold;
+
+    // Find all eligible memories (not collected, not triggers, current phase)
+    final memories = currentMap!.children
+        .whereType<MemoryItem>()
+        .where((m) =>
+            !m.isCollected &&
+            !m.memory.triggersLevel &&
+            !m.memory.isEndgameTrigger &&
+            m.memory.phase == currentPhase)
+        .toList();
+
+    // Find the nearest memory within threshold
+    MemoryItem? nearest;
+    double nearestDistance = double.infinity;
+    final playerPos = player.position;
+
+    for (final memory in memories) {
+      final distance = playerPos.distanceTo(memory.position);
+      if (distance < nearestDistance && distance <= threshold) {
+        nearestDistance = distance;
+        nearest = memory;
+      }
+    }
+
+    // Update highlighted state
+    if (_highlightedMemory != nearest) {
+      // Remove highlight from previous memory
+      _highlightedMemory?.isHighlighted = false;
+
+      // Add highlight to new nearest memory
+      nearest?.isHighlighted = true;
+
+      _highlightedMemory = nearest;
+    }
   }
 
   /// Starts the ending video sequence

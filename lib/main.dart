@@ -10,6 +10,7 @@ import 'ui/ending_video_overlay.dart';
 import 'ui/polaroid_overlay.dart';
 import 'ui/responsive_sizing.dart';
 import 'ui/settings_menu.dart';
+import 'ui/start_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,8 +41,9 @@ class MemoryLaneApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFD4A574), // Warm amber
-          brightness: Brightness.light,
+          brightness: Brightness.dark,
         ),
+        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
         useMaterial3: true,
       ),
       home: const GameScreen(),
@@ -229,23 +231,29 @@ class _GameScreenState extends State<GameScreen> {
                   'endingVideo': (context, game) => EndingVideoOverlay(
                         game: game as MemoryLaneGame,
                       ),
+                  'startScreen': (context, game) => StartScreen(
+                        game: game as MemoryLaneGame,
+                      ),
                 },
-                loadingBuilder: (context) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(
-                        color: Color(0xFFD4A574),
-                      ),
-                      SizedBox(height: ResponsiveSizing.spacing(context, 16)),
-                      Text(
-                        'Loading memories...',
-                        style: TextStyle(
-                          fontSize: ResponsiveSizing.fontSize(context, 18),
-                          color: const Color(0xFF6B5B4F),
+                loadingBuilder: (context) => Container(
+                  color: const Color(0xFF1A1A1A),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(
+                          color: Color(0xFFD4A574),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: ResponsiveSizing.spacing(context, 16)),
+                        Text(
+                          'Loading memories...',
+                          style: TextStyle(
+                            fontSize: ResponsiveSizing.fontSize(context, 18),
+                            color: const Color(0xFFD4A574),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 errorBuilder: (context, error) => Center(
