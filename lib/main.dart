@@ -59,6 +59,9 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
+  /// Static game instance to persist across hot reloads
+  static MemoryLaneGame? _persistentGame;
+
   late final MemoryLaneGame _game;
   final FocusNode _focusNode = FocusNode();
   bool _showDebugPanel = MemoryLaneGame.showDebugPanel;
@@ -71,7 +74,9 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    _game = MemoryLaneGame();
+    // Reuse existing game instance on hot reload, create new one on fresh start
+    _persistentGame ??= MemoryLaneGame();
+    _game = _persistentGame!;
 
     // Listen for debug panel toggle
     _game.onDebugPanelToggled = (visible) {

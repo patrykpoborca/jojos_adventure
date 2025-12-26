@@ -3,11 +3,12 @@ import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
+import 'package:flutter/material.dart' show Colors;
 
 import '../input/floating_joystick.dart';
 import '../memory_lane_game.dart';
 import '../world/obstacle.dart';
-import '../world/character.dart';
+import '../world/character.dart' show Character, DebugCircleComponent;
 import '../world/walking_character.dart';
 
 /// Direction the baby is facing
@@ -116,12 +117,22 @@ class BabyPlayer extends SpriteAnimationComponent
     animation = _crawlIdle;
 
     // Add hitbox for collision detection (smaller than sprite for better feel)
-    // Offset +50 on Y to better align with Willow character's feet
+    final hitboxRadius = displaySize * 0.3;
+    final hitboxPosition = Vector2(displaySize / 2, displaySize * 0.6);
     add(CircleHitbox(
-      radius: displaySize * 0.3,
-      position: Vector2(displaySize / 2, displaySize * 0.6 + 50),
+      radius: hitboxRadius,
+      position: hitboxPosition,
       anchor: Anchor.center,
       collisionType: CollisionType.active,
+    ));
+
+    // Debug visualization for player hitbox (only visible when debug panel is open)
+    add(DebugCircleComponent(
+      radius: hitboxRadius,
+      position: hitboxPosition,
+      anchor: Anchor.center,
+      color: Colors.green,
+      filled: true,
     ));
   }
 
@@ -329,9 +340,16 @@ class BabyPlayer extends SpriteAnimationComponent
     if (!collisionEnabled) return;
 
     // Skip collision with non-obstacle components (memories, etc.)
-    // Check if other is Obstacle, Character, WalkingCharacter, or has these as parent
+    // Check if other is Obstacle or has Obstacle as parent
     final isObstacle = other is Obstacle || other.parent is Obstacle;
-    final isCharacter = other is Character || other.parent is Character;
+
+    // For Character, check if collision is enabled (has collisionRadius > 0)
+    bool isCharacterWithCollision = false;
+    if (other is Character) {
+      isCharacterWithCollision = other.hasCollision;
+    } else if (other.parent is Character) {
+      isCharacterWithCollision = (other.parent as Character).hasCollision;
+    }
 
     // For WalkingCharacter, also check if collision is enabled
     bool isWalkingCharacterWithCollision = false;
@@ -341,7 +359,7 @@ class BabyPlayer extends SpriteAnimationComponent
       isWalkingCharacterWithCollision = (other.parent as WalkingCharacter).hasCollision;
     }
 
-    if (!isObstacle && !isCharacter && !isWalkingCharacterWithCollision) return;
+    if (!isObstacle && !isCharacterWithCollision && !isWalkingCharacterWithCollision) return;
 
     _isColliding = true;
 

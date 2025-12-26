@@ -113,6 +113,154 @@ class MusicZoneData {
   }
 }
 
+/// A polygon zone that triggers music playback when the player enters
+class PolygonMusicZone extends PositionComponent with HasGameReference<MemoryLaneGame> {
+  /// Unique identifier for this zone
+  final String zoneId;
+
+  /// Music file to play (relative to assets/audio/music/)
+  final String musicFile;
+
+  /// Maximum volume for this zone's music (0.0 to 1.0)
+  final double maxVolume;
+
+  /// Whether to show debug visualization
+  final bool showDebug;
+
+  /// Polygon vertices (in world coordinates)
+  final List<Vector2> vertices;
+
+  /// Whether the player is currently in this zone
+  bool _playerInZone = false;
+
+  PolygonMusicZone({
+    required this.vertices,
+    required this.zoneId,
+    required this.musicFile,
+    this.maxVolume = 1.0,
+    this.showDebug = false,
+  }) : super(position: Vector2.zero());
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+
+    // Add debug visualization if enabled
+    if (showDebug && vertices.isNotEmpty) {
+      add(_PolygonDebugComponent(vertices: vertices));
+    }
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    // Check if player is within this polygon zone
+    final playerPos = game.player.position;
+    final isInZone = _isPointInPolygon(playerPos);
+
+    if (isInZone && !_playerInZone) {
+      // Player entered zone
+      _playerInZone = true;
+      _onEnterZone();
+    } else if (!isInZone && _playerInZone) {
+      // Player left zone
+      _playerInZone = false;
+      _onExitZone();
+    }
+  }
+
+  /// Check if a point is inside the polygon using ray casting algorithm
+  bool _isPointInPolygon(Vector2 point) {
+    if (vertices.length < 3) return false;
+
+    bool inside = false;
+    int j = vertices.length - 1;
+
+    for (int i = 0; i < vertices.length; i++) {
+      final vi = vertices[i];
+      final vj = vertices[j];
+
+      if (((vi.y > point.y) != (vj.y > point.y)) &&
+          (point.x < (vj.x - vi.x) * (point.y - vi.y) / (vj.y - vi.y) + vi.x)) {
+        inside = !inside;
+      }
+      j = i;
+    }
+
+    return inside;
+  }
+
+  void _onEnterZone() {
+    AudioManager().playZoneMusic(zoneId, musicFile, maxVolume: maxVolume);
+  }
+
+  void _onExitZone() {
+    AudioManager().fadeOutZone(zoneId);
+  }
+}
+
+/// Debug component to visualize polygon zones
+class _PolygonDebugComponent extends PositionComponent {
+  final List<Vector2> vertices;
+
+  _PolygonDebugComponent({required this.vertices});
+
+  @override
+  void render(Canvas canvas) {
+    if (vertices.length < 3) return;
+
+    final path = Path();
+    path.moveTo(vertices[0].x, vertices[0].y);
+    for (int i = 1; i < vertices.length; i++) {
+      path.lineTo(vertices[i].x, vertices[i].y);
+    }
+    path.close();
+
+    // Fill
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0x33AA00FF)
+        ..style = PaintingStyle.fill,
+    );
+
+    // Stroke
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFFAA00FF)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+  }
+}
+
+/// Data class for defining polygon music zones in maps
+class PolygonMusicZoneData {
+  final List<Vector2> vertices;
+  final String zoneId;
+  final String musicFile;
+  final double maxVolume;
+
+  const PolygonMusicZoneData({
+    required this.vertices,
+    required this.zoneId,
+    required this.musicFile,
+    this.maxVolume = 1.0,
+  });
+
+  PolygonMusicZone toMusicZone({bool showDebug = false}) {
+    return PolygonMusicZone(
+      vertices: vertices,
+      zoneId: zoneId,
+      musicFile: musicFile,
+      maxVolume: maxVolume,
+      showDebug: showDebug,
+    );
+  }
+}
+
 /// Data class for defining SFX zones (point-based with distance falloff)
 class SfxZoneData {
   /// Position of the sound source

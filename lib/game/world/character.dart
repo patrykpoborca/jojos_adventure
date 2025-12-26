@@ -57,6 +57,9 @@ class Character extends SpriteAnimationComponent
   /// Collision radius for blocking player movement (0 = no collision)
   final double collisionRadius;
 
+  /// Y offset for collision hitbox (positive = lower on sprite)
+  final double collisionOffsetY;
+
   /// Type of character (affects behavior like sleeping Zs)
   final CharacterType characterType;
 
@@ -115,6 +118,7 @@ class Character extends SpriteAnimationComponent
     this.baseScale = 1.0,
     this.flipped = false,
     this.collisionRadius = 0.0,
+    this.collisionOffsetY = 0.0,
     this.characterType = CharacterType.pet,
     this.interactionMessage,
   }) : super(
@@ -122,6 +126,9 @@ class Character extends SpriteAnimationComponent
           size: Vector2.all(spriteConfig.displaySize * baseScale),
           anchor: Anchor.center,
         );
+
+  /// Whether this character has collision enabled
+  bool get hasCollision => collisionRadius > 0;
 
   /// Check if player is close enough to interact
   bool get isPlayerInRange {
@@ -170,50 +177,57 @@ class Character extends SpriteAnimationComponent
       scale = Vector2(-1.0, 1.0);
     }
 
-    // Add hitbox for tap detection
-    add(CircleHitbox(
-      radius: (spriteSize * baseScale) / 2 + 30,
-      position: size / 2,
-      anchor: Anchor.center,
-      collisionType: CollisionType.passive,
-    ));
-
-    // Add collision obstacle hitbox if radius is set
+    // Add hitboxes - either tap-only OR collision (which also handles tap)
     if (collisionRadius > 0) {
+      // Use collision hitbox (also handles tap detection)
       final scaledCollisionRadius = collisionRadius * baseScale;
+      final hitboxPosition = Vector2(size.x / 2, size.y / 2 + collisionOffsetY);
       debugPrint('Character $name: Adding collision hitbox with radius $scaledCollisionRadius');
       add(CircleHitbox(
         radius: scaledCollisionRadius,
+        position: hitboxPosition,
+        anchor: Anchor.center,
+        collisionType: CollisionType.passive,
+      ));
+
+      // Debug visualization for collision (only visible when debug panel is open)
+      add(DebugCircleComponent(
+        radius: scaledCollisionRadius,
+        position: hitboxPosition,
+        anchor: Anchor.center,
+        color: Colors.red,
+        filled: true,
+      ));
+    } else {
+      // No collision - add tap-only hitbox at center
+      final tapRadius = (spriteSize * baseScale) / 2 + 30;
+      add(CircleHitbox(
+        radius: tapRadius,
         position: size / 2,
         anchor: Anchor.center,
         collisionType: CollisionType.passive,
       ));
 
-      // Debug visualization for collision
-      if (showDebug) {
-        add(CircleComponent(
-          radius: scaledCollisionRadius,
-          position: size / 2,
-          anchor: Anchor.center,
-          paint: Paint()
-            ..color = Colors.red.withValues(alpha: 0.3)
-            ..style = PaintingStyle.fill,
-        ));
-      }
-    }
-
-    // Debug visualization for interaction range
-    if (showDebug) {
-      add(CircleComponent(
-        radius: _baseInteractDistance,
+      // Debug visualization for tap hitbox (only visible when debug panel is open)
+      add(DebugCircleComponent(
+        radius: tapRadius,
         position: size / 2,
         anchor: Anchor.center,
-        paint: Paint()
-          ..color = Colors.blue.withValues(alpha: 0.1)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
+        color: Colors.grey,
+        filled: false,
+        strokeWidth: 1,
       ));
     }
+
+    // Debug visualization for interaction range (only visible when debug panel is open)
+    add(DebugCircleComponent(
+      radius: _baseInteractDistance,
+      position: size / 2,
+      anchor: Anchor.center,
+      color: Colors.blue,
+      filled: false,
+      strokeWidth: 1,
+    ));
   }
 
   @override
@@ -466,6 +480,7 @@ class CharacterData {
   final double scale;
   final bool flipped;
   final double collisionRadius;
+  final double collisionOffsetY;
   final CharacterType characterType;
   final String? interactionMessage;
 
@@ -481,6 +496,7 @@ class CharacterData {
     this.scale = 1.0,
     this.flipped = false,
     this.collisionRadius = 0.0,
+    this.collisionOffsetY = 0.0,
     this.characterType = CharacterType.pet,
     this.interactionMessage,
   });
@@ -500,6 +516,7 @@ class CharacterData {
       baseScale: scale,
       flipped: flipped,
       collisionRadius: collisionRadius,
+      collisionOffsetY: collisionOffsetY,
       characterType: characterType,
       interactionMessage: interactionMessage,
     );
@@ -510,3 +527,33 @@ class CharacterData {
 typedef Pet = Character;
 typedef PetData = CharacterData;
 typedef PetSpriteConfig = CharacterSpriteConfig;
+
+/// A circle component that only renders when debug panel is open
+class DebugCircleComponent extends PositionComponent {
+  final double radius;
+  final Color color;
+  final bool filled;
+  final double strokeWidth;
+
+  DebugCircleComponent({
+    required this.radius,
+    required super.position,
+    required super.anchor,
+    this.color = Colors.red,
+    this.filled = true,
+    this.strokeWidth = 2.0,
+  }) : super(size: Vector2.all(radius * 2));
+
+  @override
+  void render(Canvas canvas) {
+    // Only render when debug panel is open
+    if (!MemoryLaneGame.showDebugPanel) return;
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: filled ? 0.3 : 0.5)
+      ..style = filled ? PaintingStyle.fill : PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawCircle(Offset(radius, radius), radius, paint);
+  }
+}

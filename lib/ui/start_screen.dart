@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../game/audio/audio_manager.dart';
 import '../game/memory_lane_game.dart';
+import 'keyboard_cta_handler.dart';
 import 'responsive_sizing.dart';
 
 /// Start screen overlay shown when game first loads
@@ -71,9 +72,11 @@ class _StartScreenState extends State<StartScreen>
     final buttonFontSize = ResponsiveSizing.fontSize(context, 24);
     final buttonPadding = ResponsiveSizing.spacing(context, 24);
 
-    return Material(
-      color: Colors.transparent,
-      child: AnimatedBuilder(
+    return KeyboardCtaHandler(
+      onCtaPressed: _onStartGame,
+      child: Material(
+        color: Colors.transparent,
+        child: AnimatedBuilder(
         animation: _fadeController,
         builder: (context, child) {
           return Opacity(
@@ -235,6 +238,7 @@ class _StartScreenState extends State<StartScreen>
             ),
           );
         },
+        ),
       ),
     );
   }

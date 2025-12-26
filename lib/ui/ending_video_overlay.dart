@@ -4,6 +4,7 @@ import 'package:video_player/video_player.dart';
 
 import '../game/audio/audio_manager.dart';
 import '../game/memory_lane_game.dart';
+import 'keyboard_cta_handler.dart';
 import 'responsive_sizing.dart';
 
 /// Full-screen video overlay for the ending scene
@@ -116,9 +117,25 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
     });
   }
 
+  /// Get the primary CTA action based on current state
+  VoidCallback? get _primaryCtaAction {
+    if (_hasError) {
+      return _showEndCardWithMusic;
+    } else if (!_isInitialized) {
+      return null; // No action while loading
+    } else if (_showEndCard) {
+      return _onClose;
+    } else {
+      return _onSkip; // During video playback
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
+    final ctaAction = _primaryCtaAction;
+
+    // Wrap with keyboard handler only if there's an action available
+    Widget content = FadeTransition(
       opacity: _fadeAnimation,
       child: Material(
         color: Colors.black,
@@ -160,6 +177,16 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
         ),
       ),
     );
+
+    // Wrap with keyboard handler if there's an action available
+    if (ctaAction != null) {
+      return KeyboardCtaHandler(
+        onCtaPressed: ctaAction,
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   Widget _buildLoadingState() {

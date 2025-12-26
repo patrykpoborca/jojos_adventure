@@ -7,6 +7,7 @@ import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
 import '../memory_lane_game.dart';
+import 'character.dart' show DebugCircleComponent;
 
 /// Direction for walking characters (matches baby player)
 enum WalkingDirection { down, up, left, right }
@@ -196,16 +197,9 @@ class WalkingCharacter extends SpriteAnimationComponent
 
     animation = _idleAnimation;
 
-    // Add hitbox for tap detection
-    add(CircleHitbox(
-      radius: spriteHeight / 2 + 30,
-      position: size / 2,
-      anchor: Anchor.center,
-      collisionType: CollisionType.passive,
-    ));
-
-    // Add collision hitbox if radius is set
+    // Add hitboxes - either tap-only OR collision (which also handles tap)
     if (collisionRadius > 0) {
+      // Use collision hitbox (also handles tap detection)
       final scaledCollisionRadius = collisionRadius * baseScale;
       add(CircleHitbox(
         radius: scaledCollisionRadius,
@@ -214,33 +208,46 @@ class WalkingCharacter extends SpriteAnimationComponent
         collisionType: CollisionType.passive,
       ));
 
-      if (showDebug) {
-        add(CircleComponent(
-          radius: scaledCollisionRadius,
-          position: size / 2,
-          anchor: Anchor.center,
-          paint: Paint()
-            ..color = Colors.red.withValues(alpha: 0.3)
-            ..style = PaintingStyle.fill,
-        ));
-      }
+      // Debug visualization for collision (only visible when debug panel is open)
+      add(DebugCircleComponent(
+        radius: scaledCollisionRadius,
+        position: size / 2,
+        anchor: Anchor.center,
+        color: Colors.red,
+        filled: true,
+      ));
+    } else {
+      // No collision - add tap-only hitbox at center
+      final tapRadius = spriteHeight / 2 + 30;
+      add(CircleHitbox(
+        radius: tapRadius,
+        position: size / 2,
+        anchor: Anchor.center,
+        collisionType: CollisionType.passive,
+      ));
+
+      // Debug visualization for tap hitbox (only visible when debug panel is open)
+      add(DebugCircleComponent(
+        radius: tapRadius,
+        position: size / 2,
+        anchor: Anchor.center,
+        color: Colors.grey,
+        filled: false,
+        strokeWidth: 1,
+      ));
     }
 
-    // Debug visualization
-    if (showDebug) {
-      // Draw waypoints
-      for (var i = 0; i < waypoints.length; i++) {
-        final wp = waypoints[i];
-        final relativePos = wp - position;
-        add(CircleComponent(
-          radius: 10,
-          position: relativePos + size / 2,
-          anchor: Anchor.center,
-          paint: Paint()
-            ..color = Colors.yellow.withValues(alpha: 0.7)
-            ..style = PaintingStyle.fill,
-        ));
-      }
+    // Debug visualization for waypoints (only visible when debug panel is open)
+    for (var i = 0; i < waypoints.length; i++) {
+      final wp = waypoints[i];
+      final relativePos = wp - position;
+      add(DebugCircleComponent(
+        radius: 10,
+        position: relativePos + size / 2,
+        anchor: Anchor.center,
+        color: Colors.yellow,
+        filled: true,
+      ));
     }
   }
 

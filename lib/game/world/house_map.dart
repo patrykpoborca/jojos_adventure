@@ -368,18 +368,10 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
     ];
 
-  /// Returns the list of music zone data
+  /// Returns the list of rectangular music zone data
   /// Add music zones here to define areas with background music
   List<MusicZoneData> getMusicZoneData() {
-    // ObstacleData(x: 1546, y: 123, width: 1646, height: 359, label: 'Obstacle'),
     return const [
-      // Example: Living room area with cozy music
-      MusicZoneData(
-        x: 1546, y: 123, width: 1800, height: 450,
-        zoneId: 'outdoor',
-        musicFile: 'upbeat_trim_a.mp3',
-        maxVolume: 0.4,
-      ),
       MusicZoneData(
         x: 1992, y: 481, width: 482, height: 369,
         zoneId: 'dads_office',
@@ -391,6 +383,28 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         zoneId: 'garage',
         musicFile: 'kpop.mp3',
         maxVolume: 0.6,
+      ),
+    ];
+  }
+
+  /// Returns the list of polygon music zone data
+  List<PolygonMusicZoneData> getPolygonMusicZoneData() {
+    return [
+      // Outdoor patio area - non-rectangular shape
+      PolygonMusicZoneData(
+        vertices: [
+          Vector2(1938, 690),
+          Vector2(1532, 688),
+          Vector2(1530, 136),
+          Vector2(3080, 159),
+          Vector2(3090, 438),
+          Vector2(2470, 453),
+          Vector2(2470, 381),
+          Vector2(1908, 395),
+        ],
+        zoneId: 'outdoor',
+        musicFile: 'upbeat_trim_a.mp3',
+        maxVolume: 0.4,
       ),
     ];
   }
@@ -484,7 +498,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
     return const [
       // Willow - sleeping dog in the living room
       CharacterData(
-        x: 320, y: 935,
+        x: 320, y: 880,
         name: 'Willow',
         spritePath: 'sprites/willow.png',
         columns: 8,
@@ -494,6 +508,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
         scale: 1.3,
         flipped: false,
         collisionRadius: 25.0,
+        collisionOffsetY: 30.0,
         characterType: CharacterType.pet,
       ),
     ];
@@ -627,7 +642,13 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
   void _addMusicZones() {
     final showDebug = MemoryLaneGame.debugObstaclePlacementEnabled;
 
+    // Add rectangular music zones
     for (final data in getMusicZoneData()) {
+      add(data.toMusicZone(showDebug: showDebug));
+    }
+
+    // Add polygon music zones
+    for (final data in getPolygonMusicZoneData()) {
       add(data.toMusicZone(showDebug: showDebug));
     }
   }

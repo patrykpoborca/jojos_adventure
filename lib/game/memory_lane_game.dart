@@ -264,6 +264,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
   /// Runtime toggle for debug panel visibility
   static bool showDebugPanel = debugObstaclePlacementEnabled;
 
+  /// Tracks if game has already started (survives hot reload)
+  static bool _hasStartedOnce = false;
+
   /// Current placement mode (obstacle or memory)
   DebugPlacementMode _placementMode = DebugPlacementMode.obstacle;
 
@@ -356,11 +359,13 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
 
     // On web: Show start screen first (requires user interaction to unlock audio)
     // On mobile: Load level immediately and start playing
-    if (kIsWeb) {
+    // Skip start screen on hot reload (if game has already started)
+    if (kIsWeb && !_hasStartedOnce) {
       showStartScreen();
     } else {
       await _loadLevel(currentLevel);
       state = GameState.exploring;
+      _hasStartedOnce = true;
     }
 
     if (debugObstaclePlacementEnabled) {
@@ -722,6 +727,14 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
           debugCollectAllMemories();
           return KeyEventResult.handled;
         }
+      } else {
+        // Debug panel is closed - spacebar triggers nearby memory
+        if (event.logicalKey == LogicalKeyboardKey.space) {
+          if (state == GameState.exploring && _highlightedMemory != null) {
+            triggerMemory(_highlightedMemory!.memory);
+            return KeyEventResult.handled;
+          }
+        }
       }
     }
 
@@ -999,6 +1012,14 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     state = GameState.exploring;
   }
 
+  /// Cancels the overlay without collecting the memory
+  void cancelOverlay() {
+    overlays.remove('polaroid');
+    onOverlayChanged?.call(false);
+    currentMemory = null;
+    state = GameState.exploring;
+  }
+
   /// Called when a memory is collected
   void _onMemoryCollected(Memory memory) {
     if (memory.phase == currentPhase) {
@@ -1090,6 +1111,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     if (kIsWeb && currentMap == null) {
       await _loadLevel(currentLevel);
     }
+
+    // Mark that game has started (survives hot reload)
+    _hasStartedOnce = true;
 
     // Game is now ready to play
     state = GameState.exploring;

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../game/audio/audio_manager.dart';
 import '../game/memory_lane_game.dart';
+import 'keyboard_cta_handler.dart';
 import 'responsive_sizing.dart';
 
 /// View state for the memory overlay
@@ -151,6 +152,13 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     });
   }
 
+  /// Cancel the overlay without collecting the memory (for Escape key)
+  void _cancelOverlay() {
+    _animController.reverse().then((_) {
+      widget.game.cancelOverlay();
+    });
+  }
+
   void _onLevelAccept() {
     final levelId = memory?.levelTrigger;
     if (levelId != null) {
@@ -169,15 +177,61 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     _closeOverlay();
   }
 
+  /// Get the primary CTA action based on current view state
+  VoidCallback get _primaryCtaAction {
+    // If in full screen photo mode, close it
+    if (_isFullScreenPhoto) {
+      return _onCloseFullScreen;
+    }
+
+    switch (_viewState) {
+      case MemoryViewState.polaroidStack:
+        return _onNextTap;
+      case MemoryViewState.levelDialog:
+        return _onLevelAccept;
+      case MemoryViewState.phaseComplete:
+        return _onPhaseTransition;
+      case MemoryViewState.gameComplete:
+        // Primary action is to start montage
+        return () {
+          _animController.reverse().then((_) {
+            widget.game.startMontage();
+          });
+        };
+      case MemoryViewState.endgameNotReady:
+        return _closeOverlay;
+      case MemoryViewState.couponUnlock:
+        return _onStartRoadTrip;
+    }
+  }
+
+  /// Get the secondary action (Escape key) - cancel for memory viewing, close for others
+  VoidCallback get _secondaryAction {
+    // For memory viewing, cancel without collecting
+    if (_viewState == MemoryViewState.polaroidStack) {
+      return _cancelOverlay;
+    }
+    // For level dialog, decline (don't switch level)
+    if (_viewState == MemoryViewState.levelDialog) {
+      return _cancelOverlay;
+    }
+    // For other dialogs, just close
+    return _closeOverlay;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
+    return KeyboardCtaHandler(
+      onCtaPressed: () => _primaryCtaAction(),
+      onSecondaryAction: _secondaryAction,
+      child: FadeTransition(
       opacity: _fadeAnimation,
       child: Material(
-        color: Colors.black54,
-        child: _isFullScreenPhoto
-            ? _buildFullScreenPhotoViewer()
-            : Center(child: _buildContent()),
+          color: Colors.black54,
+          child: _isFullScreenPhoto
+              ? _buildFullScreenPhotoViewer()
+              : Center(child: _buildContent()),
+        ),
       ),
     );
   }
