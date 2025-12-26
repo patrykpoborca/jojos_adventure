@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -19,6 +20,8 @@ class CollectedMemoriesHud extends StatefulWidget {
 class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
   List<CollectedMemoryInfo> _collectedMemories = [];
   int _totalMemories = 0;
+  double? _directionToMemory;
+  Timer? _updateTimer;
 
   @override
   void initState() {
@@ -34,10 +37,23 @@ class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
         });
       }
     };
+
+    // Update direction every 100ms for smooth compass
+    _updateTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (mounted && widget.game.state == GameState.exploring) {
+        final newDirection = widget.game.getDirectionToNearestMemory();
+        if (newDirection != _directionToMemory) {
+          setState(() {
+            _directionToMemory = newDirection;
+          });
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _updateTimer?.cancel();
     widget.game.onMemoriesCollectedChanged = null;
     super.dispose();
   }
@@ -107,6 +123,14 @@ class _CollectedMemoriesHudState extends State<CollectedMemoriesHud> {
                 ),
               ),
             ),
+            // Navigation arrow pointing to nearest memory
+            if (_directionToMemory != null && collected < total)
+              Padding(
+                padding: ResponsiveSizing.paddingOnly(context, left: 8),
+                child: _NavigationArrow(
+                  direction: _directionToMemory!,
+                ),
+              ),
           ],
         ),
       ),
@@ -231,5 +255,49 @@ class _SpriteFramePainter extends CustomPainter {
   bool shouldRepaint(_SpriteFramePainter oldDelegate) {
     return oldDelegate.frameIndex != frameIndex ||
            oldDelegate.spriteSheet != spriteSheet;
+  }
+}
+
+/// Navigation arrow that points toward the nearest uncollected memory
+class _NavigationArrow extends StatelessWidget {
+  /// Direction in radians (from screenAngle)
+  final double direction;
+
+  const _NavigationArrow({required this.direction});
+
+  @override
+  Widget build(BuildContext context) {
+    final arrowSize = ResponsiveSizing.dimension(context, 28);
+    final iconSize = ResponsiveSizing.iconSize(context, 18);
+
+    return Container(
+      width: arrowSize,
+      height: arrowSize,
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.3),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.amber.withValues(alpha: 0.6),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.3),
+            blurRadius: ResponsiveSizing.spacing(context, 4),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Transform.rotate(
+        // Direction is already 0 = up, positive = clockwise
+        // Icons.navigation points up by default, so use directly
+        angle: direction,
+        child: Icon(
+          Icons.navigation,
+          color: Colors.amber,
+          size: iconSize,
+        ),
+      ),
+    );
   }
 }

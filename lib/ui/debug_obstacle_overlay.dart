@@ -18,6 +18,7 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
   String _statusMessage = 'Press SPACE to mark first corner';
   Vector2 _currentPosition = Vector2.zero();
   DebugPlacementMode _currentMode = DebugPlacementMode.obstacle;
+  bool _collisionEnabled = true;
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
         if (widget.game.state != GameState.loading) {
           setState(() {
             _currentPosition = widget.game.player.position;
+            _collisionEnabled = widget.game.player.collisionEnabled;
           });
         }
         _updatePosition();
@@ -252,6 +254,45 @@ class _DebugObstacleOverlayState extends State<DebugObstacleOverlay> {
               action: 'Collect all memories',
               onTap: () => widget.game.debugCollectAllMemories(),
             ),
+            _ControlRow(
+              key_: 'U',
+              action: 'Toggle collision',
+              onTap: () {
+                widget.game.togglePlayerCollision();
+                setState(() {
+                  _collisionEnabled = widget.game.player.collisionEnabled;
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+            const Divider(color: Colors.amber),
+            const SizedBox(height: 4),
+
+            // State indicators
+            const Text(
+              'Current State:',
+              style: TextStyle(
+                color: Colors.amber,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 4),
+            _StateIndicator(
+              label: 'Collision',
+              value: _collisionEnabled ? 'ON' : 'OFF',
+              isEnabled: _collisionEnabled,
+            ),
+            _StateIndicator(
+              label: 'Level',
+              value: widget.game.currentLevel.name,
+              isEnabled: true,
+            ),
+            _StateIndicator(
+              label: 'Phase',
+              value: widget.game.currentPhase.name,
+              isEnabled: true,
+            ),
           ],
         ),
       ),
@@ -321,6 +362,53 @@ class _ControlRow extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StateIndicator extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isEnabled;
+
+  const _StateIndicator({
+    required this.label,
+    required this.value,
+    required this.isEnabled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isEnabled ? Colors.greenAccent : Colors.redAccent,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 11,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: isEnabled ? Colors.greenAccent : Colors.redAccent,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

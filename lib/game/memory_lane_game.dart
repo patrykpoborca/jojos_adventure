@@ -1,3 +1,5 @@
+import 'dart:math' show atan2, pi;
+
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -271,6 +273,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
   /// Callback to notify UI when cinematic mode changes (ending video)
   void Function(bool cinematic)? onCinematicModeChanged;
 
+  /// Callback to notify UI when full-screen overlays are shown/hidden
+  void Function(bool hasOverlay)? onOverlayChanged;
+
   /// List of placed obstacles (for output)
   final List<String> _placedObstacles = [];
 
@@ -439,6 +444,10 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
     state = GameState.loading;
     await _loadLevel(levelId);
+
+    // Fallback check: ensure phase transition happens if all memories collected
+    _checkPhaseTransitionFallback();
+
     state = GameState.exploring;
   }
 
@@ -449,6 +458,20 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       orElse: () => currentLevel,
     );
     await switchToLevel(levelId);
+  }
+
+  /// Fallback check to ensure phase transition happens if all memories are collected
+  /// This catches edge cases where the normal trigger might have been missed
+  void _checkPhaseTransitionFallback() {
+    if (_memoriesCollectedInPhase >= _totalMemoriesInPhase && _totalMemoriesInPhase > 0) {
+      debugPrint('Fallback check: Phase ${currentPhase.name} complete! ($_memoriesCollectedInPhase/$_totalMemoriesInPhase)');
+      // Schedule the phase complete for next frame to avoid interrupting level load
+      Future.microtask(() {
+        if (state == GameState.exploring) {
+          _onPhaseComplete();
+        }
+      });
+    }
   }
 
   /// Toggle between levels (for debug)
@@ -838,6 +861,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
     state = GameState.viewingMemory;
     overlays.add('polaroid');
+    onOverlayChanged?.call(true);
   }
 
   /// Resumes the game after viewing a memory (and track collection)
@@ -848,6 +872,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     }
 
     overlays.remove('polaroid');
+    onOverlayChanged?.call(false);
     currentMemory = null;
     state = GameState.exploring;
   }
@@ -861,10 +886,16 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
       // Only count if not already collected
       if (!_collectedMemoryKeys.contains(memoryKey)) {
         _collectedMemoryKeys.add(memoryKey);
-        _memoriesCollectedInPhase++;
-        debugPrint('Memory collected: $_memoriesCollectedInPhase/$_totalMemoriesInPhase in ${currentPhase.name} phase');
 
-        // Track collected memory with sprite type for HUD
+        // Only count memories that aren't level triggers (matching _totalMemoriesInPhase calculation)
+        // Level-trigger memories don't count towards phase progress
+        final countsTowardsPhase = !memory.triggersLevel;
+        if (countsTowardsPhase) {
+          _memoriesCollectedInPhase++;
+        }
+        debugPrint('Memory collected: $_memoriesCollectedInPhase/$_totalMemoriesInPhase in ${currentPhase.name} phase (countsTowardsPhase: $countsTowardsPhase)');
+
+        // Track collected memory with sprite type for HUD (all memories, not just countable ones)
         final spriteIndex = MemorySpriteTypes.getSpriteIndexForMemory(memory.stylizedPhotoPath);
         if (spriteIndex != null) {
           _collectedMemories.add(CollectedMemoryInfo(
@@ -876,7 +907,8 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
         }
 
         // Check if all memories in this phase are collected
-        if (_memoriesCollectedInPhase >= _totalMemoriesInPhase && !memory.triggersLevel) {
+        // Only trigger phase complete for non-level-trigger memories (player is about to switch levels otherwise)
+        if (countsTowardsPhase && _memoriesCollectedInPhase >= _totalMemoriesInPhase) {
           _onPhaseComplete();
         }
       }
@@ -899,6 +931,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     overlayType = OverlayType.phaseComplete;
     state = GameState.viewingMemory;
     overlays.add('polaroid');
+    onOverlayChanged?.call(true);
   }
 
   /// Shows the game complete overlay
@@ -906,17 +939,20 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
     overlayType = OverlayType.gameComplete;
     state = GameState.viewingMemory;
     overlays.add('polaroid');
+    onOverlayChanged?.call(true);
   }
 
   /// Shows the settings menu overlay
   void showSettings() {
     overlays.add('settings');
+    onOverlayChanged?.call(true);
     // Don't change game state - allow game to continue in background
   }
 
   /// Hides the settings menu overlay
   void hideSettings() {
     overlays.remove('settings');
+    onOverlayChanged?.call(false);
   }
 
   /// Transition to a new game phase
@@ -975,6 +1011,82 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection {
 
   /// Get list of collected memories for HUD display
   List<CollectedMemoryInfo> get collectedMemories => List.unmodifiable(_collectedMemories);
+
+  /// Get the direction (angle in radians) to the nearest uncollected memory
+  /// Returns null if no uncollected memories exist on the current level
+  /// Angle is 0 = up, positive = clockwise (for Transform.rotate in Flutter)
+  double? getDirectionToNearestMemory() {
+    if (currentMap == null) return null;
+
+    // Find all uncollected memory items on current level
+    // Exclude: level triggers, endgame triggers, and already collected
+    final memories = currentMap!.children
+        .whereType<MemoryItem>()
+        .where((m) =>
+            !m.isCollected &&
+            !m.memory.triggersLevel &&
+            !m.memory.isEndgameTrigger &&
+            m.memory.phase == currentPhase)
+        .toList();
+
+    if (memories.isEmpty) return null;
+
+    // Get fresh player position
+    final playerPos = player.position.clone();
+
+    // Find the nearest one
+    MemoryItem? nearest;
+    double nearestDistance = double.infinity;
+
+    for (final memory in memories) {
+      final distance = playerPos.distanceTo(memory.position);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = memory;
+      }
+    }
+
+    if (nearest == null) return null;
+
+    // Calculate angle from player to memory
+    // In game coords: x increases right, y increases down
+    // atan2(dy, dx) gives angle from positive x-axis
+    // We want: 0 = up, positive = clockwise
+    final dx = nearest.position.x - playerPos.x;
+    final dy = nearest.position.y - playerPos.y;
+
+    // atan2 returns: 0 = right, π/2 = down, π = left, -π/2 = up
+    // We want: 0 = up, π/2 = right, π = down, -π/2 = left
+    // So add π/2 to rotate the reference frame
+    return atan2(dy, dx) + (pi / 2);
+  }
+
+  /// Get the distance to the nearest uncollected memory (for UI feedback)
+  double? getDistanceToNearestMemory() {
+    if (currentMap == null) return null;
+
+    final memories = currentMap!.children
+        .whereType<MemoryItem>()
+        .where((m) =>
+            !m.isCollected &&
+            !m.memory.triggersLevel &&
+            !m.memory.isEndgameTrigger &&
+            m.memory.phase == currentPhase)
+        .toList();
+
+    if (memories.isEmpty) return null;
+
+    final playerPos = player.position;
+    double nearestDistance = double.infinity;
+    for (final memory in memories) {
+      final distance = playerPos.distanceTo(memory.position);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+      }
+    }
+
+    return nearestDistance;
+  }
 
   /// Starts the ending video sequence
   void startMontage() {

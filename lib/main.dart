@@ -57,6 +57,7 @@ class _GameScreenState extends State<GameScreen> {
   final FocusNode _focusNode = FocusNode();
   bool _showDebugPanel = MemoryLaneGame.showDebugPanel;
   bool _isCinematicMode = false;
+  bool _hasActiveOverlay = false;
 
   /// Currently pressed movement keys
   final Set<LogicalKeyboardKey> _pressedMovementKeys = {};
@@ -85,12 +86,22 @@ class _GameScreenState extends State<GameScreen> {
         });
       }
     };
+
+    // Listen for overlay changes (polaroid, settings)
+    _game.onOverlayChanged = (hasOverlay) {
+      if (mounted) {
+        setState(() {
+          _hasActiveOverlay = hasOverlay;
+        });
+      }
+    };
   }
 
   @override
   void dispose() {
     _game.onDebugPanelToggled = null;
     _game.onCinematicModeChanged = null;
+    _game.onOverlayChanged = null;
     _focusNode.dispose();
     super.dispose();
   }
@@ -242,12 +253,12 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
 
-              // Collected memories HUD (top left) - hidden in cinematic mode
-              if (!_isCinematicMode)
+              // Collected memories HUD (top left) - hidden in cinematic mode or when overlay active
+              if (!_isCinematicMode && !_hasActiveOverlay)
                 CollectedMemoriesHud(game: _game),
 
-              // Settings button (top right) - hidden in cinematic mode
-              if (!_isCinematicMode)
+              // Settings button (top right) - hidden in cinematic mode or when overlay active
+              if (!_isCinematicMode && !_hasActiveOverlay)
                 Builder(
                   builder: (context) {
                     final buttonSize = ResponsiveSizing.dimension(context, 48);
