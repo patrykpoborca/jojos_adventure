@@ -1,4 +1,5 @@
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,14 +14,17 @@ import 'ui/settings_menu.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to landscape orientation
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  // Mobile only - these APIs don't work on web
+  if (!kIsWeb) {
+    // Lock to landscape orientation
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
 
-  // Hide system UI for immersive experience
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Hide system UI for immersive experience
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
 
   runApp(const MemoryLaneApp());
 }
