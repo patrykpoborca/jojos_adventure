@@ -1,37 +1,30 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart';
 
 import '../audio/audio_manager.dart';
 import '../memory_lane_game.dart';
 
-/// A floating joystick that appears wherever the user touches
-/// and provides directional input based on drag from touch start point
+/// A virtual joystick that calculates direction based on touch position
+/// relative to the baby's position in world space (no visible joystick).
+///
+/// Since this component is added to the world, localPosition in drag events
+/// is already in world coordinates after Flame's camera transformation.
 class FloatingJoystick extends PositionComponent
     with HasGameReference<MemoryLaneGame>, DragCallbacks {
   /// Current drag direction (normalized, -1 to 1 range like JoystickComponent)
   Vector2 _relativeDelta = Vector2.zero();
 
-  /// Touch start position (center of virtual joystick)
-  Vector2? _touchStart;
+  /// Whether currently touching
+  bool _isTouching = false;
 
-  /// Current touch position
-  Vector2? _touchCurrent;
+  /// Current touch position in world coordinates
+  Vector2 _touchWorldPosition = Vector2.zero();
 
-  /// Maximum drag distance for full speed
-  static const double _maxDragDistance = 80.0;
+  /// Maximum distance for full speed (in world units)
+  static const double _maxDistance = 200.0;
 
-  /// Visual feedback radius
-  static const double _indicatorRadius = 60.0;
-  static const double _knobRadius = 25.0;
-
-  /// Colors matching the fixed joystick
-  final Paint _backgroundPaint = Paint()..color = const Color(0x44D4A574);
-  final Paint _knobPaint = Paint()..color = const Color(0xAAD4A574);
-  final Paint _linePaint = Paint()
-    ..color = const Color(0x66D4A574)
-    ..strokeWidth = 2.0
-    ..style = PaintingStyle.stroke;
+  /// Dead zone around player (in world units)
+  static const double _deadZone = 40.0;
 
   FloatingJoystick() : super(priority: 1000);
 
@@ -39,7 +32,7 @@ class FloatingJoystick extends PositionComponent
   Vector2 get relativeDelta => _relativeDelta;
 
   /// Whether currently dragging
-  bool get isDragging => _touchStart != null;
+  bool get isDragging => _isTouching;
 
   @override
   bool containsLocalPoint(Vector2 point) {
@@ -60,8 +53,9 @@ class FloatingJoystick extends PositionComponent
     // Don't capture if control mode is joystick
     if (game.controlMode != MovementControlMode.positional) return;
 
-    _touchStart = event.localPosition.clone();
-    _touchCurrent = event.localPosition.clone();
+    _isTouching = true;
+    // localPosition is already in world coordinates for world components
+    _touchWorldPosition = event.localPosition.clone();
     _updateDelta();
   }
 
@@ -69,9 +63,11 @@ class FloatingJoystick extends PositionComponent
   void onDragUpdate(DragUpdateEvent event) {
     super.onDragUpdate(event);
 
-    if (_touchStart == null) return;
+    if (!_isTouching) return;
 
-    _touchCurrent = event.localStartPosition + event.localDelta;
+    // Update touch position: start position + accumulated delta
+    // Both are in world coordinates for world components
+    _touchWorldPosition = event.localStartPosition + event.localDelta;
     _updateDelta();
   }
 
@@ -88,71 +84,34 @@ class FloatingJoystick extends PositionComponent
   }
 
   void _updateDelta() {
-    if (_touchStart == null || _touchCurrent == null) {
+    if (!_isTouching) {
       _relativeDelta = Vector2.zero();
       return;
     }
 
-    final delta = _touchCurrent! - _touchStart!;
+    // Get player's world position
+    final playerPos = game.player.position;
+
+    // Calculate direction from player to touch position (both in world coords)
+    final delta = _touchWorldPosition - playerPos;
     final distance = delta.length;
 
-    if (distance < 5) {
-      // Dead zone to prevent jitter
+    if (distance < _deadZone) {
+      // Dead zone to prevent jitter when touching near the baby
       _relativeDelta = Vector2.zero();
       return;
     }
 
-    // Normalize and scale based on distance
-    final normalizedDistance = (distance / _maxDragDistance).clamp(0.0, 1.0);
+    // Normalize and scale based on distance from player
+    final effectiveDistance = distance - _deadZone;
+    final normalizedDistance = (effectiveDistance / _maxDistance).clamp(0.0, 1.0);
     _relativeDelta = delta.normalized() * normalizedDistance;
   }
 
   void _reset() {
-    _touchStart = null;
-    _touchCurrent = null;
+    _isTouching = false;
     _relativeDelta = Vector2.zero();
   }
 
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-
-    // Only render if in positional mode and currently dragging
-    if (game.controlMode != MovementControlMode.positional) return;
-    if (_touchStart == null) return;
-
-    // Draw background circle at touch start
-    canvas.drawCircle(
-      Offset(_touchStart!.x, _touchStart!.y),
-      _indicatorRadius,
-      _backgroundPaint,
-    );
-
-    // Draw outline
-    canvas.drawCircle(
-      Offset(_touchStart!.x, _touchStart!.y),
-      _indicatorRadius,
-      _linePaint,
-    );
-
-    // Draw knob at current position (clamped to max distance)
-    if (_touchCurrent != null) {
-      final delta = _touchCurrent! - _touchStart!;
-      final distance = delta.length;
-      final clampedDistance = distance.clamp(0.0, _indicatorRadius);
-
-      Vector2 knobPos;
-      if (distance > 0) {
-        knobPos = _touchStart! + delta.normalized() * clampedDistance;
-      } else {
-        knobPos = _touchStart!.clone();
-      }
-
-      canvas.drawCircle(
-        Offset(knobPos.x, knobPos.y),
-        _knobRadius,
-        _knobPaint,
-      );
-    }
-  }
+  // No render - this joystick is invisible
 }

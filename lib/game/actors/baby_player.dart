@@ -85,6 +85,7 @@ class BabyPlayer extends SpriteAnimationComponent
   // Current state
   MovementMode _movementMode = MovementMode.crawling;
   BabyDirection _currentDirection = BabyDirection.down;
+  BabyDirection _previousDirection = BabyDirection.down;
   bool _isMoving = false;
 
   /// References to hitbox components for position updates
@@ -319,8 +320,14 @@ class BabyPlayer extends SpriteAnimationComponent
 
       position.add(delta);
 
-      // Determine direction based on input
-      _currentDirection = _getDirectionFromInput(inputDirection);
+      // Determine direction based on input (track previous for smooth tilt transition)
+      final newDirection = _getDirectionFromInput(inputDirection);
+      if (newDirection != _currentDirection) {
+        _previousDirection = _currentDirection;
+        _currentDirection = newDirection;
+        // Adjust tilt to compensate for direction change
+        _compensateTiltForDirectionChange(inputDirection);
+      }
 
       // Calculate and apply diagonal tilt
       _updateTilt(inputDirection, dt);
@@ -454,6 +461,49 @@ class BabyPlayer extends SpriteAnimationComponent
     }
   }
 
+  /// Gets the cardinal angle in degrees for a direction
+  double _getCardinalAngle(BabyDirection direction, double inputAngle) {
+    switch (direction) {
+      case BabyDirection.right:
+        return 0.0;
+      case BabyDirection.down:
+        return 90.0;
+      case BabyDirection.left:
+        // Handle wrap-around: left is at 180 or -180
+        return inputAngle > 0 ? 180.0 : -180.0;
+      case BabyDirection.up:
+        return -90.0;
+    }
+  }
+
+  /// Compensates the current tilt when direction changes to avoid snapping
+  void _compensateTiltForDirectionChange(Vector2 input) {
+    if (input.isZero()) return;
+
+    final inputAngle = atan2(input.y, input.x) * 180 / pi;
+
+    // Calculate what visual angle we had with the previous direction + tilt
+    final previousCardinal = _getCardinalAngle(_previousDirection, inputAngle);
+    final previousVisualAngle = previousCardinal + (_currentTilt * 180 / pi);
+
+    // Calculate what tilt we need for the new direction to maintain that visual angle
+    final newCardinal = _getCardinalAngle(_currentDirection, inputAngle);
+    var compensatedTilt = previousVisualAngle - newCardinal;
+
+    // Normalize to -180 to 180 range
+    while (compensatedTilt > 180) {
+      compensatedTilt -= 360;
+    }
+    while (compensatedTilt < -180) {
+      compensatedTilt += 360;
+    }
+
+    // Clamp to reasonable tilt range and convert to radians
+    final maxTiltRad = _maxTiltDegrees * pi / 180;
+    _currentTilt = compensatedTilt.clamp(-_maxTiltDegrees * 2, _maxTiltDegrees * 2) * pi / 180;
+    _currentTilt = _currentTilt.clamp(-maxTiltRad * 1.5, maxTiltRad * 1.5);
+  }
+
   /// Updates the sprite tilt for diagonal movement
   void _updateTilt(Vector2 input, double dt) {
     double targetTilt = 0.0;
@@ -462,22 +512,7 @@ class BabyPlayer extends SpriteAnimationComponent
       final inputAngle = atan2(input.y, input.x) * 180 / pi;
 
       // Get the center angle for the current cardinal direction
-      double cardinalAngle;
-      switch (_currentDirection) {
-        case BabyDirection.right:
-          cardinalAngle = 0.0;
-          break;
-        case BabyDirection.down:
-          cardinalAngle = 90.0;
-          break;
-        case BabyDirection.left:
-          // Handle wrap-around: left is at 180 or -180
-          cardinalAngle = inputAngle > 0 ? 180.0 : -180.0;
-          break;
-        case BabyDirection.up:
-          cardinalAngle = -90.0;
-          break;
-      }
+      final cardinalAngle = _getCardinalAngle(_currentDirection, inputAngle);
 
       // Calculate offset from cardinal direction
       double offset = inputAngle - cardinalAngle;
