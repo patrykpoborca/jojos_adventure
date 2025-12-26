@@ -82,6 +82,9 @@ class WalkingCharacter extends SpriteAnimationComponent
   /// Interaction hearts
   final List<_InteractionHeart> _hearts = [];
 
+  /// Whether this character's movement is paused (for character interaction focus)
+  bool isPaused = false;
+
   WalkingCharacter({
     required Vector2 position,
     required this.name,
@@ -287,6 +290,13 @@ class WalkingCharacter extends SpriteAnimationComponent
   }
 
   void _updateMovement(double dt) {
+    // Skip movement when paused (during character interaction)
+    if (isPaused) {
+      _isMoving = false;
+      _updateAnimation();
+      return;
+    }
+
     // Handle pause at waypoints
     if (_pauseTimer > 0) {
       _pauseTimer -= dt;
@@ -427,24 +437,11 @@ class WalkingCharacter extends SpriteAnimationComponent
   void _onInteract() {
     debugPrint('Interacting with $name!');
     _interactionCooldown = 1.5;
-    _spawnInteractionHearts();
 
-    if (interactionMessage != null) {
-      debugPrint(interactionMessage!);
-    }
+    // Trigger focused character interaction view
+    game.startCharacterInteraction(this);
   }
 
-  void _spawnInteractionHearts() {
-    final random = Random();
-    final count = 3 + random.nextInt(3);
-    for (var i = 0; i < count; i++) {
-      _hearts.add(_InteractionHeart(
-        startX: size.x * 0.3 + random.nextDouble() * size.x * 0.4,
-        startY: size.y * 0.3,
-        delay: i * 0.1,
-      ));
-    }
-  }
 }
 
 /// Floating heart animation for interactions

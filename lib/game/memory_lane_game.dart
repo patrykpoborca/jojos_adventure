@@ -15,6 +15,7 @@ import 'world/house_map.dart';
 import 'world/memory_item.dart';
 // import 'world/snow_effect.dart'; // Disabled for performance
 import 'world/upstairs_map.dart';
+import 'world/walking_character.dart';
 
 /// Available levels in the game
 enum LevelId {
@@ -30,6 +31,7 @@ enum GameState {
   loading,
   exploring,
   viewingMemory,
+  characterInteraction,
   montage,
   complete,
 }
@@ -214,6 +216,15 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
 
   /// Distance threshold for highlighting nearest memory
   static const double _highlightThreshold = 300.0;
+
+  /// Currently focused character during interaction (can be Character or WalkingCharacter)
+  PositionComponent? _focusedCharacter;
+
+  /// Stored camera zoom before character interaction
+  double? _preInteractionZoom;
+
+  /// Stored camera target before character interaction
+  Vector2? _preInteractionCameraTarget;
 
   /// Upstairs multiplier for highlight threshold
   static const double _highlightThresholdUpstairsMultiplier = 2.0;
@@ -618,7 +629,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     // Update audio manager (handles music fading and SFX zones)
     AudioManager().update(dt);
 
-    // Only update game logic when exploring
+    // Update game logic when exploring or during character interaction
     if (state == GameState.exploring) {
       super.update(dt);
 
@@ -632,10 +643,21 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
       if (showDebugPanel) {
         updatePreview();
       }
-    }
 
-    // Update keyboard direction for player
-    _updateKeyboardDirection();
+      // Update keyboard direction for player
+      _updateKeyboardDirection();
+    } else if (state == GameState.characterInteraction) {
+      // During character interaction, keep animations running
+      // but don't update player movement or camera following
+      super.update(dt);
+
+      // Force zoom and camera position to stay on character
+      if (_focusedCharacter != null) {
+        final targetZoom = _calculateCharacterFocusZoom(_focusedCharacter!);
+        camera.viewfinder.zoom = targetZoom;
+        _cameraAnchor.position = _focusedCharacter!.position.clone();
+      }
+    }
   }
 
   /// Movement keys for WASD and arrows
@@ -1326,5 +1348,115 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     onCinematicModeChanged?.call(false);
     state = GameState.complete;
   }
+
+  // ==========================================
+  // CHARACTER INTERACTION (FOCUS MODE)
+  // ==========================================
+
+  /// Maximum zoom level for character interaction
+  static const double _maxInteractionZoom = 2.5;
+
+  /// Calculate zoom level to make character approximately 50% of screen height
+  double _calculateCharacterFocusZoom(PositionComponent character) {
+    // Get character's display size (in world units)
+    final characterHeight = character.size.y;
+
+    // Target: character should be ~50% of screen height
+    const targetScreenRatio = 0.5;
+    final targetScreenHeight = size.y * targetScreenRatio;
+
+    // Current zoom determines how world units map to screen pixels
+    final currentZoom = _preInteractionZoom ?? camera.viewfinder.zoom;
+
+    // Calculate what zoom we need so character fills target percentage
+    final desiredZoom = targetScreenHeight / characterHeight;
+
+    // Ensure we're actually zooming IN (at least 1.5x current zoom)
+    final minZoom = currentZoom * 1.5;
+    final calculatedZoom = desiredZoom > minZoom ? desiredZoom : minZoom;
+
+    // Cap at maximum zoom to prevent over-zooming
+    final finalZoom = calculatedZoom.clamp(currentZoom, _maxInteractionZoom);
+
+    return finalZoom;
+  }
+
+  /// Start focused interaction with a character
+  void startCharacterInteraction(PositionComponent character) {
+    if (state != GameState.exploring) return;
+
+    _focusedCharacter = character;
+
+    // Store current camera state
+    _preInteractionZoom = camera.viewfinder.zoom;
+    _preInteractionCameraTarget = _cameraAnchor.position.clone();
+
+    debugPrint('BEFORE: zoom=${camera.viewfinder.zoom}, anchor=${_cameraAnchor.position}');
+
+    // Pause all walking characters on current map
+    _setWalkingCharactersPaused(true);
+
+    // Calculate target zoom (character should be ~50% of screen)
+    final focusZoom = _calculateCharacterFocusZoom(character);
+
+    // Move camera anchor to character (camera follows this)
+    _cameraAnchor.position = character.position.clone();
+
+    // Apply zoom directly to viewfinder
+    camera.viewfinder.zoom = focusZoom;
+
+    debugPrint('AFTER: zoom=${camera.viewfinder.zoom}, anchor=${_cameraAnchor.position}');
+
+    // Show the interaction overlay
+    state = GameState.characterInteraction;
+    overlays.add('characterInteraction');
+    onOverlayChanged?.call(true);
+
+    debugPrint('Started character interaction - target zoom: $focusZoom');
+  }
+
+  /// End focused interaction and return to normal gameplay
+  void endCharacterInteraction() {
+    if (state != GameState.characterInteraction) return;
+
+    debugPrint('Ending interaction - restoring zoom to $_preInteractionZoom');
+
+    // Resume all walking characters
+    _setWalkingCharactersPaused(false);
+
+    // Restore camera state
+    if (_preInteractionZoom != null) {
+      camera.viewfinder.zoom = _preInteractionZoom!;
+    }
+    if (_preInteractionCameraTarget != null) {
+      _cameraAnchor.position = _preInteractionCameraTarget!.clone();
+    }
+
+    // Clear state
+    _focusedCharacter = null;
+    _preInteractionZoom = null;
+    _preInteractionCameraTarget = null;
+
+    // Hide overlay and resume game
+    overlays.remove('characterInteraction');
+    onOverlayChanged?.call(false);
+    state = GameState.exploring;
+
+    debugPrint('Ended character interaction, current zoom: ${camera.viewfinder.zoom}');
+  }
+
+  /// Set paused state for all walking characters on current map
+  void _setWalkingCharactersPaused(bool paused) {
+    if (currentMap == null) return;
+
+    for (final child in currentMap!.children) {
+      if (child is WalkingCharacter) {
+        child.isPaused = paused;
+      }
+    }
+  }
+
+  /// Get the currently focused character (for overlay rendering)
+  PositionComponent? get focusedCharacter => _focusedCharacter;
 }
 

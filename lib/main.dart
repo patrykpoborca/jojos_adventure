@@ -10,6 +10,7 @@ import 'ui/ending_video_overlay.dart';
 import 'ui/polaroid_overlay.dart';
 import 'ui/responsive_sizing.dart';
 import 'ui/settings_menu.dart';
+import 'ui/character_interaction_overlay.dart';
 import 'ui/start_screen.dart';
 
 void main() {
@@ -237,6 +238,10 @@ class _GameScreenState extends State<GameScreen> {
                         game: game as MemoryLaneGame,
                       ),
                   'startScreen': (context, game) => StartScreen(
+                        game: game as MemoryLaneGame,
+                      ),
+                  'characterInteraction': (context, game) =>
+                      CharacterInteractionOverlay(
                         game: game as MemoryLaneGame,
                       ),
                 },

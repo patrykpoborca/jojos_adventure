@@ -281,20 +281,6 @@ class Character extends SpriteAnimationComponent
     ));
   }
 
-  void _spawnInteractionHearts() {
-    final random = Random();
-    // Spawn 3-5 hearts
-    final count = 3 + random.nextInt(3);
-    for (var i = 0; i < count; i++) {
-      _hearts.add(_InteractionHeart(
-        startX: size.x * 0.3 + random.nextDouble() * size.x * 0.4,
-        startY: size.y * 0.3,
-        delay: i * 0.1,
-        isPerson: characterType == CharacterType.person,
-      ));
-    }
-  }
-
   @override
   void render(Canvas canvas) {
     super.render(canvas);
@@ -362,14 +348,8 @@ class Character extends SpriteAnimationComponent
     // Set cooldown to prevent spam
     _interactionCooldown = 1.5;
 
-    // Spawn hearts/love effect
-    _spawnInteractionHearts();
-
-    // Show interaction message if set
-    if (interactionMessage != null) {
-      // Could show overlay or toast here
-      debugPrint(interactionMessage!);
-    }
+    // Trigger focused character interaction view
+    game.startCharacterInteraction(this);
   }
 }
 

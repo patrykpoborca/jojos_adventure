@@ -283,7 +283,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       // Stairs memory - triggers upstairs level!
       MemoryItemData(
         x: 1958, y: 1116,
-        stylizedPhotoPath: 'assets/photos/old_bathtime.jpg',
+        stylizedPhotoPath: 'assets/photos/old_down_stairs.jpg',
         date: 'Nov 3, 2025',
         caption: 'Climbing the stairs...',
         levelTrigger: 'upstairsNursery',
