@@ -397,18 +397,24 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     }
   }
 
-  /// Calculate total memories across all levels for current phase (excluding level triggers)
+  /// Calculate total memories across all levels for current phase
+  /// Excludes: level triggers (they navigate to other levels) and endgame triggers (finish line)
   void _calculateTotalMemoriesForPhase() {
     resetPhaseMemoryCount();
 
     // Count memories from HouseMap (main floor)
+    // Exclude level triggers and endgame triggers
     final houseMemories = HouseMap.getMemoryDataStatic()
-        .where((m) => m.phase == currentPhase && m.levelTrigger == null)
+        .where((m) => m.phase == currentPhase &&
+                      m.levelTrigger == null &&
+                      !m.isEndgameTrigger)
         .length;
 
     // Count memories from UpstairsMap
     final upstairsMemories = UpstairsMap.getMemoryDataStatic()
-        .where((m) => m.phase == currentPhase && m.levelTrigger == null)
+        .where((m) => m.phase == currentPhase &&
+                      m.levelTrigger == null &&
+                      !m.isEndgameTrigger)
         .length;
 
     _totalMemoriesInPhase = houseMemories + upstairsMemories;
@@ -1069,23 +1075,26 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
       if (!_collectedMemoryKeys.contains(memoryKey)) {
         _collectedMemoryKeys.add(memoryKey);
 
-        // Only count memories that aren't level triggers (matching _totalMemoriesInPhase calculation)
-        // Level-trigger memories don't count towards phase progress
-        final countsTowardsPhase = !memory.triggersLevel;
+        // Only count memories that aren't level triggers or endgame triggers
+        // (matching _totalMemoriesInPhase calculation)
+        final countsTowardsPhase = !memory.triggersLevel && !memory.isEndgameTrigger;
         if (countsTowardsPhase) {
           _memoriesCollectedInPhase++;
         }
         debugPrint('Memory collected: $_memoriesCollectedInPhase/$_totalMemoriesInPhase in ${currentPhase.name} phase (countsTowardsPhase: $countsTowardsPhase)');
 
-        // Track collected memory with sprite type for HUD (all memories, not just countable ones)
-        final spriteIndex = MemorySpriteTypes.getSpriteIndexForMemory(memory.stylizedPhotoPath);
-        if (spriteIndex != null) {
-          _collectedMemories.add(CollectedMemoryInfo(
-            memoryKey: memory.stylizedPhotoPath,
-            spriteTypeIndex: spriteIndex,
-            caption: memory.caption,
-          ));
-          onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
+        // Track collected memory with sprite type for HUD (only countable memories)
+        // Exclude level triggers so HUD count matches phase progress
+        if (countsTowardsPhase) {
+          final spriteIndex = MemorySpriteTypes.getSpriteIndexForMemory(memory.stylizedPhotoPath);
+          if (spriteIndex != null) {
+            _collectedMemories.add(CollectedMemoryInfo(
+              memoryKey: memory.stylizedPhotoPath,
+              spriteTypeIndex: spriteIndex,
+              caption: memory.caption,
+            ));
+            onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
+          }
         }
 
         // Check if all memories in this phase are collected
