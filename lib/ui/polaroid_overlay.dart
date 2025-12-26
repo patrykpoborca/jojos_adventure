@@ -201,7 +201,20 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
       case MemoryViewState.endgameNotReady:
         return _closeOverlay;
       case MemoryViewState.couponUnlock:
-        return _onStartRoadTrip;
+        return _onCouponDismiss;
+    }
+  }
+
+  /// Handle coupon dialog dismissal - check if endgame is pending
+  void _onCouponDismiss() {
+    // Check if we need to show endgame dialog after coupon
+    if (widget.game.pendingEndgameAfterCoupon) {
+      widget.game.pendingEndgameAfterCoupon = false;
+      setState(() {
+        _viewState = MemoryViewState.gameComplete;
+      });
+    } else {
+      _closeOverlay();
     }
   }
 
@@ -214,6 +227,10 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
     // For level dialog, decline (don't switch level)
     if (_viewState == MemoryViewState.levelDialog) {
       return _cancelOverlay;
+    }
+    // For coupon dialog, use dismiss to check for pending endgame
+    if (_viewState == MemoryViewState.couponUnlock) {
+      return _onCouponDismiss;
     }
     // For other dialogs, just close
     return _closeOverlay;
@@ -1412,13 +1429,13 @@ class _PolaroidOverlayState extends State<PolaroidOverlay>
             ),
           ),
 
-          // Close button (X) - top right
+          // Close button (X) - top right - uses dismiss to check for pending endgame
           Positioned(
             top: pos,
             right: pos,
             child: _buildCornerButton(
               icon: Icons.close,
-              onTap: _closeOverlay,
+              onTap: _onCouponDismiss,
               isAccent: false,
             ),
           ),

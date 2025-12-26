@@ -13,7 +13,7 @@ import 'input/floating_joystick.dart';
 import 'world/fog_of_war.dart';
 import 'world/house_map.dart';
 import 'world/memory_item.dart';
-// import 'world/snow_effect.dart'; // Disabled for performance
+import 'world/snow_effect.dart';
 import 'world/upstairs_map.dart';
 import 'world/walking_character.dart';
 
@@ -169,6 +169,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
 
   /// Type of overlay to show (memory, phase complete, or game complete)
   OverlayType overlayType = OverlayType.memory;
+
+  /// Whether an endgame dialog is pending after the current coupon dialog
+  bool pendingEndgameAfterCoupon = false;
 
   late final BabyPlayer player;
   late final JoystickComponent joystick;
@@ -327,9 +330,8 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     // Load and add the tiled background (behind everything)
     await _loadBackground();
 
-    // Snow effect disabled for performance on mobile devices
-    // (10,000 particles with gradient shaders was too heavy)
-    // await world.add(SnowEffectFactory.createForGame(this));
+    // Snow effect with viewport culling and object pooling (500 flakes)
+    await world.add(SnowEffectFactory.createForGame(this));
 
     // Create joystick for movement control
     joystick = JoystickComponent(
@@ -436,6 +438,11 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     AudioManager().clearZoneMusic();
     AudioManager().clearSfxZones();
 
+    // Clear any stale character interaction state to prevent zoom issues
+    _focusedCharacter = null;
+    _preInteractionZoom = null;
+    _preInteractionCameraTarget = null;
+
     // Reset memory sprite bag for fresh distribution
     MemorySpriteTypes.resetBag();
 
@@ -445,16 +452,19 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
       currentMap = null;
     }
 
+    // Track level transitions FIRST so any callbacks use the correct level
+    _previousLevel = currentLevel;
+    final wasFirstLoad = _isFirstLoad;
+    _isFirstLoad = false;
+
     // Create and add the new map, set level-specific ambient music
     switch (levelId) {
       case LevelId.mainFloor:
         currentMap = HouseMap();
-        camera.viewfinder.zoom = _getResponsiveZoom(LevelId.mainFloor);
         // Set spawn position based on context
-        // Note: currentLevel still holds the OLD level at this point
-        if (_isFirstLoad) {
+        if (wasFirstLoad) {
           player.position = Vector2(417, 219); // First game load position
-        } else if (currentLevel == LevelId.upstairsNursery) {
+        } else if (_previousLevel == LevelId.upstairsNursery) {
           player.position = Vector2(756, 543); // Coming from upstairs
         } else {
           player.position = Vector2(417, 219); // Default to first load position
@@ -464,33 +474,37 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
         break;
       case LevelId.upstairsNursery:
         currentMap = UpstairsMap();
-        camera.viewfinder.zoom = _getResponsiveZoom(LevelId.upstairsNursery);
         player.position = Vector2(1334, 800); // Near the exit door
         player.scale = Vector2.all(2.0); // Larger baby for small room
         await AudioManager().switchAmbientMusic(AudioManager.upstairsAmbient);
         break;
     }
 
+    // Update currentLevel before adding map (so onLoad callbacks see correct level)
+    currentLevel = levelId;
+
     await world.add(currentMap!);
 
-    // Track level transitions
-    _previousLevel = currentLevel;
-    currentLevel = levelId;
-    _isFirstLoad = false;
+    // Set zoom AFTER map is added to ensure it's not overwritten
+    camera.viewfinder.zoom = _getResponsiveZoom(levelId);
 
-    debugPrint('Loaded level: $levelId (previous: $_previousLevel, firstLoad: $_isFirstLoad)');
+    debugPrint('Loaded level: $levelId (zoom: ${camera.viewfinder.zoom}, previous: $_previousLevel)');
   }
 
   /// Switch to a different level
   Future<void> switchToLevel(LevelId levelId) async {
     if (levelId == currentLevel) return;
 
+    // Show loading screen
+    showLoading();
     state = GameState.loading;
+
     await _loadLevel(levelId);
 
     // Fallback check: ensure phase transition happens if all memories collected
     _checkPhaseTransitionFallback();
 
+    // Loading is done - overlay will auto-hide after animation loop completes
     state = GameState.exploring;
   }
 
@@ -1010,10 +1024,23 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     if (state != GameState.exploring) return;
 
     currentMemory = memory;
+    pendingEndgameAfterCoupon = false; // Reset pending state
 
-    // Handle endgame trigger specially
-    if (memory.isEndgameTrigger) {
-      // Check if all walking phase memories are collected (excluding endgame trigger itself)
+    // Check if this is a coupon reward first - it takes priority
+    if (memory.isCouponReward) {
+      overlayType = OverlayType.couponUnlock;
+      debugPrint('Coupon reward triggered!');
+
+      // If it's also an endgame trigger, mark as pending for after coupon dismissal
+      if (memory.isEndgameTrigger) {
+        final allMemoriesCollected = _memoriesCollectedInPhase >= _totalMemoriesInPhase;
+        if (allMemoriesCollected) {
+          pendingEndgameAfterCoupon = true;
+          debugPrint('Endgame pending after coupon dialog.');
+        }
+      }
+    } else if (memory.isEndgameTrigger) {
+      // Handle endgame trigger (when not a coupon)
       final allMemoriesCollected = _memoriesCollectedInPhase >= _totalMemoriesInPhase;
 
       if (allMemoriesCollected) {
@@ -1041,8 +1068,15 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
 
     // Mark the triggered MemoryItem as collected and remove it from the map
     // This handles the case where memory was triggered via keyboard (space key)
+    // EXCEPT for level triggers - they should remain usable (go up/down stairs multiple times)
     if (_triggeredMemoryItem != null) {
-      _triggeredMemoryItem!.markAsCollected();
+      final isLevelTrigger = _triggeredMemoryItem!.memory.triggersLevel;
+
+      // Only mark as collected if it's not a level trigger
+      if (!isLevelTrigger) {
+        _triggeredMemoryItem!.markAsCollected();
+      }
+
       // Remove non-persistent memories from the map
       if (!_triggeredMemoryItem!.memory.persistsAfterCollection) {
         _triggeredMemoryItem!.removeFromParent();
@@ -1071,13 +1105,20 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
       // Create a unique key for this memory
       final memoryKey = '${memory.stylizedPhotoPath}_${memory.phase.name}';
 
+      // Level triggers should NOT be added to collected keys - they need to remain usable
+      // for going up/down stairs multiple times
+      if (memory.triggersLevel) {
+        debugPrint('Level trigger used: ${memory.caption} (not marking as collected)');
+        return;
+      }
+
       // Only count if not already collected
       if (!_collectedMemoryKeys.contains(memoryKey)) {
         _collectedMemoryKeys.add(memoryKey);
 
-        // Only count memories that aren't level triggers or endgame triggers
+        // Only count memories that aren't endgame triggers
         // (matching _totalMemoriesInPhase calculation)
-        final countsTowardsPhase = !memory.triggersLevel && !memory.isEndgameTrigger;
+        final countsTowardsPhase = !memory.isEndgameTrigger;
         if (countsTowardsPhase) {
           _memoriesCollectedInPhase++;
         }
@@ -1146,6 +1187,19 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     onOverlayChanged?.call(false);
   }
 
+  /// Shows the loading overlay
+  void showLoading() {
+    overlays.add('loading');
+  }
+
+  /// Hides the loading overlay (called by the overlay itself after minimum loop)
+  void hideLoading() {
+    overlays.remove('loading');
+  }
+
+  /// Whether loading overlay is currently visible
+  bool get isLoadingVisible => overlays.isActive('loading');
+
   /// Shows the start screen overlay
   void showStartScreen() {
     overlays.add('startScreen');
@@ -1155,6 +1209,10 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
   Future<void> hideStartScreen() async {
     overlays.remove('startScreen');
 
+    // Show loading screen
+    showLoading();
+    state = GameState.loading;
+
     // On web, level wasn't loaded yet - load it now after user interaction
     if (kIsWeb && currentMap == null) {
       await _loadLevel(currentLevel);
@@ -1163,13 +1221,17 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     // Mark that game has started (survives hot reload)
     _hasStartedOnce = true;
 
-    // Game is now ready to play
+    // Game is now ready to play - loading overlay will auto-hide after animation loop
     state = GameState.exploring;
   }
 
   /// Transition to a new game phase
   Future<void> transitionToPhase(GamePhase newPhase) async {
     if (newPhase == currentPhase) return;
+
+    // Show loading screen
+    showLoading();
+    state = GameState.loading;
 
     currentPhase = newPhase;
     _memoriesCollectedInPhase = 0;
@@ -1190,6 +1252,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
 
     onPhaseChanged?.call(newPhase);
     debugPrint('Transitioned to ${newPhase.name} phase');
+
+    // Loading done - overlay will auto-hide after animation loop
+    state = GameState.exploring;
   }
 
   /// Add to the total memory count for the current phase (called by maps)
@@ -1309,13 +1374,12 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
         ? _highlightThreshold * _highlightThresholdUpstairsMultiplier
         : _highlightThreshold;
 
-    // Find all eligible memories (not collected, not triggers, current phase)
+    // Find all eligible memories (not collected, current phase)
+    // Include level triggers and endgame triggers so they can be activated with spacebar
     final memories = currentMap!.children
         .whereType<MemoryItem>()
         .where((m) =>
             !m.isCollected &&
-            !m.memory.triggersLevel &&
-            !m.memory.isEndgameTrigger &&
             m.memory.phase == currentPhase)
         .toList();
 
@@ -1351,11 +1415,45 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     overlays.add('endingVideo');
   }
 
-  /// Hides the ending video overlay
+  /// Hides the ending video overlay and restarts the game
   void hideEndingVideo() {
     overlays.remove('endingVideo');
     onCinematicModeChanged?.call(false);
-    state = GameState.complete;
+
+    // Restart the game from the beginning
+    restartGame();
+  }
+
+  /// Restarts the game from the beginning, resetting all progress
+  Future<void> restartGame() async {
+    // Reset game phase to crawling
+    currentPhase = GamePhase.crawling;
+
+    // Reset memory tracking
+    _memoriesCollectedInPhase = 0;
+    _collectedMemoryKeys.clear();
+    _collectedMemories.clear();
+    onMemoriesCollectedChanged?.call(List.unmodifiable(_collectedMemories));
+
+    // Reset player to crawling sprite
+    player.resetToCrawling();
+
+    // Reset to main floor
+    currentLevel = LevelId.mainFloor;
+    _isFirstLoad = true;
+
+    // Recalculate memories for crawling phase
+    _calculateTotalMemoriesForPhase();
+
+    // Stop any playing audio
+    AudioManager().clearSfxZones();
+    AudioManager().clearZoneMusic();
+
+    // Show start screen
+    state = GameState.loading;
+    showStartScreen();
+
+    debugPrint('Game restarted - showing start screen');
   }
 
   // ==========================================

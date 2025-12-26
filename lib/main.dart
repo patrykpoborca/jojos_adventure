@@ -7,6 +7,7 @@ import 'game/memory_lane_game.dart';
 import 'ui/collected_memories_hud.dart';
 import 'ui/debug_obstacle_overlay.dart';
 import 'ui/ending_video_overlay.dart';
+import 'ui/loading_overlay.dart';
 import 'ui/polaroid_overlay.dart';
 import 'ui/responsive_sizing.dart';
 import 'ui/settings_menu.dart';
@@ -242,6 +243,9 @@ class _GameScreenState extends State<GameScreen> {
                       ),
                   'characterInteraction': (context, game) =>
                       CharacterInteractionOverlay(
+                        game: game as MemoryLaneGame,
+                      ),
+                  'loading': (context, game) => LoadingOverlayWithPainter(
                         game: game as MemoryLaneGame,
                       ),
                 },

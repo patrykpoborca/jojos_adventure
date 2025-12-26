@@ -375,7 +375,8 @@ class MemoryItem extends SpriteAnimationComponent
     if (_collected && !memory.persistsAfterCollection) return;
 
     // Only mark as collected on first collection (for counting purposes)
-    if (!_collected) {
+    // EXCEPT level triggers - they should remain usable for going up/down stairs
+    if (!_collected && !memory.triggersLevel) {
       _collected = true;
     }
 

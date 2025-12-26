@@ -432,7 +432,7 @@ class _EndingVideoOverlayState extends State<EndingVideoOverlay>
                     ],
                   ),
                   child: Text(
-                    'Close',
+                    'Play Again',
                     style: GoogleFonts.caveat(
                       fontSize: ResponsiveSizing.fontSize(context, 24),
                       color: Colors.white,
