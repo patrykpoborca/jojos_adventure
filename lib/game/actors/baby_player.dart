@@ -52,7 +52,7 @@ class BabyPlayer extends SpriteAnimationComponent
 
   /// Movement speed in pixels per second (base values for main floor)
   static const double _baseCrawlSpeed = 60;
-  static const double _baseWalkSpeed = 108; // 180 reduced by 40%
+  static const double _baseWalkSpeed = 75; // 180 reduced by 40%
 
   /// Upstairs scale multiplier (matches player scale difference)
   static const double _upstairsMultiplier = 2.0;
@@ -64,6 +64,14 @@ class BabyPlayer extends SpriteAnimationComponent
 
   /// Display size for the baby sprite
   static const double displaySize = 64 * 2;
+
+  /// Collision hitbox offset for crawling mode (positive = right/down)
+  static const double crawlCollisionOffsetX = 0.0;
+  static const double crawlCollisionOffsetY = 0.0;
+
+  /// Collision hitbox offset for walking mode (positive = right/down)
+  static const double walkCollisionOffsetX = -20.0;
+  static const double walkCollisionOffsetY = 0.0;
 
   /// Walking sprite aspect ratio (calculated in onLoad)
   double _walkingAspectRatio = 1.0;
@@ -79,8 +87,24 @@ class BabyPlayer extends SpriteAnimationComponent
   BabyDirection _currentDirection = BabyDirection.down;
   bool _isMoving = false;
 
+  /// References to hitbox components for position updates
+  CircleHitbox? _hitbox;
+  DebugCircleComponent? _debugHitbox;
+
   /// Keyboard input direction (set from main.dart key handlers)
   Vector2 keyboardDirection = Vector2.zero();
+
+  /// Current sprite tilt angle (radians) for diagonal movement
+  double _currentTilt = 0.0;
+
+  /// Deadzone angle (degrees) - no tilt within this range of cardinal directions
+  static const double _tiltDeadzone = 7.0;
+
+  /// Maximum tilt angle (degrees) for diagonal movement
+  static const double _maxTiltDegrees = 15.0;
+
+  /// Tilt interpolation speed (higher = faster response)
+  static const double _tiltLerpSpeed = 12.0;
 
   BabyPlayer({required this.joystick, required this.floatingJoystick})
       : super(
@@ -118,22 +142,45 @@ class BabyPlayer extends SpriteAnimationComponent
 
     // Add hitbox for collision detection (smaller than sprite for better feel)
     final hitboxRadius = displaySize * 0.3;
-    final hitboxPosition = Vector2(displaySize / 2, displaySize * 0.6);
-    add(CircleHitbox(
+    final hitboxPosition = Vector2(
+      displaySize / 2 + crawlCollisionOffsetX,
+      displaySize * 0.6 + crawlCollisionOffsetY,
+    );
+    _hitbox = CircleHitbox(
       radius: hitboxRadius,
       position: hitboxPosition,
       anchor: Anchor.center,
       collisionType: CollisionType.active,
-    ));
+    );
+    add(_hitbox!);
 
     // Debug visualization for player hitbox (only visible when debug panel is open)
-    add(DebugCircleComponent(
+    _debugHitbox = DebugCircleComponent(
       radius: hitboxRadius,
       position: hitboxPosition,
       anchor: Anchor.center,
       color: Colors.green,
       filled: true,
-    ));
+    );
+    add(_debugHitbox!);
+  }
+
+  /// Updates hitbox position based on current movement mode
+  void _updateHitboxPosition() {
+    final offsetX = _movementMode == MovementMode.crawling
+        ? crawlCollisionOffsetX
+        : walkCollisionOffsetX;
+    final offsetY = _movementMode == MovementMode.crawling
+        ? crawlCollisionOffsetY
+        : walkCollisionOffsetY;
+
+    final newPosition = Vector2(
+      displaySize / 2 + offsetX,
+      displaySize * 0.6 + offsetY,
+    );
+
+    _hitbox?.position = newPosition;
+    _debugHitbox?.position = newPosition;
   }
 
   Future<void> _loadAnimations() async {
@@ -275,10 +322,15 @@ class BabyPlayer extends SpriteAnimationComponent
       // Determine direction based on input
       _currentDirection = _getDirectionFromInput(inputDirection);
 
+      // Calculate and apply diagonal tilt
+      _updateTilt(inputDirection, dt);
+
       // Clamp position to house bounds
       _clampToHouseBounds();
     } else {
       _isMoving = false;
+      // Smoothly return to no tilt when stopped
+      _updateTilt(Vector2.zero(), dt);
     }
 
     // Handle camera freeze on collision
@@ -402,6 +454,73 @@ class BabyPlayer extends SpriteAnimationComponent
     }
   }
 
+  /// Updates the sprite tilt for diagonal movement
+  void _updateTilt(Vector2 input, double dt) {
+    double targetTilt = 0.0;
+
+    if (!input.isZero()) {
+      final inputAngle = atan2(input.y, input.x) * 180 / pi;
+
+      // Get the center angle for the current cardinal direction
+      double cardinalAngle;
+      switch (_currentDirection) {
+        case BabyDirection.right:
+          cardinalAngle = 0.0;
+          break;
+        case BabyDirection.down:
+          cardinalAngle = 90.0;
+          break;
+        case BabyDirection.left:
+          // Handle wrap-around: left is at 180 or -180
+          cardinalAngle = inputAngle > 0 ? 180.0 : -180.0;
+          break;
+        case BabyDirection.up:
+          cardinalAngle = -90.0;
+          break;
+      }
+
+      // Calculate offset from cardinal direction
+      double offset = inputAngle - cardinalAngle;
+
+      // Normalize offset to -180 to 180 range
+      while (offset > 180) {
+        offset -= 360;
+      }
+      while (offset < -180) {
+        offset += 360;
+      }
+
+      // Apply deadzone - no tilt within deadzone
+      if (offset.abs() <= _tiltDeadzone) {
+        targetTilt = 0.0;
+      } else {
+        // Calculate tilt amount beyond deadzone
+        // Max offset from cardinal is 45 degrees (halfway to next cardinal)
+        final effectiveOffset = offset.abs() - _tiltDeadzone;
+        final maxEffectiveOffset = 45.0 - _tiltDeadzone;
+        final tiltRatio = (effectiveOffset / maxEffectiveOffset).clamp(0.0, 1.0);
+
+        // Apply tilt in the direction of the offset
+        targetTilt = tiltRatio * _maxTiltDegrees * (offset > 0 ? 1 : -1);
+
+        // Convert to radians
+        targetTilt = targetTilt * pi / 180;
+      }
+    }
+
+    // Smoothly interpolate to target tilt
+    final lerpFactor = (_tiltLerpSpeed * dt).clamp(0.0, 1.0);
+    _currentTilt += (targetTilt - _currentTilt) * lerpFactor;
+
+    // Apply very small values as zero to prevent jitter
+    if (_currentTilt.abs() < 0.001) {
+      _currentTilt = 0.0;
+    }
+
+    // Apply tilt to sprite rotation
+    angle = _currentTilt;
+  }
+
   /// Offset to apply when facing south (down) to fix sprite alignment
   static const double _southFacingOffset = 50.0;
   double _currentYOffset = 0.0;
@@ -437,6 +556,9 @@ class BabyPlayer extends SpriteAnimationComponent
     // Apply proper aspect ratio for walking sprite
     size = Vector2(displaySize * _walkingAspectRatio, displaySize);
 
+    // Update hitbox position for walking mode
+    _updateHitboxPosition();
+
     _updateAnimation();
   }
 
@@ -451,6 +573,9 @@ class BabyPlayer extends SpriteAnimationComponent
 
     // Restore square size for crawling
     size = Vector2.all(displaySize);
+
+    // Update hitbox position for crawling mode
+    _updateHitboxPosition();
 
     _updateAnimation();
   }

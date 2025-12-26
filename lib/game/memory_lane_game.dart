@@ -209,6 +209,9 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
   /// Currently highlighted memory (nearest to player within threshold)
   MemoryItem? _highlightedMemory;
 
+  /// The MemoryItem that triggered the current overlay (for cleanup on dismiss)
+  MemoryItem? _triggeredMemoryItem;
+
   /// Distance threshold for highlighting nearest memory
   static const double _highlightThreshold = 300.0;
 
@@ -731,6 +734,8 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
         // Debug panel is closed - spacebar triggers nearby memory
         if (event.logicalKey == LogicalKeyboardKey.space) {
           if (state == GameState.exploring && _highlightedMemory != null) {
+            // Track which MemoryItem triggered this for cleanup on dismiss
+            _triggeredMemoryItem = _highlightedMemory;
             triggerMemory(_highlightedMemory!.memory);
             return KeyEventResult.handled;
           }
@@ -1006,6 +1011,17 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
       _onMemoryCollected(currentMemory!);
     }
 
+    // Mark the triggered MemoryItem as collected and remove it from the map
+    // This handles the case where memory was triggered via keyboard (space key)
+    if (_triggeredMemoryItem != null) {
+      _triggeredMemoryItem!.markAsCollected();
+      // Remove non-persistent memories from the map
+      if (!_triggeredMemoryItem!.memory.persistsAfterCollection) {
+        _triggeredMemoryItem!.removeFromParent();
+      }
+      _triggeredMemoryItem = null;
+    }
+
     overlays.remove('polaroid');
     onOverlayChanged?.call(false);
     currentMemory = null;
@@ -1017,6 +1033,7 @@ class MemoryLaneGame extends FlameGame with HasCollisionDetection, KeyboardEvent
     overlays.remove('polaroid');
     onOverlayChanged?.call(false);
     currentMemory = null;
+    _triggeredMemoryItem = null; // Clear without marking as collected
     state = GameState.exploring;
   }
 
