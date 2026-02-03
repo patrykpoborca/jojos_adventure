@@ -68,7 +68,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       // ========================================
       MemoryItemData.simple(
         x: 230, y: 243,
-        photoPath: 'assets/photos/young_some_times_parents_travel.jpg',
+        photoPath: 'assets/photos/young_some_times_parents_travel.png',
         date: 'Jul 30, 2025', caption: 'Parents travel sometimes too!',
       ),
       MemoryItemData.simple(
@@ -206,7 +206,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 367, y: 466,
-        photoPath: 'assets/photos/old_couch_chill.jpg',
+        photoPath: 'assets/photos/old_couch_chill.png',
         date: 'Nov 7, 2025', caption: 'Dad works too much',
         phase: GamePhase.walking,
       ),
@@ -303,7 +303,7 @@ class HouseMap extends PositionComponent with HasGameReference<MemoryLaneGame> {
       ),
       MemoryItemData.simple(
         x: 2329, y: 544,
-        photoPath: 'assets/photos/old_working.jpg',
+        photoPath: 'assets/photos/old_working.png',
         date: 'Sep 19, 2025', caption: 'Working with dad',
         phase: GamePhase.walking,
       ),
